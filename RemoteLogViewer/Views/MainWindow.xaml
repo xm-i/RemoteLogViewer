@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:RemoteLogViewer.ViewModels"
+    xmlns:views="using:RemoteLogViewer.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -19,7 +20,7 @@
             <TabView.TabItemTemplate>
                 <DataTemplate x:DataType="vm:LogViewerViewModel">
                     <TabViewItem Header="{x:Bind Title}">
-                        <TextBlock Text="{x:Bind Title}" />
+                        <views:SshSessionControl />
                     </TabViewItem>
                 </DataTemplate>
             </TabView.TabItemTemplate>

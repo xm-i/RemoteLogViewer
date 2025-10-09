@@ -30,6 +30,8 @@ public class MainWindowViewModel {
 	///     新しいログビュータブを追加します。
 	/// </summary>
 	private void AddTab() {
-		this._tabs.Add(new LogViewerViewModel($"Log {this.Tabs.Count + 1}"));
+		var vm = Ioc.Default.GetRequiredService<LogViewerViewModel>();
+		vm.Title = $"Log {this.Tabs.Count + 1}";
+		this._tabs.Add(vm);
 	}
 }

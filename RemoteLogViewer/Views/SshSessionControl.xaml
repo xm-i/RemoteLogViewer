@@ -1,0 +1,32 @@
+<UserControl
+    x:Class="RemoteLogViewer.Views.SshSessionControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:RemoteLogViewer.ViewModels"
+    xmlns:conv="using:RemoteLogViewer.Views.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+	<UserControl.Resources>
+		<conv:BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+		<conv:InverseBooleanToVisibilityConverter x:Key="BoolToVisibilityInverse" />
+	</UserControl.Resources>
+	<Grid Padding="12">
+		<StackPanel>
+			<!-- 接続設定ビュー -->
+			<StackPanel Visibility="{x:Bind ViewModel.IsConnected.Value, Mode=OneWay,Converter={StaticResource BoolToVisibilityInverse}}" Spacing="8">
+				<TextBox Header="Host" Text="{x:Bind ViewModel.Host.Value, Mode=TwoWay}" />
+				<NumberBox Header="Port" Value="{x:Bind ViewModel.Port.Value, Mode=TwoWay}" Minimum="1" Maximum="65535" />
+				<TextBox Header="User" Text="{x:Bind ViewModel.User.Value, Mode=TwoWay}" />
+				<TextBox Header="Password" Text="{x:Bind ViewModel.Password.Value, Mode=TwoWay}"/>
+				<Button Content="Connect" Command="{x:Bind ViewModel.ConnectCommand}" />
+			</StackPanel>
+
+			<!-- 接続後ビュー (ListView 表示) -->
+			<StackPanel Visibility="{x:Bind ViewModel.IsConnected.Value, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" Spacing="8">
+				<TextBlock Text="Entries" FontWeight="SemiBold" />
+				<ListView ItemsSource="{x:Bind ViewModel.Entries}" Height="300" />
+			</StackPanel>
+		</StackPanel>
+	</Grid>
+</UserControl>
