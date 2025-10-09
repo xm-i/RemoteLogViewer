@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "RemoteLogViewer (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "RemoteLogViewer (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
