@@ -59,6 +59,10 @@ public class SshSessionViewModel {
 	public ReactiveCommand<SshConnectionInfoViewModel> SelectSshConnectionInfoCommand {
 		get;
 	} = new();
+	/// <summary>
+	///     切断コマンド。
+	/// </summary>
+	public ReactiveCommand DisconnectCommand { get; } = new();
 
 	public SshSessionViewModel(SshSessionModel model) {
 		this._model = model;
@@ -70,5 +74,6 @@ public class SshSessionViewModel {
 		this.TestConnectCommand.Subscribe(_ => this._model.TestConnect());
 		this.SelectSshConnectionInfoCommand.Subscribe(vm => this._model.SelectedSshConnectionInfo.Value = vm.Model);
 		this.AddSavedConnectionsCommand.Subscribe(_ => this._model.AddSavedConnection());
+		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
 	}
 }

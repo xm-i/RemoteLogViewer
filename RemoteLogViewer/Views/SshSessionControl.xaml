@@ -67,7 +67,14 @@
 
 		<!-- 接続後ビュー (ListView 表示) -->
 		<StackPanel Visibility="{x:Bind ViewModel.IsConnected.Value, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" Spacing="8">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
 			<TextBlock Text="Entries" FontWeight="SemiBold" />
+				<Button Grid.Column="1" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand}" />
+			</Grid>
 			<ListView ItemsSource="{x:Bind ViewModel.Entries}" Height="300" />
 		</StackPanel>
 	</Grid>
