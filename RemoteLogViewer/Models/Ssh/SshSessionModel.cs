@@ -43,7 +43,7 @@ public class SshSessionModel {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return; //TODO: エラー通知
 		}
-		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value);
+		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value);
 		this.Entries.Clear();
 		var output = this._sshService.ListDirectory("/");
 		this.Entries.AddRange(output);
@@ -57,7 +57,7 @@ public class SshSessionModel {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return; //TODO: エラー通知
 		}
-		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value);
+		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value);
 		this.Disconnect();
 	}
 

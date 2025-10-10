@@ -16,7 +16,11 @@ public class SshConnectionInfoModel {
 	/// <summary>ユーザー。</summary>
 	public ReactiveProperty<string> User { get; } = new(string.Empty);
 	/// <summary>パスワード。</summary>
-	public ReactiveProperty<string> Password { get; } = new(string.Empty);
+	public ReactiveProperty<string?> Password { get; } = new(null);
+	/// <summary>秘密鍵パス。</summary>
+	public ReactiveProperty<string?> PrivateKeyPath { get; } = new(null);
+	/// <summary>秘密鍵パスフレーズ。</summary>
+	public ReactiveProperty<string?> PrivateKeyPassphrase { get; } = new(null);
 	public IServiceProvider ServiceProvider {
 		get;
 	}
@@ -47,7 +51,15 @@ public class SshConnectionInfoModelForJson {
 		init;
 	}
 
-	public required string Password {
+	public string? Password {
+		get;
+		init;
+	}
+	public string? PrivateKeyPath {
+		get;
+		init;
+	}
+	public string? PrivateKeyPassphrase {
 		get;
 		init;
 	}
@@ -60,6 +72,8 @@ public class SshConnectionInfoModelForJson {
 		model.Port.Value = json.Port;
 		model.User.Value = json.User;
 		model.Password.Value = json.Password;
+		model.PrivateKeyPath.Value = json.PrivateKeyPath;
+		model.PrivateKeyPassphrase.Value = json.PrivateKeyPassphrase;
 		return model;
 	}
 
@@ -69,7 +83,9 @@ public class SshConnectionInfoModelForJson {
 			Host = model.Host.Value,
 			Port = model.Port.Value,
 			User = model.User.Value,
-			Password = model.Password.Value,
+			Password = string.IsNullOrWhiteSpace(model.Password.Value) ? null : model.Password.Value,
+			PrivateKeyPath = string.IsNullOrWhiteSpace(model.PrivateKeyPath.Value) ? null : model.PrivateKeyPath.Value,
+			PrivateKeyPassphrase = string.IsNullOrWhiteSpace(model.PrivateKeyPassphrase.Value) ? null : model.PrivateKeyPassphrase.Value,
 		};
 	}
 }

@@ -56,6 +56,14 @@
 				<NumberBox Header="Port" Value="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.Port.Value, Mode=TwoWay}" Minimum="1" Maximum="65535" />
 				<TextBox Header="User" Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.User.Value, Mode=TwoWay}" />
 				<TextBox Header="Password" Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.Password.Value, Mode=TwoWay}"/>
+				<StackPanel>
+					<TextBlock Text="Private Key Path" FontSize="12"/>
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<TextBox Width="300" Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.PrivateKeyPath.Value, Mode=TwoWay}" PlaceholderText="C:\keys\private.key" />
+						<Button Content="..." Click="BrowsePrivateKeyButton_Click" />
+					</StackPanel>
+				</StackPanel>
+				<TextBox Header="Private Key Passphrase" Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.PrivateKeyPassphrase.Value, Mode=TwoWay}" />
 				<StackPanel Orientation="Horizontal" Spacing="8">
 					<Button Content="Test" Command="{x:Bind ViewModel.TestConnectCommand}" />
 					<Button Content="Connect" Command="{x:Bind ViewModel.ConnectCommand}" />

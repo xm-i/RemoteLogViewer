@@ -41,6 +41,16 @@ public class SshConnectionInfoViewModel {
 	}
 
 	/// <summary>
+	/// 秘密鍵パス。
+	/// </summary>
+	public BindableReactiveProperty<string?> PrivateKeyPath { get; }
+
+	/// <summary>
+	/// 秘密鍵パスフレーズ。
+	/// </summary>
+	public BindableReactiveProperty<string?> PrivateKeyPassphrase { get; }
+
+	/// <summary>
 	///	表示用文字列
 	/// </summary>
 	public BindableReactiveProperty<string> DisplayName {
@@ -64,6 +74,8 @@ public class SshConnectionInfoViewModel {
 		this.Port = this.Model.Port.ToBindableReactiveProperty();
 		this.User = this.Model.User!.ToBindableReactiveProperty()!;
 		this.Password = this.Model.Password!.ToBindableReactiveProperty()!;
+		this.PrivateKeyPath = this.Model.PrivateKeyPath.ToBindableReactiveProperty();
+		this.PrivateKeyPassphrase = this.Model.PrivateKeyPassphrase.ToBindableReactiveProperty();
 		this.DisplayName = this.User.CombineLatest(this.Host, this.Port, (u, h, p) => $"{u}@{h}:{p}").ToBindableReactiveProperty(string.Empty);
 
 		this.SaveConnectionInfoCommand.Subscribe(_ => {
@@ -71,6 +83,8 @@ public class SshConnectionInfoViewModel {
 			this.Model.Port.Value = this.Port.Value;
 			this.Model.User.Value = this.User.Value;
 			this.Model.Password.Value = this.Password.Value;
+			this.Model.PrivateKeyPath.Value = this.PrivateKeyPath.Value;
+			this.Model.PrivateKeyPassphrase.Value = this.PrivateKeyPassphrase.Value;
 			sshConnectionStoreModel.Save();
 		});
 

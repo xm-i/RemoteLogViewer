@@ -1,4 +1,6 @@
 using Renci.SshNet;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RemoteLogViewer.Services;
 
@@ -10,15 +12,38 @@ public class SshService : IDisposable {
 	private SshClient? _client;
 
 	/// <summary>
-	///     パスワード認証で接続します。
+	///     パスワード / 鍵認証で接続します。password と privateKeyPath の両方が指定された場合は複数メソッドで試行します。
 	/// </summary>
 	/// <param name="host">ホスト。</param>
 	/// <param name="port">ポート。</param>
 	/// <param name="user">ユーザー名。</param>
-	/// <param name="password">パスワード。</param>
-	public void Connect(string host, int port, string user, string password) {
+	/// <param name="password">パスワード (任意)。</param>
+	/// <param name="privateKeyPath">秘密鍵パス (任意)。</param>
+	/// <param name="privateKeyPassphrase">秘密鍵パスフレーズ (任意)。</param>
+	public void Connect(string host, int port, string user, string? password, string? privateKeyPath, string? privateKeyPassphrase) {
 		this.Disconnect();
-		this._client = new SshClient(host, port, user, password);
+
+		if (!string.IsNullOrWhiteSpace(privateKeyPath)) {
+			var methods = new List<AuthenticationMethod>();
+			// 鍵認証
+			PrivateKeyFile pkFile;
+			if (!string.IsNullOrEmpty(privateKeyPassphrase)) {
+				pkFile = new PrivateKeyFile(privateKeyPath, privateKeyPassphrase);
+			} else {
+				pkFile = new PrivateKeyFile(privateKeyPath);
+			}
+			methods.Add(new PrivateKeyAuthenticationMethod(user, pkFile));
+			// 併用できる場合はパスワードも追加
+			if (!string.IsNullOrWhiteSpace(password)) {
+				methods.Add(new PasswordAuthenticationMethod(user, password));
+			}
+			var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]);
+			this._client = new SshClient(connectionInfo);
+		} else {
+			// 従来のパスワード専用
+			this._client = new SshClient(host, port, user, password ?? string.Empty);
+		}
+
 		this._client.Connect();
 	}
 
