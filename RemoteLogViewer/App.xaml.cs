@@ -13,14 +13,12 @@ using RemoteLogViewer.Views;
 namespace RemoteLogViewer;
 
 public partial class App : Application {
-	private static Window? _mainWindow;
-
 	/// <summary>
 	///     メインウィンドウインスタンスを取得します。
 	/// </summary>
 	public static Window MainWindow {
 		get {
-			return _mainWindow ??= Ioc.Default.GetRequiredService<MainWindow>();
+			return field ??= Ioc.Default.GetRequiredService<MainWindow>();
 		}
 	}
 
@@ -62,6 +60,16 @@ public partial class App : Application {
 
 		foreach (var singletonTargetType in singletonTargetTypes) {
 			serviceCollection.AddSingleton(singletonTargetType);
+		}
+
+		var scopedTargetTypes = Assembly
+			.GetExecutingAssembly()
+			.GetTypes()
+			.Where(x =>
+				x.GetCustomAttributes<AddScopedAttribute>(inherit: true).Any());
+
+		foreach (var scopedTargetType in scopedTargetTypes) {
+			serviceCollection.AddScoped(scopedTargetType);
 		}
 
 		Ioc.Default.ConfigureServices(

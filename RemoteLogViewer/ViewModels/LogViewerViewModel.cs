@@ -1,3 +1,5 @@
+using RemoteLogViewer.ViewModels.Ssh;
+
 namespace RemoteLogViewer.ViewModels;
 
 /// <summary>
@@ -12,4 +14,18 @@ public class LogViewerViewModel {
 		get;
 		set;
 	} = string.Empty;
+
+	/// <summary>
+	///     セッションマネージャ ViewModel への参照。
+	/// </summary>
+	public SshSessionViewModel SshSessionViewModel {
+		get;
+	}
+
+	/// <summary>
+	///     DI 用コンストラクタ。
+	/// </summary>
+	public LogViewerViewModel(SshSessionViewModel sshSessionViewModel) {
+		this.SshSessionViewModel = sshSessionViewModel;
+	}
 }
