@@ -76,29 +76,33 @@
 		</Grid>
 
 		<!-- 接続後ビュー (ListView 表示) -->
-		<StackPanel Visibility="{x:Bind ViewModel.IsConnected.Value, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" Spacing="8">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*" />
-					<ColumnDefinition Width="Auto" />
-				</Grid.ColumnDefinitions>
-			<TextBlock Text="Entries" FontWeight="SemiBold" />
-				<Button Grid.Column="1" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand}" />
-			</Grid>
-			<StackPanel Orientation="Horizontal" Spacing="4">
+		<Grid Visibility="{x:Bind ViewModel.IsConnected.Value, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" RowDefinitions="Auto,*,Auto" ColumnDefinitions="*" RowSpacing="8">
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<TextBlock Text="Entries" FontWeight="SemiBold" />
+				<Button Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand}" />
+			</StackPanel>
+			<StackPanel Orientation="Horizontal" Spacing="4" Grid.Row="1">
 				<TextBox Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Width="400" KeyDown="CurrentPathTextBox_KeyDown" />
 				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand}" />
 			</StackPanel>
-			<ListView ItemsSource="{x:Bind ViewModel.Entries}" Height="300" IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
-				<ListView.ItemTemplate>
-					<DataTemplate x:DataType="ssh:FileSystemObject">
-						<StackPanel Orientation="Horizontal" Spacing="8">
-							<FontIcon Glyph="{x:Bind Converter={StaticResource FsoToGlyph}}"/>
-							<TextBlock Text="{x:Bind FileName}"/>
-						</StackPanel>
-					</DataTemplate>
-				</ListView.ItemTemplate>
-			</ListView>
-		</StackPanel>
+			<Grid Grid.Row="2" ColumnDefinitions="300,*" ColumnSpacing="12">
+				<ListView Grid.Column="0" ItemsSource="{x:Bind ViewModel.Entries}" Height="300" IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
+					<ListView.ItemTemplate>
+						<DataTemplate x:DataType="ssh:FileSystemObject">
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<FontIcon Glyph="{x:Bind Converter={StaticResource FsoToGlyph}}"/>
+								<TextBlock Text="{x:Bind FileName}"/>
+							</StackPanel>
+						</DataTemplate>
+					</ListView.ItemTemplate>
+				</ListView>
+				<ScrollViewer Grid.Column="1" Height="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+					<StackPanel>
+						<TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
+						<TextBox TextWrapping="NoWrap" FontFamily="Consolas" AcceptsReturn="True" Text="{x:Bind ViewModel.FileContent.Value, Mode=OneWay}" IsReadOnly="True" MinWidth="400"/>
+					</StackPanel>
+				</ScrollViewer>
+			</Grid>
+		</Grid>
 	</Grid>
 </UserControl>

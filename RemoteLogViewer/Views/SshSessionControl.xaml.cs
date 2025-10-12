@@ -29,7 +29,7 @@ public sealed partial class SshSessionControl : UserControl {
 
 	private void Entries_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e) {
 		if (sender is ListView lv && lv.SelectedItem is FileSystemObject fso) {
-			this.ViewModel.EnterDirectoryCommand.Execute(fso);
+			this.ViewModel.OpenCommand.Execute(fso);			
 		}
 	}
 
