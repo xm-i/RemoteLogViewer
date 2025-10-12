@@ -1,4 +1,4 @@
-using RemoteLogViewer.Services;
+using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh;
@@ -17,7 +17,7 @@ public class SshSessionModel {
 	} = new(false);
 
 	/// <summary>ルートエントリ一覧。</summary>
-	public ObservableList<string> Entries {
+	public ObservableList<FileSystemObject> Entries {
 		get;
 	} = [];
 
@@ -64,6 +64,7 @@ public class SshSessionModel {
 	public void Disconnect() {
 		this._sshService.Disconnect();
 		this.IsConnected.Value = false;
+		this.Entries.Clear();
 	}
 
 	public void AddSavedConnection() {

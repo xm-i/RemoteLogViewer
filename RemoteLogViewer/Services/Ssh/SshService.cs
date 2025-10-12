@@ -1,8 +1,9 @@
 using Renci.SshNet;
+
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RemoteLogViewer.Services;
+namespace RemoteLogViewer.Services.Ssh;
 
 /// <summary>
 ///     SSH 接続とコマンド実行を提供します。

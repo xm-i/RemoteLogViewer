@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RemoteLogViewer.Models.Ssh;
+using RemoteLogViewer.Services;
+using RemoteLogViewer.Services.Ssh; // for SshEntry
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 
@@ -20,7 +22,7 @@ public class SshSessionViewModel {
 	/// <summary>
 	///     ルートディレクトリ一覧。
 	/// </summary>
-	public NotifyCollectionChangedSynchronizedViewList<string> Entries {
+	public NotifyCollectionChangedSynchronizedViewList<FileSystemObject> Entries {
 		get;
 	}
 	/// <summary>
