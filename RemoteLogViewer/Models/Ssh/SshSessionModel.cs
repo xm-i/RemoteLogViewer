@@ -16,6 +16,11 @@ public class SshSessionModel {
 		get;
 	} = new(false);
 
+	/// <summary>現在のパス。</summary>
+	public ReactiveProperty<string> CurrentPath {
+		get;
+	} = new("/");
+
 	/// <summary>ルートエントリ一覧。</summary>
 	public ObservableList<FileSystemObject> Entries {
 		get;
@@ -44,10 +49,68 @@ public class SshSessionModel {
 			return; //TODO: エラー通知
 		}
 		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value);
-		this.Entries.Clear();
-		var output = this._sshService.ListDirectory("/");
-		this.Entries.AddRange(output);
+		this.NavigateTo("/");
 		this.IsConnected.Value = true;
+	}
+
+	/// <summary>
+	///     指定ディレクトリを読み込みます。
+	/// </summary>
+	/// <param name="path">パス。</param>
+	private void LoadDirectory(string path) {
+		var list = this._sshService.ListDirectory(path);
+		this.Entries.Clear();
+		this.Entries.AddRange(list);
+	}
+
+	/// <summary>
+	///     絶対パスへ移動します。
+	/// </summary>
+	/// <param name="path">絶対パス。</param>
+	public void NavigateTo(string path) {
+		if (string.IsNullOrWhiteSpace(path)) {
+			return;
+		}
+		if (!path.StartsWith('/')) {
+			path = this.CurrentPath.Value.TrimEnd('/') + "/" + path.Trim('/');
+		}
+		path = path.Replace("//", "/");
+		if (path.Length > 1 && path.EndsWith('/')) {
+			path = path[..^1];
+		}
+		this.CurrentPath.Value = path;
+		this.LoadDirectory(path);
+	}
+
+	/// <summary>
+	///     対象ディレクトリへ移動します。
+	/// </summary>
+	/// <param name="directoryName">ディレクトリ名</param>
+	public void EnterDirectory(string directoryName) {
+		if (string.IsNullOrWhiteSpace(directoryName)) {
+			return;
+		}
+		string newPath;
+		if (directoryName.StartsWith('/')) {
+			newPath = directoryName;
+		} else if (directoryName == "..") {
+			if (this.CurrentPath.Value != "/") {
+				var trimmed = this.CurrentPath.Value.TrimEnd('/');
+				var idx = trimmed.LastIndexOf('/');
+				newPath = idx <= 0 ? "/" : trimmed[..idx];
+			} else {
+				newPath = "/";
+			}
+		} else if (directoryName == ".") {
+			newPath = this.CurrentPath.Value;
+		} else {
+			if (this.CurrentPath.Value == "/") {
+				newPath = "/" + directoryName.Trim('/');
+			} else {
+				newPath = this.CurrentPath.Value.TrimEnd('/') + "/" + directoryName.Trim('/');
+			}
+		}
+		this.NavigateTo(newPath);
 	}
 
 	/// <summary>
@@ -65,6 +128,7 @@ public class SshSessionModel {
 		this._sshService.Disconnect();
 		this.IsConnected.Value = false;
 		this.Entries.Clear();
+		this.CurrentPath.Value = "/";
 	}
 
 	public void AddSavedConnection() {

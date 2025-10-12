@@ -13,7 +13,7 @@ public static class SshServiceEx {
 	/// <returns></returns>
 	public static FileSystemObject[] ListDirectory(this SshService sshService, string path) {
 		var escaped = path.Replace("\"", "\\\"");
-		var output = sshService.Run($"ls -Al --time-style=+%Y-%m-%dT%H:%M:%S%z \"{escaped}\"");
+		var output = sshService.Run($"ls -al --time-style=+%Y-%m-%dT%H:%M:%S%z \"{escaped}\"");
 
 		var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		var list = new List<FileSystemObject>();
@@ -40,6 +40,9 @@ public static class SshServiceEx {
 			var arrowIndex = nameWithMaybeLink.IndexOf(" -> ", StringComparison.Ordinal);
 			if (arrowIndex >= 0) {
 				fileName = nameWithMaybeLink[..arrowIndex];
+			}
+			if (fileName == ".") {
+				continue;
 			}
 
 			FileSystemObjectType? type = null;

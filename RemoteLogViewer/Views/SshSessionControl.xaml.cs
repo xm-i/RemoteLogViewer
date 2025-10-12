@@ -6,6 +6,7 @@ using WinRT.Interop;
 using System.Diagnostics;
 
 using RemoteLogViewer.ViewModels.Ssh;
+using RemoteLogViewer.Services.Ssh;
 
 namespace RemoteLogViewer.Views;
 
@@ -23,6 +24,19 @@ public sealed partial class SshSessionControl : UserControl {
 	private void SavedConnections_DoubleTapped(object sender, DoubleTappedRoutedEventArgs _) {
 		if (sender is ListBox lb && lb.SelectedItem is SshConnectionInfoViewModel info) {
 			this.ViewModel.SelectSshConnectionInfoCommand.Execute(info);
+		}
+	}
+
+	private void Entries_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e) {
+		if (sender is ListView lv && lv.SelectedItem is FileSystemObject fso) {
+			this.ViewModel.EnterDirectoryCommand.Execute(fso);
+		}
+	}
+
+	private void CurrentPathTextBox_KeyDown(object sender, KeyRoutedEventArgs e) {
+		if (e.Key == Windows.System.VirtualKey.Enter) {
+			this.ViewModel.NavigatePathCommand.Execute(Unit.Default);
+			e.Handled = true;
 		}
 	}
 

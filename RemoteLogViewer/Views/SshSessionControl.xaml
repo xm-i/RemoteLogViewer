@@ -85,7 +85,11 @@
 			<TextBlock Text="Entries" FontWeight="SemiBold" />
 				<Button Grid.Column="1" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand}" />
 			</Grid>
-			<ListView ItemsSource="{x:Bind ViewModel.Entries}" Height="300" >
+			<StackPanel Orientation="Horizontal" Spacing="4">
+				<TextBox Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Width="400" KeyDown="CurrentPathTextBox_KeyDown" />
+				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand}" />
+			</StackPanel>
+			<ListView ItemsSource="{x:Bind ViewModel.Entries}" Height="300" IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
 				<ListView.ItemTemplate>
 					<DataTemplate x:DataType="ssh:FileSystemObject">
 						<StackPanel Orientation="Horizontal" Spacing="8">

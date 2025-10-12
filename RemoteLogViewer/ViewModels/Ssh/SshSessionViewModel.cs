@@ -20,7 +20,7 @@ public class SshSessionViewModel {
 		get;
 	}
 	/// <summary>
-	///     ルートディレクトリ一覧。
+	///     ディレクトリエントリ一覧。
 	/// </summary>
 	public NotifyCollectionChangedSynchronizedViewList<FileSystemObject> Entries {
 		get;
@@ -36,6 +36,13 @@ public class SshSessionViewModel {
 	///     選択中接続情報。
 	/// </summary>
 	public IReadOnlyBindableReactiveProperty<SshConnectionInfoViewModel?> SelectedSshConnectionInfo {
+		get;
+	}
+
+	/// <summary>
+	///     現在のパス。
+	/// </summary>
+	public BindableReactiveProperty<string> CurrentPath {
 		get;
 	}
 
@@ -66,9 +73,20 @@ public class SshSessionViewModel {
 	/// </summary>
 	public ReactiveCommand DisconnectCommand { get; } = new();
 
+	/// <summary>
+	/// ディレクトリ移動コマンド。
+	/// </summary>
+	public ReactiveCommand<FileSystemObject> EnterDirectoryCommand { get; } = new();
+
+	/// <summary>
+	/// パスナビゲートコマンド (テキストボックス編集適用)。
+	/// </summary>
+	public ReactiveCommand NavigatePathCommand { get; } = new();
+
 	public SshSessionViewModel(SshSessionModel model) {
 		this._model = model;
 		this.IsConnected = this._model.IsConnected.ToReadOnlyBindableReactiveProperty();
+		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!;
 		this.Entries = this._model.Entries.ToNotifyCollectionChanged();
 		this.SavedConnections = this._model.SavedConnections.ToNotifyCollectionChanged(x => x.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>());
 		this.SelectedSshConnectionInfo = this._model.SelectedSshConnectionInfo.Select(x => x?.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>()).ToReadOnlyBindableReactiveProperty();
@@ -77,5 +95,13 @@ public class SshSessionViewModel {
 		this.SelectSshConnectionInfoCommand.Subscribe(vm => this._model.SelectedSshConnectionInfo.Value = vm.Model);
 		this.AddSavedConnectionsCommand.Subscribe(_ => this._model.AddSavedConnection());
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
+		this.EnterDirectoryCommand.Subscribe(fso => {
+			if (fso?.FileSystemObjectType == FileSystemObjectType.Directory) {
+				this._model.EnterDirectory(fso.FileName);
+			}
+		});
+		this.NavigatePathCommand.Subscribe(_ => {
+			this._model.NavigateTo(this.CurrentPath.Value);
+		});
 	}
 }
