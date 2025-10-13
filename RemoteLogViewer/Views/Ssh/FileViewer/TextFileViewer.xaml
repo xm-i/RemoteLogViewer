@@ -3,17 +3,47 @@
     x:Class="RemoteLogViewer.Views.Ssh.FileViewer.TextFileViewer"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:RemoteLogViewer.Views.Ssh.FileViewer"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:models="using:RemoteLogViewer.Models.Ssh.FileViewer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="mc">
+    <Grid RowDefinitions="auto,*">
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="4">
+            <TextBlock Text="ファイル:"/>
+            <TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
+            <TextBlock Text=" 行数:"/>
+            <TextBlock Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
+            <TextBlock Text=" 表示範囲:"/>
+            <TextBlock Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
+            <TextBlock Text="-"/>
+			<TextBlock Text="{x:Bind ViewModel.WindowEndLine.Value, Mode=OneWay}"/>
+			<TextBlock Text="表示可能行数"/>
+			<TextBlock Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
+			<Button Content="LoadLines" Command="{x:Bind ViewModel.LoadLinesCommand}"/>
+		</StackPanel>
+		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,Auto">
 
-    <Grid ColumnDefinitions="auto,*">
-		<ScrollViewer Grid.Column="1" Height="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-			<StackPanel>
-				<TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
-				<TextBox TextWrapping="NoWrap" FontFamily="Consolas" AcceptsReturn="True" Text="{x:Bind ViewModel.FileContent.Value, Mode=OneWay}" IsReadOnly="True" MinWidth="400" />
-			</StackPanel>
-		</ScrollViewer>
+			<ScrollViewer x:Name="ContentViewer"
+				VerticalScrollBarVisibility="Hidden"
+				HorizontalScrollBarVisibility="Auto"
+				SizeChanged="ContentViewer_SizeChanged">
+				<ItemsControl ItemsSource="{x:Bind ViewModel.Lines, Mode=OneWay}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="models:TextLine">
+							<Grid ColumnDefinitions="40,Auto">
+								<TextBlock Text="{x:Bind LineNumber}"/>
+								<TextBlock Grid.Column="1" Text="{x:Bind Content}" FontFamily="Consolas" />
+							</Grid>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+
+			<ScrollBar Grid.Column="1"
+				Orientation="Vertical"
+				Minimum="0"
+				Maximum="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay,Converter={StaticResource LongToDoubleConverter}}"
+				ViewportSize="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
+				Value="{x:Bind ViewModel.WindowStartLine.Value, Mode=TwoWay,Converter={StaticResource LongToDoubleConverter}}" />
+		</Grid>
 	</Grid>
 </UserControl>

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
@@ -20,10 +21,14 @@ public class TextFileViewerModel {
 		get;
 	} = new(null);
 
-	/// <summary>開いているファイル内容。</summary>
-	public ReactiveProperty<string?> FileContent {
+	/// <summary>総行数。</summary>
+	public ReactiveProperty<long> TotalLines {
 		get;
-	} = new(null);
+	} = new();
+
+	public ObservableList<TextLine> Lines {
+		get;
+	} = new();
 
 	/// <summary>
 	///     ファイルを開き内容を取得します。
@@ -37,12 +42,19 @@ public class TextFileViewerModel {
 		var escaped = fullPath.Replace("\"", "\\\"");
 		try {
 			var content = this._sshService.Run($"cat \"{escaped}\"");
+			this.TotalLines.Value = this._sshService.GetLineCount(escaped);
 			this.OpenedFilePath.Value = fullPath;
-			this.FileContent.Value = content;
-		} catch (Exception ex) {
+		} catch (Exception) {
 			this.OpenedFilePath.Value = fullPath;
-			this.FileContent.Value = $"[Failed to open file: {ex.Message}]";
 		}
+	}
+
+	public void LoadLines(long startLine, long endLine) {
+		if(this.OpenedFilePath.Value == null) {
+			return;
+		}
+		this.Lines.Clear();
+		this.Lines.AddRange(this._sshService.GetLines(this.OpenedFilePath.Value, startLine, endLine));
 	}
 
 	/// <summary>
@@ -50,7 +62,6 @@ public class TextFileViewerModel {
 	/// </summary>
 	public void CloseFile() {
 		this.OpenedFilePath.Value = null;
-		this.FileContent.Value = null;
 	}
 
 }

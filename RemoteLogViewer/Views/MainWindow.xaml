@@ -15,16 +15,23 @@
 		<MicaBackdrop />
 	</Window.SystemBackdrop>
 
-	<Grid Padding="12" RowSpacing="8" RowDefinitions="Auto,*">
+	<Grid Padding="12" RowSpacing="8">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
 		<StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
 			<Button Content="New Log Tab" Command="{x:Bind ViewModel.AddTabCommand}" />
 		</StackPanel>
 
-		<TabView Grid.Row="1" TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedTab.Value, Mode=TwoWay}" IsAddTabButtonVisible="False">
+		<TabView Grid.Row="1"
+				TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
+				SelectedItem="{x:Bind ViewModel.SelectedTab.Value, Mode=TwoWay}"
+				IsAddTabButtonVisible="False">
 			<TabView.TabItemTemplate>
 				<DataTemplate x:DataType="vm:LogViewerViewModel">
 					<TabViewItem Header="{x:Bind Title}">
-						<views:LogViewerControl ViewModel="{x:Bind }"  Grid.Column="1" />
+						<views:LogViewerControl ViewModel="{x:Bind }" />
 					</TabViewItem>
 				</DataTemplate>
 			</TabView.TabItemTemplate>

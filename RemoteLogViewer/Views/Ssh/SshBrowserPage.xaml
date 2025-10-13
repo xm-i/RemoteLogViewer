@@ -2,37 +2,37 @@
     x:Class="RemoteLogViewer.Views.SshSession.SshBrowserPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
 	xmlns:fileViewer="using:RemoteLogViewer.Views.Ssh.FileViewer"
     xmlns:ssh="using:RemoteLogViewer.Services.Ssh"
     xmlns:sshVm="using:RemoteLogViewer.ViewModels.Ssh"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
-    <StackPanel Padding="12" Spacing="8">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Entries" FontWeight="SemiBold" />
-            <Button Grid.Column="1" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" />
-        </Grid>
-        <StackPanel Orientation="Horizontal" Spacing="4">
-            <TextBox Width="400" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
-            <Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
-        </StackPanel>
-        <Grid ColumnDefinitions="300,*" ColumnSpacing="12">
-            <ListView Grid.Column="0" ItemsSource="{x:Bind ViewModel.Entries}" Height="300" IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="ssh:FileSystemObject">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE8A5;" />
-                            <TextBlock Text="{x:Bind FileName}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-			<fileViewer:TextFileViewer Grid.Column="1" ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}"/>
-        </Grid>
-    </StackPanel>
+	<controls:DockPanel Margin="4">
+		<controls:DockPanel controls:DockPanel.Dock="Left" Width="340">
+			<StackPanel controls:DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
+				<TextBox Width="240" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
+				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
+			</StackPanel>
+			<ListView ItemsSource="{x:Bind ViewModel.Entries}"
+					 VerticalAlignment="Stretch"
+					 ScrollViewer.VerticalScrollMode="Auto"
+					 ScrollViewer.VerticalScrollBarVisibility="Auto"
+					 IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
+				<ListView.ItemTemplate>
+					<DataTemplate x:DataType="ssh:FileSystemObject">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<FontIcon Glyph="&#xE8A5;" />
+							<TextBlock Text="{x:Bind FileName}" />
+						</StackPanel>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+		</controls:DockPanel>
+		<fileViewer:TextFileViewer ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" />
+		<controls:DockPanel controls:DockPanel.Dock="Bottom" >
+			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" />
+		</controls:DockPanel>
+	</controls:DockPanel>
 </Page>

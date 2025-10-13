@@ -38,3 +38,5 @@
 - Viewでバインディングを行う際は、避けられない場合を除き `x:Bind` を利用すること。
 - ViewとViewModelはBindableReactiveProperty, ObservableListを利用してデータバインディングを行うこと。
 - ViewModelは、ModelのReactivePropertyをBindableReactivePropertyに変換して公開すること。
+- 無関係な箇所の修正は行わないこと。(コードフォーマットの修正や、コメント追加削除などを含む)
+- 修正後にビルドが成功することを確認すること。
