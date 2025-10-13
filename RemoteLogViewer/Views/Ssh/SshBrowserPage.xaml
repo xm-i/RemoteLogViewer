@@ -1,0 +1,42 @@
+<Page
+    x:Class="RemoteLogViewer.Views.SshSession.SshBrowserPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ssh="using:RemoteLogViewer.Services.Ssh"
+    xmlns:sshVm="using:RemoteLogViewer.ViewModels.Ssh"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <StackPanel Padding="12" Spacing="8">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Entries" FontWeight="SemiBold" />
+            <Button Grid.Column="1" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" />
+        </Grid>
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBox Width="400" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
+            <Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
+        </StackPanel>
+        <Grid ColumnDefinitions="300,*" ColumnSpacing="12">
+            <ListView Grid.Column="0" ItemsSource="{x:Bind ViewModel.Entries}" Height="300" IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="ssh:FileSystemObject">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8A5;" />
+                            <TextBlock Text="{x:Bind FileName}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <ScrollViewer Grid.Column="1" Height="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
+                    <TextBox TextWrapping="NoWrap" FontFamily="Consolas" AcceptsReturn="True" Text="{x:Bind ViewModel.FileContent.Value, Mode=OneWay}" IsReadOnly="True" MinWidth="400" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </StackPanel>
+</Page>

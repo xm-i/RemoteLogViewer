@@ -20,11 +20,11 @@
 			<Button Content="New Log Tab" Command="{x:Bind ViewModel.AddTabCommand}" />
 		</StackPanel>
 
-		<TabView Grid.Row="1" TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}" IsAddTabButtonVisible="False">
+		<TabView Grid.Row="1" TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedTab.Value, Mode=TwoWay}" IsAddTabButtonVisible="False">
 			<TabView.TabItemTemplate>
 				<DataTemplate x:DataType="vm:LogViewerViewModel">
 					<TabViewItem Header="{x:Bind Title}">
-						<views:SshSessionControl Grid.Column="1" />
+						<views:LogViewerControl ViewModel="{x:Bind }"  Grid.Column="1" />
 					</TabViewItem>
 				</DataTemplate>
 			</TabView.TabItemTemplate>

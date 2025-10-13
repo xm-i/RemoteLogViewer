@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+
 namespace RemoteLogViewer.ViewModels;
 
 /// <summary>
@@ -12,6 +14,10 @@ public class MainWindowViewModel {
 	public NotifyCollectionChangedSynchronizedViewList<LogViewerViewModel> Tabs {
 		get;
 	}
+
+	public BindableReactiveProperty<LogViewerViewModel?> SelectedTab {
+		get;
+	} = new();
 
 	/// <summary>
 	///     新しいタブを追加するリアクティブコマンドです。
@@ -30,8 +36,9 @@ public class MainWindowViewModel {
 	///     新しいログビュータブを追加します。
 	/// </summary>
 	private void AddTab() {
-		var vm = Ioc.Default.GetRequiredService<LogViewerViewModel>();
+		var vm = Ioc.Default.CreateScope().ServiceProvider.GetRequiredService<LogViewerViewModel>();
 		vm.Title = $"Log {this.Tabs.Count + 1}";
 		this._tabs.Add(vm);
+		this.SelectedTab.Value = vm;
 	}
 }

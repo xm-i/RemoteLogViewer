@@ -6,7 +6,7 @@ namespace RemoteLogViewer.Models.Ssh;
 /// <summary>
 ///     SSH セッションのドメインモデル。接続状態と接続操作を担います。
 /// </summary>
-[AddTransient]
+[AddScoped]
 public class SshSessionModel {
 	private readonly SshService _sshService;
 	private readonly SshConnectionStoreModel _store;
