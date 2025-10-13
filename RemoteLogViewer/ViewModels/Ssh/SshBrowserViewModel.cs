@@ -2,7 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services;
-using RemoteLogViewer.Services.Ssh; // for SshEntry
+using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.ViewModels.Ssh.FileViewer; // for SshEntry
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 
@@ -27,30 +28,31 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 		get;
 	}
 
-	/// <summary>開いているファイルのパス。</summary>
-	public IReadOnlyBindableReactiveProperty<string?> OpenedFilePath { get; }
-	/// <summary>開いているファイル内容。</summary>
-	public IReadOnlyBindableReactiveProperty<string?> FileContent { get; }
-
 	/// <summary>
 	///     切断コマンド。
 	/// </summary>
 	public ReactiveCommand DisconnectCommand { get; } = new();
 
 	/// <summary>
-	/// パスナビゲートコマンド (テキストボックス編集適用)。
+	/// パスナビゲートコマンド。
 	/// </summary>
 	public ReactiveCommand NavigatePathCommand { get; } = new();
 
 	/// <summary>ファイルシステムオープンコマンド。</summary>
 	public ReactiveCommand<FileSystemObject> OpenCommand { get; } = new();
 
-	public SshBrowserViewModel(SshSessionModel model) {
+	/// <summary>
+	/// テキストファイル閲覧 ViewModel。
+	/// </summary>
+	public TextFileViewerViewModel TextFileViewerViewModel {
+		get;
+	}
+
+	public SshBrowserViewModel(SshSessionModel model, TextFileViewerViewModel textFileViewerViewModel) {
 		this._model = model;
+		this.TextFileViewerViewModel = textFileViewerViewModel;
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!;
 		this.Entries = this._model.Entries.ToNotifyCollectionChanged();
-		this.OpenedFilePath = this._model.OpenedFilePath.ToReadOnlyBindableReactiveProperty();
-		this.FileContent = this._model.FileContent.ToReadOnlyBindableReactiveProperty();
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
 		this.OpenCommand.Subscribe(fso => {
 			switch (fso?.FileSystemObjectType) {
@@ -59,7 +61,7 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 					this._model.EnterDirectory(fso.FileName);
 					break;
 				case FileSystemObjectType.File:
-					this._model.OpenFile(fso);
+					this.TextFileViewerViewModel.OpenFile(this.CurrentPath.Value, fso);
 					break;
 			}
 		});

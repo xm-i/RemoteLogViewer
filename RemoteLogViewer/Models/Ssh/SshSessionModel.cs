@@ -1,5 +1,7 @@
+using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils.Extensions;
+using RemoteLogViewer.Views.Ssh.FileViewer;
 
 namespace RemoteLogViewer.Models.Ssh;
 
@@ -10,7 +12,7 @@ namespace RemoteLogViewer.Models.Ssh;
 public class SshSessionModel {
 	private readonly SshService _sshService;
 	private readonly SshConnectionStoreModel _store;
-
+	private readonly TextFileViewerModel _textFileViewerModel;
 	/// <summary>接続済みか。</summary>
 	public ReactiveProperty<bool> IsConnected {
 		get;
@@ -35,19 +37,10 @@ public class SshSessionModel {
 		get;
 	} = new(null);
 
-	/// <summary>開いているファイルのフルパス。</summary>
-	public ReactiveProperty<string?> OpenedFilePath {
-		get;
-	} = new(null);
-
-	/// <summary>開いているファイル内容。</summary>
-	public ReactiveProperty<string?> FileContent {
-		get;
-	} = new(null);
-
-	public SshSessionModel(SshService sshService, SshConnectionStoreModel store) {
+	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store) {
 		this._sshService = sshService;
 		this._store = store;
+		this._textFileViewerModel = textFileViewerModel;
 		this.SavedConnections = store.Items;
 	}
 
@@ -90,8 +83,7 @@ public class SshSessionModel {
 		}
 		this.CurrentPath.Value = path;
 		this.LoadDirectory(path);
-		this.OpenedFilePath.Value = null;
-		this.FileContent.Value = null;
+		this._textFileViewerModel.CloseFile();
 	}
 
 	/// <summary>
@@ -126,26 +118,6 @@ public class SshSessionModel {
 	}
 
 	/// <summary>
-	///     ファイルを開き内容を取得します。
-	/// </summary>
-	/// <param name="fso">ファイル。</param>
-	public void OpenFile(FileSystemObject fso) {
-		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
-			return;
-		}
-		var fullPath = this.CurrentPath.Value == "/" ? "/" + fso.FileName : this.CurrentPath.Value.TrimEnd('/') + "/" + fso.FileName;
-		var escaped = fullPath.Replace("\"", "\\\"");
-		try {
-			var content = this._sshService.Run($"cat \"{escaped}\"");
-			this.OpenedFilePath.Value = fullPath;
-			this.FileContent.Value = content;
-		} catch (Exception ex) {
-			this.OpenedFilePath.Value = fullPath;
-			this.FileContent.Value = $"[Failed to open file: {ex.Message}]";
-		}
-	}
-
-	/// <summary>
 	///     テスト接続 (状態は保持しない) を行います。
 	/// </summary>
 	public void TestConnect() {
@@ -161,8 +133,7 @@ public class SshSessionModel {
 		this.IsConnected.Value = false;
 		this.Entries.Clear();
 		this.CurrentPath.Value = "/";
-		this.OpenedFilePath.Value = null;
-		this.FileContent.Value = null;
+		this._textFileViewerModel.CloseFile();
 	}
 
 	public void AddSavedConnection() {

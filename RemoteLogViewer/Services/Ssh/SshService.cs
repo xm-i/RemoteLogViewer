@@ -8,7 +8,7 @@ namespace RemoteLogViewer.Services.Ssh;
 /// <summary>
 ///     SSH 接続とコマンド実行を提供します。
 /// </summary>
-[AddTransient]
+[AddScoped]
 public class SshService : IDisposable {
 	private SshClient? _client;
 
