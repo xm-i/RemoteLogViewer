@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 
 using CommunityToolkit.Mvvm.DependencyInjection;
@@ -35,7 +36,7 @@ public partial class App : Application {
 	/// <param name="args">起動引数。</param>
 	protected override void OnLaunched(LaunchActivatedEventArgs args) {
 		Build();
-
+		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => Trace.WriteLine(ex.ToString()));
 		MainWindow.Activate();
 	}
 

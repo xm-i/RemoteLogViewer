@@ -15,13 +15,15 @@ namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 [AddScoped]
 public class TextFileViewerViewModel {
 	private readonly TextFileViewerModel _textFileViewerModel;
+	private const long LineHeight = 18;
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty();
 		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty();
 		this.Lines = this._textFileViewerModel.Lines.ToNotifyCollectionChanged();
 		this.WindowEndLine = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => start + count - 1).ToReadOnlyBindableReactiveProperty((long)0);
-		this.LoadLinesCommand.Subscribe(_ => {
+		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty();
+		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(500), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
 			this._textFileViewerModel.LoadLines(this.WindowStartLine.Value + 1, this.WindowEndLine.Value + 1);
 		});
 	}
@@ -34,6 +36,12 @@ public class TextFileViewerViewModel {
 	public IReadOnlyBindableReactiveProperty<long> TotalLines {
 		get;
 	}
+
+	/// <summary>総高さ。</summary>
+	public IReadOnlyBindableReactiveProperty<long> TotalHeight {
+		get;
+	}
+
 	/// <summary>現在ウィンドウ開始行。</summary>
 	public BindableReactiveProperty<long> WindowStartLine {
 		get;

@@ -30,9 +30,10 @@
 				</ListView.ItemTemplate>
 			</ListView>
 		</controls:DockPanel>
-		<fileViewer:TextFileViewer ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" />
 		<controls:DockPanel controls:DockPanel.Dock="Bottom" >
 			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" />
+			<Grid/>
 		</controls:DockPanel>
+		<fileViewer:TextFileViewer ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" />
 	</controls:DockPanel>
 </Page>
