@@ -67,4 +67,68 @@ public static class SshServiceEx {
 
 		return [.. list];
 	}
+	/// <summary>
+	///     リモートファイルの総行数を取得します。<br/>
+	///     wc を利用して高速に最終行番号 (行数) を取得します。
+	/// </summary>
+	/// <param name="remoteFilePath">対象ファイルのパス。</param>
+	/// <returns>総行数。</returns>
+	/// <exception cref="InvalidOperationException">SSH 未接続の場合。</exception>
+	/// <exception cref="ArgumentException">パスが無効な場合。</exception>
+	public static long GetLineCount(this SshService sshService, string remoteFilePath) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
+		}
+		var escaped = EscapeSingleQuotes(remoteFilePath);
+		var output = sshService.Run($"wc -l '{escaped}' 2>/dev/null | awk '{{print $1}}'").Trim();
+		if (string.IsNullOrEmpty(output)) {
+			return 0;
+		}
+		if (long.TryParse(output, out var count)) {
+			return count;
+		}
+		throw new InvalidOperationException($"行数取得に失敗しました: {output}");
+	}
+
+	/// <summary>
+	///     指定した開始行から終了行まで (両端含む) の行を取得します。<br/>
+	///     sed の範囲指定 (start,endp) を使用します。
+	/// </summary>
+	/// <param name="remoteFilePath">対象ファイルのパス。</param>
+	/// <param name="startLine">開始行 (1 始まり)。</param>
+	/// <param name="endLine">終了行 (1 始まり, 開始行以上)。</param>
+	/// <returns>取得した行の配列。存在しない行番号は無視されます。</returns>
+	/// <exception cref="ArgumentException">パラメータが無効な場合。</exception>
+	/// <exception cref="InvalidOperationException">SSH 未接続の場合。</exception>
+	public static string[] GetLines(this SshService sshService, string remoteFilePath, long startLine, long endLine) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
+		}
+		if (startLine < 1) {
+			throw new ArgumentException("startLine must be >= 1", nameof(startLine));
+		}
+		if (endLine < startLine) {
+			throw new ArgumentException("endLine must be >= startLine", nameof(endLine));
+		}
+		var escaped = EscapeSingleQuotes(remoteFilePath);
+		var output = sshService.Run($"sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null");
+		if (output.Length == 0) {
+			return Array.Empty<string>();
+		}
+		var lines = output.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+		// sed は末尾改行がある場合に最後に空要素ができるため取り除く
+		if (lines.Length > 0 && lines[^1].Length == 0) {
+			return lines[..^1];
+		}
+		return lines;
+	}
+
+	/// <summary>
+	///     シェルのシングルクォートで囲むためにパス内のシングルクォートをエスケープします。
+	/// </summary>
+	/// <param name="path">パス。</param>
+	/// <returns>エスケープ後のパス。</returns>
+	private static string EscapeSingleQuotes(string path) {
+		return path.Replace("'", "'\\''");
+	}
 }
