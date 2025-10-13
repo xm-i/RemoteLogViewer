@@ -136,6 +136,54 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
+	///     指定したパターンでリモートファイルを grep し、行番号付き結果 (最大 1000 件) を取得します。
+	/// </summary>
+	/// <param name="sshService">SSH サービス。</param>
+	/// <param name="remoteFilePath">対象ファイルパス。</param>
+	/// <param name="pattern">検索パターン (grep の基本正規表現。空文字は結果 0)。</param>
+	/// <param name="maxResults">最大取得件数 (既定 1000)。1 以上。</param>
+	/// <param name="ignoreCase">大文字小文字を無視する場合 true。</param>
+	/// <returns>一致した行の配列。</returns>
+	/// <exception cref="ArgumentException">パラメータが無効な場合。</exception>
+	public static TextLine[] Grep(this SshService sshService, string remoteFilePath, string pattern, int maxResults = 1000, bool ignoreCase = false) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
+		}
+		pattern ??= string.Empty;
+		pattern = pattern.Trim();
+		if (pattern.Length == 0) {
+			return Array.Empty<TextLine>();
+		}
+		if (maxResults < 1) {
+			throw new ArgumentException("maxResults must be >=1", nameof(maxResults));
+		}
+
+		var escapedPath = EscapeSingleQuotes(remoteFilePath);
+		var escapedPattern = EscapeSingleQuotes(pattern);
+		var ic = ignoreCase ? " -i" : string.Empty;
+		// -n: 行番号, -m: 最大件数, --text: バイナリ扱い回避, --color=never: カラー制御コード排除
+		var cmd = $"grep -n -m {maxResults}{ic} --text --color=never '{escapedPattern}' '{escapedPath}' 2>/dev/null || true";
+		var output = sshService.Run(cmd);
+		if (string.IsNullOrWhiteSpace(output)) {
+			return Array.Empty<TextLine>();
+		}
+		var list = new List<TextLine>();
+		var lines = output.Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		foreach (var line in lines) {
+			var idx = line.IndexOf(':');
+			if (idx <= 0) {
+				continue;
+			}
+			if (!long.TryParse(line[..idx], out var ln)) {
+				continue;
+			}
+			var content = line[(idx+1)..];
+			list.Add(new TextLine(ln, content));
+		}
+		return [.. list];
+	}
+
+	/// <summary>
 	///     シェルのシングルクォートで囲むためにパス内のシングルクォートをエスケープします。
 	/// </summary>
 	/// <param name="path">パス。</param>

@@ -10,7 +10,7 @@ using RemoteLogViewer.Services.Ssh;
 namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 
 /// <summary>
-///     テキストファイル閲覧 ViewModel。スクロール位置に応じて部分読み込みを行います。
+///     テキストファイル閲覧 ViewModel。スクロール位置に応じて部分読み込み + GREP 検索を提供します。
 /// </summary>
 [AddScoped]
 public class TextFileViewerViewModel {
@@ -23,9 +23,13 @@ public class TextFileViewerViewModel {
 		this.Lines = this._textFileViewerModel.Lines.ToNotifyCollectionChanged();
 		this.WindowEndLine = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => start + count - 1).ToReadOnlyBindableReactiveProperty((long)0);
 		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty();
+		this.GrepResults = this._textFileViewerModel.GrepResults.ToNotifyCollectionChanged();
+		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty();
+
 		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(500), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
 			this._textFileViewerModel.LoadLines(this.WindowStartLine.Value + 1, this.WindowEndLine.Value + 1);
 		});
+		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value));
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -64,6 +68,24 @@ public class TextFileViewerViewModel {
 	} = new();
 
 	public ReactiveCommand LoadLinesCommand {
+		get;
+	} = new();
+
+	/// <summary>GREP クエリ。</summary>
+	public BindableReactiveProperty<string> GrepQuery {
+		get;
+	} = new();
+
+	/// <summary>GREP 結果。</summary>
+	public NotifyCollectionChangedSynchronizedViewList<TextLine> GrepResults {
+		get;
+	}
+	/// <summary>GREP 実行中。</summary>
+	public IReadOnlyBindableReactiveProperty<bool> IsGrepRunning {
+		get;
+	}
+	/// <summary>GREP 実行コマンド。</summary>
+	public ReactiveCommand GrepCommand {
 		get;
 	} = new();
 
