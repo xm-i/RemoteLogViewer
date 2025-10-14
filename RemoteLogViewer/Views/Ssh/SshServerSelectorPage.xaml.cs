@@ -54,6 +54,18 @@ public sealed partial class SshServerSelectorPage : Page {
 	}
 
 	/// <summary>
+	/// 保存済み接続一覧の選択変更時の処理です (シングルクリック対応)。
+	/// </summary>
+	private void SavedConnections_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+		if (this.ViewModel == null) {
+			return;
+		}
+		if (sender is ListBox lb && lb.SelectedItem is SshConnectionInfoViewModel info) {
+			this.ViewModel.SelectSshConnectionInfoCommand.Execute(info);
+		}
+	}
+
+	/// <summary>
 	/// 秘密鍵ファイル選択ボタン押下時の処理です。
 	/// </summary>
 	private async void BrowsePrivateKeyButton_Click(object sender, RoutedEventArgs e) {
