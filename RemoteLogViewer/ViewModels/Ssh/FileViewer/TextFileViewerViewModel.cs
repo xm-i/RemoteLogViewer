@@ -21,8 +21,9 @@ public class TextFileViewerViewModel {
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty();
 		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty();
 		this.Lines = this._textFileViewerModel.Lines.ToNotifyCollectionChanged();
-		this.WindowEndLine = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => start + count - 1).ToReadOnlyBindableReactiveProperty((long)0);
-		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty();
+		this.WindowEndLine = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => start + count).ToReadOnlyBindableReactiveProperty((long)0);
+		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(1, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]);
+		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x+1) * LineHeight).ToReadOnlyBindableReactiveProperty();
 		this.GrepResults = this._textFileViewerModel.GrepResults.ToNotifyCollectionChanged();
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty();
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x);
@@ -68,11 +69,15 @@ public class TextFileViewerViewModel {
 	public NotifyCollectionChangedSynchronizedViewList<TextLine> Lines {
 		get;
 	}
+	/// <summary>行番号一覧。</summary>
+	public IReadOnlyBindableReactiveProperty<long[]> LineNumbers {
+		get;
+	}
 
 	/// <summary>
 	/// 画面上表示可能な行数
 	/// </summary>
-	public BindableReactiveProperty<long> VisibleLineCount {
+	public BindableReactiveProperty<int> VisibleLineCount {
 		get;
 	} = new();
 
