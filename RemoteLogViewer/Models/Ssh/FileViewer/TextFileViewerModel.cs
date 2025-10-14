@@ -40,12 +40,15 @@ public class TextFileViewerModel {
 		get;
 	} = new(false);
 
+	/// <summary>利用可能エンコーディング。</summary>
+	public ObservableList<string> AvailableEncodings { get; } = [];
+
 	/// <summary>
 	///     ファイルを開き内容を取得します。
 	/// </summary>
 	/// <param name="path">パス。</param>
 	/// <param name="fso">ファイル。</param>
-	public void OpenFile(string path,FileSystemObject fso) {
+	public void OpenFile(string path, FileSystemObject fso) {
 		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
 			return;
 		}
@@ -53,24 +56,29 @@ public class TextFileViewerModel {
 		var escaped = fullPath.Replace("\"", "\\\"");
 		try {
 			this.TotalLines.Value = this._sshService.GetLineCount(fullPath);
+			this.AvailableEncodings.Clear();
 			this.OpenedFilePath.Value = fullPath;
 		} catch {
 			this.OpenedFilePath.Value = fullPath;
 		}
 	}
 
-	public void LoadLines(long startLine, long endLine) {
-		if(this.OpenedFilePath.Value == null) {
+	public void LoadAvailableEncoding() {
+		this.AvailableEncodings.AddRange(this._sshService.ListIconvEncodings());
+	}
+
+	public void LoadLines(long startLine, long endLine,string encoding) {
+		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
 		this.Lines.Clear();
-		this.Lines.AddRange(this._sshService.GetLines(this.OpenedFilePath.Value, startLine, endLine));
+		this.Lines.AddRange(this._sshService.GetLines(this.OpenedFilePath.Value, startLine, endLine, encoding));
 	}
 
 	/// <summary>
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
-	public void Grep(string query) {
+	public void Grep(string query, string encoding) {
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
@@ -81,7 +89,7 @@ public class TextFileViewerModel {
 		this.GrepResults.Clear();
 		try {
 			this.IsGrepRunning.Value = true;
-			this.GrepResults.AddRange(this._sshService.Grep(this.OpenedFilePath.Value, query));
+			this.GrepResults.AddRange(this._sshService.Grep(this.OpenedFilePath.Value, query, 1000, false, encoding));
 		} finally {
 			this.IsGrepRunning.Value = false;
 		}

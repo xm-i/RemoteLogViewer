@@ -25,11 +25,20 @@ public class TextFileViewerViewModel {
 		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty();
 		this.GrepResults = this._textFileViewerModel.GrepResults.ToNotifyCollectionChanged();
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty();
+		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x);
+		this.AvailableEncodings = view.ToNotifyCollectionChanged();
 
 		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(500), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
-			this._textFileViewerModel.LoadLines(this.WindowStartLine.Value + 1, this.WindowEndLine.Value + 1);
+			this._textFileViewerModel.LoadLines(this.WindowStartLine.Value + 1, this.WindowEndLine.Value + 1, this.SelectedEncoding.Value);
 		});
-		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value));
+		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value));
+		this.SelectedEncoding.Subscribe(x => {
+			if (string.IsNullOrWhiteSpace(x)) {
+				view.ResetFilter();
+				return;
+			}
+			view.AttachFilter(ae => ae.Contains(x,StringComparison.OrdinalIgnoreCase));
+		});
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -86,6 +95,16 @@ public class TextFileViewerViewModel {
 	}
 	/// <summary>GREP 実行コマンド。</summary>
 	public ReactiveCommand GrepCommand {
+		get;
+	} = new();
+
+	/// <summary>利用可能エンコーディング。</summary>
+	public NotifyCollectionChangedSynchronizedViewList<string> AvailableEncodings {
+		get;
+	}
+
+	/// <summary>選択エンコーディング。</summary>
+	public BindableReactiveProperty<string> SelectedEncoding {
 		get;
 	} = new();
 

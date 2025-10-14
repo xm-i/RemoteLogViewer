@@ -25,6 +25,8 @@
 			<TextBlock Text="{x:Bind ViewModel.WindowEndLine.Value, Mode=OneWay}"/>
 			<TextBlock Text=" 表示可能行数:"/>
 			<TextBlock Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
+			<TextBlock Text=" Encoding:"/>
+			<AutoSuggestBox Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 			<Button Content="LoadLines" Command="{x:Bind ViewModel.LoadLinesCommand}"/>
 		</StackPanel>
 		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,Auto">
@@ -79,23 +81,25 @@
 				<TextBlock Text="結果:"/>
 				<TextBlock Text="{x:Bind ViewModel.GrepResults.Count, Mode=OneWay}"/>
 			</StackPanel>
-			<ListBox Grid.Row="1" ItemsSource="{x:Bind ViewModel.GrepResults}" SelectionMode="Single" Padding="0,8" Background="Transparent">
-				<ListBox.ItemContainerStyle>
-					<Style TargetType="ListBoxItem">
-						<Setter Property="Padding" Value="0"/>
-					</Style>
-				</ListBox.ItemContainerStyle>
-				<ListBox.ItemTemplate>
-					<DataTemplate x:DataType="models:TextLine">
-						<Grid ColumnDefinitions="60,Auto" MinHeight="18">
-							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0">
-								<TextBlock Text="{x:Bind LineNumber}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
-							</Border>
-							<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
-						</Grid>
-					</DataTemplate>
-				</ListBox.ItemTemplate>
-			</ListBox>
+			<ScrollViewer
+				Grid.Row="1"
+				VerticalScrollBarVisibility="Auto"
+				Padding="0,8"
+				HorizontalScrollBarVisibility="Auto"
+				PointerWheelChanged="ContentViewer_PointerWheelChanged">
+				<ItemsControl ItemsSource="{x:Bind ViewModel.GrepResults}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="models:TextLine">
+							<Grid ColumnDefinitions="60,Auto" MinHeight="18">
+								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0">
+									<TextBlock Text="{x:Bind LineNumber}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+								</Border>
+								<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
+							</Grid>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
 		</Grid>
 	</Grid>
 </UserControl>

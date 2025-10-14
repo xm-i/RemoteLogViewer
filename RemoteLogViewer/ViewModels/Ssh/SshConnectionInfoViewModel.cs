@@ -87,7 +87,7 @@ public class SshConnectionInfoViewModel {
 		this.Password = this.Model.Password!.ToBindableReactiveProperty()!;
 		this.PrivateKeyPath = this.Model.PrivateKeyPath.ToBindableReactiveProperty();
 		this.PrivateKeyPassphrase = this.Model.PrivateKeyPassphrase.ToBindableReactiveProperty();
-		this.EncodingString = this.Model.EncodingString.ToBindableReactiveProperty();
+		this.EncodingString = this.Model.EncodingString!.ToBindableReactiveProperty()!;
 		this.DisplayName = this.Name
 			.CombineLatest(this.User, this.Host, this.Port, (n, u, h, p) => string.IsNullOrWhiteSpace(n) ? $"{u}@{h}:{p}" : n)
 			.ToBindableReactiveProperty(string.Empty);

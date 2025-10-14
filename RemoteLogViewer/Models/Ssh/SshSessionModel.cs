@@ -61,6 +61,7 @@ public class SshSessionModel {
 		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, encoding);
 		this.NavigateTo("/");
 		this.IsConnected.Value = true;
+		this._textFileViewerModel.LoadAvailableEncoding();
 	}
 
 	/// <summary>

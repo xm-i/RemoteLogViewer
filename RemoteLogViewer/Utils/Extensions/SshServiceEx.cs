@@ -12,7 +12,7 @@ public static class SshServiceEx {
 	/// </summary>
 	/// <param name="sshService">SSHサービス</param>
 	/// <param name="path">パス</param>
-	/// <returns></returns>
+	/// <returns>ディレクトリエントリ一覧。</returns>
 	public static FileSystemObject[] ListDirectory(this SshService sshService, string path) {
 		var escaped = path.Replace("\"", "\\\"");
 		var output = sshService.Run($"ls -al --time-style=+%Y-%m-%dT%H:%M:%S%z \"{escaped}\"");
@@ -69,6 +69,33 @@ public static class SshServiceEx {
 
 		return [.. list];
 	}
+
+	/// <summary>
+	///     リモート環境で利用可能な iconv のエンコーディング一覧を取得します。
+	/// </summary>
+	/// <param name="sshService">SSH サービス。</param>
+	/// <returns>エンコーディング名配列。</returns>
+	public static string[] ListIconvEncodings(this SshService sshService) {
+		var output = sshService.Run("iconv -l 2>/dev/null || true");
+		if (string.IsNullOrWhiteSpace(output)) {
+			return ["UTF-8"]; // フォールバック
+		}
+		var tokens = output.Split(['\r', '\n', '\t', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var t in tokens) {
+			var name = t.Trim();
+			if (name.Length == 0) {
+				continue;
+			}
+			if (name.EndsWith("//", StringComparison.Ordinal)) {
+				name = name[..^2];
+			}
+			set.Add(name);
+		}
+		set.Add("UTF-8");
+		return set.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+	}
+
 	/// <summary>
 	///     リモートファイルの総行数を取得します。<br/>
 	///     wc を利用して高速に最終行番号 (行数) を取得します。
@@ -93,19 +120,14 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
-	///     指定した開始行から終了行まで (両端含む) の行を取得します。<br/>
-	///     sed の範囲指定 (start,endp) を使用します。
+	///     指定した開始行から終了行までの行を取得します (UTF-8 以外は iconv 変換)。
 	/// </summary>
 	/// <param name="remoteFilePath">対象ファイルのパス。</param>
 	/// <param name="startLine">開始行 (1 始まり)。</param>
-	/// <param name="endLine">終了行 (1 始まり, 開始行以上)。</param>
-	/// <returns>
-	///     取得した行の <see cref="TextLine"/> コレクション。<br/>
-	///     存在しない行番号は無視されます。
-	/// </returns>
-	/// <exception cref="ArgumentException">パラメータが無効な場合。</exception>
-	/// <exception cref="InvalidOperationException">SSH 未接続の場合。</exception>
-	public static IEnumerable<TextLine> GetLines(this SshService sshService, string remoteFilePath, long startLine, long endLine) {
+	/// <param name="endLine">終了行 (1 始まり)。</param>
+	/// <param name="sourceEncoding">ソースエンコーディング。UTF-8 の場合は変換無し。</param>
+	/// <returns>取得行。</returns>
+	public static IEnumerable<TextLine> GetLines(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? sourceEncoding) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("File path is empty.", nameof(remoteFilePath));
 		}
@@ -117,9 +139,8 @@ public static class SshServiceEx {
 		}
 
 		var escaped = EscapeSingleQuotes(remoteFilePath);
-
-		var output = sshService.Run($"sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null");
-
+		var convertPipe = NeedsConversion(sourceEncoding) ? $" | iconv -f {EscapeSingleQuotes(sourceEncoding!)} -t UTF-8//IGNORE" : string.Empty;
+		var output = sshService.Run($"LC_ALL=C sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null" + convertPipe);
 		if (string.IsNullOrEmpty(output)) {
 			return Array.Empty<TextLine>();
 		}
@@ -136,16 +157,16 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
-	///     指定したパターンでリモートファイルを grep し、行番号付き結果 (最大 1000 件) を取得します。
+	///     grep 検索 (UTF-8 以外は iconv 変換) を行います。
 	/// </summary>
 	/// <param name="sshService">SSH サービス。</param>
-	/// <param name="remoteFilePath">対象ファイルパス。</param>
-	/// <param name="pattern">検索パターン (grep の基本正規表現。空文字は結果 0)。</param>
-	/// <param name="maxResults">最大取得件数 (既定 1000)。1 以上。</param>
-	/// <param name="ignoreCase">大文字小文字を無視する場合 true。</param>
-	/// <returns>一致した行の配列。</returns>
-	/// <exception cref="ArgumentException">パラメータが無効な場合。</exception>
-	public static TextLine[] Grep(this SshService sshService, string remoteFilePath, string pattern, int maxResults = 1000, bool ignoreCase = false) {
+	/// <param name="remoteFilePath">対象ファイル。</param>
+	/// <param name="pattern">パターン。</param>
+	/// <param name="maxResults">最大件数。</param>
+	/// <param name="ignoreCase">大文字小文字無視。</param>
+	/// <param name="sourceEncoding">ソースエンコーディング。</param>
+	/// <returns>一致行。</returns>
+	public static TextLine[] Grep(this SshService sshService, string remoteFilePath, string pattern, int maxResults, bool ignoreCase, string? sourceEncoding) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -161,14 +182,14 @@ public static class SshServiceEx {
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
 		var escapedPattern = EscapeSingleQuotes(pattern);
 		var ic = ignoreCase ? " -i" : string.Empty;
-		// -n: 行番号, -m: 最大件数, --text: バイナリ扱い回避, --color=never: カラー制御コード排除
-		var cmd = $"grep -n -m {maxResults}{ic} --text --color=never '{escapedPattern}' '{escapedPath}' 2>/dev/null || true";
+		var convertPipe = NeedsConversion(sourceEncoding) ? $" | iconv -f {EscapeSingleQuotes(sourceEncoding!)} -t UTF-8//IGNORE" : string.Empty;
+		var cmd = $"LC_ALL=C grep -n -h -m {maxResults}{ic} -F --binary-files=text --color=never -- '{escapedPattern}' -- '{escapedPath}' 2>/dev/null" + convertPipe + " || true";
 		var output = sshService.Run(cmd);
 		if (string.IsNullOrWhiteSpace(output)) {
 			return Array.Empty<TextLine>();
 		}
 		var list = new List<TextLine>();
-		var lines = output.Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		foreach (var line in lines) {
 			var idx = line.IndexOf(':');
 			if (idx <= 0) {
@@ -177,7 +198,7 @@ public static class SshServiceEx {
 			if (!long.TryParse(line[..idx], out var ln)) {
 				continue;
 			}
-			var content = line[(idx+1)..];
+			var content = line[(idx + 1)..];
 			list.Add(new TextLine(ln, content));
 		}
 		return [.. list];
@@ -190,5 +211,17 @@ public static class SshServiceEx {
 	/// <returns>エスケープ後のパス。</returns>
 	private static string EscapeSingleQuotes(string path) {
 		return path.Replace("'", "'\\''");
+	}
+
+	/// <summary>
+	///     UTF-8 でない場合に変換が必要かを判定します。
+	/// </summary>
+	/// <param name="sourceEncoding">ソースエンコーディング。</param>
+	/// <returns>変換が必要なら true。</returns>
+	private static bool NeedsConversion(string? sourceEncoding) {
+		if (string.IsNullOrWhiteSpace(sourceEncoding)) {
+			return false; // 指定なしは UTF-8 扱い
+		}
+		return !sourceEncoding.Equals("UTF-8", StringComparison.OrdinalIgnoreCase) && !sourceEncoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase);
 	}
 }
