@@ -25,6 +25,7 @@
 		</StackPanel>
 
 		<TabView Grid.Row="1"
+				VerticalAlignment="Stretch"
 				TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
 				SelectedItem="{x:Bind ViewModel.SelectedTab.Value, Mode=TwoWay}"
 				IsAddTabButtonVisible="False">
