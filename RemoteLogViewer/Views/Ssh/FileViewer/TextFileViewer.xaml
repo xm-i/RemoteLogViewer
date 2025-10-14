@@ -20,10 +20,8 @@
 			<TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
 			<TextBlock Text=" 行数:"/>
 			<TextBlock Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
-			<TextBlock Text=" 表示範囲:"/>
+			<TextBlock Text=" 表示開始行:"/>
 			<TextBlock Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
-			<TextBlock Text="-"/>
-			<TextBlock Text="{x:Bind ViewModel.WindowEndLine.Value, Mode=OneWay}"/>
 			<TextBlock Text=" 表示可能行数:"/>
 			<TextBlock Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
 			<TextBlock Text=" Encoding:"/>

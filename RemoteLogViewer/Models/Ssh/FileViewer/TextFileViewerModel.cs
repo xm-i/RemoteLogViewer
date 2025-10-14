@@ -1,8 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
+
+using Microsoft.UI.Xaml.Shapes;
 
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils.Extensions;
@@ -12,6 +10,8 @@ namespace RemoteLogViewer.Models.Ssh.FileViewer;
 [AddScoped]
 public class TextFileViewerModel {
 	private readonly SshService _sshService;
+	private const double loadingBuffer = 5;
+
 	public TextFileViewerModel(SshService sshService) {
 		this._sshService = sshService;
 	}
@@ -26,6 +26,9 @@ public class TextFileViewerModel {
 		get;
 	} = new();
 
+	/// <summary>
+	/// 表示行。
+	/// </summary>
 	public ObservableList<TextLine> Lines {
 		get;
 	} = new();
@@ -42,6 +45,13 @@ public class TextFileViewerModel {
 
 	/// <summary>利用可能エンコーディング。</summary>
 	public ObservableList<string> AvailableEncodings { get; } = [];
+
+	/// <summary>
+	/// 読み込み済みテキスト
+	/// </summary>
+	public ObservableDictionary<long, TextLine> LoadedLines {
+		get;
+	} = [];
 
 	/// <summary>
 	///     ファイルを開き内容を取得します。
@@ -63,16 +73,89 @@ public class TextFileViewerModel {
 		}
 	}
 
+	/// <summary>
+	/// テキストファイル参照に利用可能なエンコードを取得します。
+	/// </summary>
 	public void LoadAvailableEncoding() {
 		this.AvailableEncodings.AddRange(this._sshService.ListIconvEncodings());
 	}
 
-	public void LoadLines(long startLine, long endLine,string encoding) {
+	/// <summary>
+	/// 指定行範囲のテキストを表示中に設定します。
+	/// パフォーマンス向上のため、事前に多めに読み込みしておく。
+	/// </summary>
+	/// <param name="startLine">開始行</param>
+	/// <param name="visibleCount">表示可能行</param>
+	/// <param name="encoding">エンコード</param>
+	public void UpdateLines(long startLine, long visibleCount, string encoding) {
+		this.PreLoadLines(startLine, visibleCount, encoding);
+		foreach (var line in this.Lines.ToArray()) {
+			if (startLine <= line.LineNumber && line.LineNumber < startLine + visibleCount) {
+				// 表示範囲に含まれる行は残す
+				continue;
+			}
+			this.Lines.Remove(line);
+		}
+		for (var i = startLine; i < startLine + visibleCount; i++) {
+			// 表示範囲に含まれる行を追加
+			if (this.LoadedLines.ContainsKey(i)) {
+				if (!this.Lines.Any(x => x.LineNumber == i)) {
+					this.Lines.Add(this.LoadedLines[i]);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// 指定された範囲のテキストを読み込みます。
+	/// 指定範囲に対して、テキストを事前に多めに読み込んでおき、読み込み量が少ない場合は読み込み処理をスキップします。
+	/// </summary>
+	/// <param name="startLine">開始行</param>
+	/// <param name="visibleCount">表示可能行</param>
+	/// <param name="encoding">エンコード</param>
+	public void PreLoadLines(long startLine, long visibleCount, string encoding) {
 		if (this.OpenedFilePath.Value == null) {
+			throw new InvalidOperationException();
+		}
+
+		// 読み込み行設定
+		var loadStartLine = Math.Max(1, startLine - (int)(visibleCount * loadingBuffer));
+		var loadEndLine = Math.Min(this.TotalLines.Value, startLine + (int)(visibleCount * loadingBuffer));
+
+		// 読み込み済み範囲は除外 (開始行)
+		for (var i = loadStartLine; i <= loadEndLine; i++) {
+			if (this.LoadedLines.ContainsKey(i)) {
+				if (i == loadStartLine) {
+					loadStartLine++;
+				}
+			}
+		}
+
+		// 読み込み済み範囲は除外 (終了行)
+		for (var i = loadEndLine; i >= loadStartLine; i--) {
+			if (this.LoadedLines.ContainsKey(i)) {
+				if (i == loadEndLine) {
+					loadEndLine--;
+				}
+			}
+		}
+
+		if (
+			loadEndLine < loadStartLine ||
+			((
+				loadStartLine > startLine + visibleCount ||
+				loadEndLine < startLine
+			) &&
+			loadEndLine - loadStartLine < visibleCount)) {
+			// 読み込み対象行がないか、読み込み対象が表示範囲外かつ、読み込み対象が少ない場合は読み込みスキップ
 			return;
 		}
-		this.Lines.Clear();
-		this.Lines.AddRange(this._sshService.GetLines(this.OpenedFilePath.Value, startLine, endLine, encoding));
+
+		var lines = this._sshService.GetLines(this.OpenedFilePath.Value, loadStartLine, loadEndLine, encoding);
+
+		foreach (var line in lines) {
+			this.LoadedLines[line.LineNumber] = line;
+		}
 	}
 
 	/// <summary>

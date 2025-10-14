@@ -21,16 +21,15 @@ public class TextFileViewerViewModel {
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty();
 		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty();
 		this.Lines = this._textFileViewerModel.Lines.ToNotifyCollectionChanged();
-		this.WindowEndLine = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => start + count).ToReadOnlyBindableReactiveProperty((long)0);
 		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(1, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]);
-		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x+1) * LineHeight).ToReadOnlyBindableReactiveProperty();
+		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x + 1) * LineHeight).ToReadOnlyBindableReactiveProperty();
 		this.GrepResults = this._textFileViewerModel.GrepResults.ToNotifyCollectionChanged();
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty();
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged();
 
-		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(500), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
-			this._textFileViewerModel.LoadLines(this.WindowStartLine.Value + 1, this.WindowEndLine.Value + 1, this.SelectedEncoding.Value);
+		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(10), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
+			this._textFileViewerModel.UpdateLines(this.WindowStartLine.Value + 1, this.VisibleLineCount.Value, this.SelectedEncoding.Value);
 		});
 		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value));
 		this.SelectedEncoding.Subscribe(x => {
@@ -38,7 +37,7 @@ public class TextFileViewerViewModel {
 				view.ResetFilter();
 				return;
 			}
-			view.AttachFilter(ae => ae.Contains(x,StringComparison.OrdinalIgnoreCase));
+			view.AttachFilter(ae => ae.Contains(x, StringComparison.OrdinalIgnoreCase));
 		});
 	}
 
@@ -51,7 +50,7 @@ public class TextFileViewerViewModel {
 		get;
 	}
 
-	/// <summary>総高さ。</summary>
+	/// <summary>総高さ。(px)</summary>
 	public IReadOnlyBindableReactiveProperty<long> TotalHeight {
 		get;
 	}
@@ -60,10 +59,6 @@ public class TextFileViewerViewModel {
 	public BindableReactiveProperty<long> WindowStartLine {
 		get;
 	} = new();
-	/// <summary>現在ウィンドウ終了行。</summary>
-	public IReadOnlyBindableReactiveProperty<long> WindowEndLine {
-		get;
-	}
 
 	/// <summary>表示行一覧。</summary>
 	public NotifyCollectionChangedSynchronizedViewList<TextLine> Lines {
