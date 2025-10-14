@@ -29,6 +29,13 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 	}
 
 	/// <summary>
+	/// エントリフィルターワード。
+	/// </summary>
+	public BindableReactiveProperty<string?> EntryFilterWord {
+		get;
+	} = new();
+
+	/// <summary>
 	///     切断コマンド。
 	/// </summary>
 	public ReactiveCommand DisconnectCommand { get; } = new();
@@ -52,7 +59,8 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 		this._model = model;
 		this.TextFileViewerViewModel = textFileViewerViewModel;
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!;
-		this.Entries = this._model.Entries.ToNotifyCollectionChanged();
+		var view = this._model.Entries.CreateView(x => x);
+		this.Entries = view.ToNotifyCollectionChanged();
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
 		this.OpenCommand.Subscribe(fso => {
 			switch (fso?.FileSystemObjectType) {
@@ -67,6 +75,14 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 		});
 		this.NavigatePathCommand.Subscribe(_ => {
 			this._model.NavigateTo(this.CurrentPath.Value);
+		});
+		this.EntryFilterWord.ThrottleLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
+			var word = this.EntryFilterWord.Value;
+			if (string.IsNullOrWhiteSpace(word)) {
+				view.ResetFilter();
+			} else {
+				view.AttachFilter(fso => fso.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
+			}
 		});
 	}
 }

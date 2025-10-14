@@ -15,6 +15,9 @@
 				<TextBox Width="240" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
 				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
 			</StackPanel>
+			<StackPanel controls:DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
+				<TextBox Width="240" Text="{x:Bind ViewModel.EntryFilterWord.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Filter" />
+			</StackPanel>
 			<ListView ItemsSource="{x:Bind ViewModel.Entries}"
 					 VerticalAlignment="Stretch"
 					 ScrollViewer.VerticalScrollMode="Auto"
