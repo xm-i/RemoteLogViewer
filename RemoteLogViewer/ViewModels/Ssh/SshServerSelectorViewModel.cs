@@ -1,3 +1,5 @@
+using System.Text;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using RemoteLogViewer.Models.Ssh;
@@ -10,7 +12,7 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 ///     SSH 接続設定と接続後の状態管理を行います。
 /// </summary>
 [AddScoped]
-public class SshServerSelectorViewModel: BaseSshPageViewModel {
+public class SshServerSelectorViewModel : BaseSshPageViewModel {
 	private readonly SshSessionModel _model;
 
 	/// <summary>
@@ -30,6 +32,13 @@ public class SshServerSelectorViewModel: BaseSshPageViewModel {
 	///     選択中接続情報。
 	/// </summary>
 	public IReadOnlyBindableReactiveProperty<SshConnectionInfoViewModel?> SelectedSshConnectionInfo {
+		get;
+	}
+
+	/// <summary>
+	/// 利用可能エンコード一覧。
+	/// </summary>
+	public EncodingInfo[] AvailableEncodings {
 		get;
 	}
 
@@ -55,7 +64,7 @@ public class SshServerSelectorViewModel: BaseSshPageViewModel {
 	public ReactiveCommand<SshConnectionInfoViewModel> SelectSshConnectionInfoCommand {
 		get;
 	} = new();
-	
+
 	public SshServerSelectorViewModel(SshSessionModel model) {
 		this._model = model;
 		this.IsConnected = this._model.IsConnected.ToReadOnlyBindableReactiveProperty();
@@ -65,5 +74,6 @@ public class SshServerSelectorViewModel: BaseSshPageViewModel {
 		this.TestConnectCommand.Subscribe(_ => this._model.TestConnect());
 		this.SelectSshConnectionInfoCommand.Subscribe(vm => this._model.SelectedSshConnectionInfo.Value = vm.Model);
 		this.AddSavedConnectionsCommand.Subscribe(_ => this._model.AddSavedConnection());
+		this.AvailableEncodings = this._model.AvailableEncodings;
 	}
 }

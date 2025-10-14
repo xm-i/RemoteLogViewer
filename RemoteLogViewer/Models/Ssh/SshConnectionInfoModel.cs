@@ -7,6 +7,9 @@ namespace RemoteLogViewer.Models.Ssh;
 /// </summary>
 [AddScoped]
 public class SshConnectionInfoModel {
+	public ReactiveProperty<string> Name {
+		get;
+	} = new(string.Empty);
 	/// <summary>ID。</summary>
 	public ReactiveProperty<Guid> Id { get; } = new(Guid.Empty);
 	/// <summary>ホスト。</summary>
@@ -28,6 +31,10 @@ public class SshConnectionInfoModel {
 	public SshConnectionInfoModel(IServiceProvider serviceProvider) {
 		this.ServiceProvider = serviceProvider;
 	}
+
+	public ReactiveProperty<string> EncodingString {
+		get;
+	} = new("UTF-8");
 }
 
 public class SshConnectionInfoModelForJson {
@@ -63,6 +70,14 @@ public class SshConnectionInfoModelForJson {
 		get;
 		init;
 	}
+	public required string Name {
+		get;
+		init;
+	}
+	public required string EncodingString {
+		get;
+		init;
+	}
 
 	public static SshConnectionInfoModel CreateSshConnectionInfoModel(SshConnectionInfoModelForJson json) {
 		var scope = Ioc.Default.CreateScope();
@@ -74,6 +89,8 @@ public class SshConnectionInfoModelForJson {
 		model.Password.Value = json.Password;
 		model.PrivateKeyPath.Value = json.PrivateKeyPath;
 		model.PrivateKeyPassphrase.Value = json.PrivateKeyPassphrase;
+		model.Name.Value = json.Name;
+		model.EncodingString.Value = json.EncodingString;
 		return model;
 	}
 
@@ -86,6 +103,8 @@ public class SshConnectionInfoModelForJson {
 			Password = string.IsNullOrWhiteSpace(model.Password.Value) ? null : model.Password.Value,
 			PrivateKeyPath = string.IsNullOrWhiteSpace(model.PrivateKeyPath.Value) ? null : model.PrivateKeyPath.Value,
 			PrivateKeyPassphrase = string.IsNullOrWhiteSpace(model.PrivateKeyPassphrase.Value) ? null : model.PrivateKeyPassphrase.Value,
+			Name = model.Name.Value,
+			EncodingString = model.EncodingString.Value,
 		};
 	}
 }

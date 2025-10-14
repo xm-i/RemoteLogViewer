@@ -2,6 +2,7 @@ using Renci.SshNet;
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace RemoteLogViewer.Services.Ssh;
 
@@ -21,7 +22,8 @@ public class SshService : IDisposable {
 	/// <param name="password">パスワード (任意)。</param>
 	/// <param name="privateKeyPath">秘密鍵パス (任意)。</param>
 	/// <param name="privateKeyPassphrase">秘密鍵パスフレーズ (任意)。</param>
-	public void Connect(string host, int port, string user, string? password, string? privateKeyPath, string? privateKeyPassphrase) {
+	/// <param name="encoding">文字エンコード</param>
+	public void Connect(string host, int port, string user, string? password, string? privateKeyPath, string? privateKeyPassphrase, Encoding encoding) {
 		this.Disconnect();
 
 		if (!string.IsNullOrWhiteSpace(privateKeyPath)) {
@@ -39,10 +41,13 @@ public class SshService : IDisposable {
 				methods.Add(new PasswordAuthenticationMethod(user, password));
 			}
 			var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]);
+			connectionInfo.Encoding = encoding;
 			this._client = new SshClient(connectionInfo);
 		} else {
 			// 従来のパスワード専用
-			this._client = new SshClient(host, port, user, password ?? string.Empty);
+			var connectionInfo = new ConnectionInfo(host, port, user, [new PasswordAuthenticationMethod(user, password ?? string.Empty)]);
+			connectionInfo.Encoding = encoding;
+			this._client = new SshClient(connectionInfo);
 		}
 
 		this._client.Connect();

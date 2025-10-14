@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 
 using CommunityToolkit.Mvvm.DependencyInjection;
 
@@ -37,6 +38,7 @@ public partial class App : Application {
 	protected override void OnLaunched(LaunchActivatedEventArgs args) {
 		Build();
 		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => Trace.WriteLine(ex.ToString()));
+		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		MainWindow.Activate();
 	}
 

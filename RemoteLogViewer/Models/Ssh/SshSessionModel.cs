@@ -1,7 +1,9 @@
+using System.Collections.Generic;
+using System.Text;
+
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils.Extensions;
-using RemoteLogViewer.Views.Ssh.FileViewer;
 
 namespace RemoteLogViewer.Models.Ssh;
 
@@ -37,6 +39,10 @@ public class SshSessionModel {
 		get;
 	} = new(null);
 
+	public EncodingInfo[] AvailableEncodings {
+		get;
+	} = Encoding.GetEncodings();
+
 	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store) {
 		this._sshService = sshService;
 		this._store = store;
@@ -51,7 +57,8 @@ public class SshSessionModel {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return; //TODO: エラー通知
 		}
-		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value);
+		var encoding = Encoding.GetEncoding(ci.EncodingString.Value);
+		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, encoding);
 		this.NavigateTo("/");
 		this.IsConnected.Value = true;
 	}
@@ -124,7 +131,8 @@ public class SshSessionModel {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return; //TODO: エラー通知
 		}
-		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value);
+		var encoding = Encoding.GetEncoding(ci.EncodingString.Value);
+		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, encoding);
 		this.Disconnect();
 	}
 
