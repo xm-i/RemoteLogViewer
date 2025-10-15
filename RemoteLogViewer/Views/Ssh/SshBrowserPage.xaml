@@ -6,6 +6,7 @@
 	xmlns:fileViewer="using:RemoteLogViewer.Views.Ssh.FileViewer"
     xmlns:ssh="using:RemoteLogViewer.Services.Ssh"
     xmlns:sshVm="using:RemoteLogViewer.ViewModels.Ssh"
+	xmlns:models="using:RemoteLogViewer.Models.Ssh"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
@@ -19,16 +20,16 @@
 	</Page.Resources>
 
 	<controls:DockPanel Margin="4">
-		<controls:DockPanel controls:DockPanel.Dock="Left" Width="360">
-			<StackPanel controls:DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
+		<Grid RowDefinitions="auto,auto,auto,2*,auto,*" controls:DockPanel.Dock="Left" Width="360">
+			<StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4">
 				<TextBox Width="240" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
 				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
 			</StackPanel>
-			<StackPanel controls:DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
+			<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4">
 				<TextBox Width="240" Text="{x:Bind ViewModel.EntryFilterWord.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Filter" />
 			</StackPanel>
-			<ListView ItemsSource="{x:Bind ViewModel.Entries}"
-					 VerticalAlignment="Stretch"
+			<TextBlock Grid.Row="2"  Text="Entries" FontWeight="SemiBold" Margin="0,4,0,2" />
+			<ListView Grid.Row="3"  ItemsSource="{x:Bind ViewModel.Entries}"
 					 ScrollViewer.VerticalScrollMode="Auto"
 					 ScrollViewer.VerticalScrollBarVisibility="Auto"
 					 IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
@@ -50,7 +51,23 @@
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>
-		</controls:DockPanel>
+			<TextBlock Grid.Row="4"  Text="Bookmarks" FontWeight="SemiBold" Margin="0,8,0,2" />
+			<ListView ItemsSource="{x:Bind ViewModel.Bookmarks}"
+					 Grid.Row="5"
+					 ScrollViewer.VerticalScrollMode="Auto"
+					 ScrollViewer.VerticalScrollBarVisibility="Auto"
+					 DoubleTapped="Bookmarks_DoubleTapped">
+				<ListView.ItemTemplate>
+					<DataTemplate x:DataType="models:SshBookmarkModel">
+						<StackPanel Orientation="Horizontal" Spacing="4" Padding="4,2">
+							<FontIcon Glyph="&#xE735;" Foreground="Gold" />
+							<TextBlock Text="{x:Bind Name.Value}" />
+							<TextBlock Text="{x:Bind Path.Value}" Foreground="Gray" Margin="8,0,0,0" />
+						</StackPanel>
+					</DataTemplate>
+				</ListView.ItemTemplate>
+			</ListView>
+		</Grid>
 		<controls:DockPanel controls:DockPanel.Dock="Bottom" >
 			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" />
 			<Grid/>

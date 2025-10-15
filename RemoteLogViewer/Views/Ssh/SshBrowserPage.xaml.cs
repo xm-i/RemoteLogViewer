@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
 using RemoteLogViewer.ViewModels.Ssh;
+using RemoteLogViewer.Models.Ssh;
 
 namespace RemoteLogViewer.Views.SshSession;
 
@@ -60,6 +61,18 @@ public sealed partial class SshBrowserPage : Page {
 		if (e.Key == Windows.System.VirtualKey.Enter) {
 			this.ViewModel.NavigatePathCommand.Execute(Unit.Default);
 			e.Handled = true;
+		}
+	}
+
+	/// <summary>
+	/// ブックマークリストダブルタップでそのパスへ遷移します。
+	/// </summary>
+	private void Bookmarks_DoubleTapped(object sender, DoubleTappedRoutedEventArgs _) {
+		if (this.ViewModel == null) {
+			return;
+		}
+		if (sender is ListView lv && lv.SelectedItem is SshBookmarkModel bm) {
+			this.ViewModel.OpenBookmarkCommand.Execute(bm);
 		}
 	}
 }

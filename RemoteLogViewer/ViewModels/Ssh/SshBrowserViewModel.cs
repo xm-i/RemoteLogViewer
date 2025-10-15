@@ -20,6 +20,12 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 		get;
 	}
 
+	/// <summary>現在の接続のブックマーク一覧。</summary>
+	public NotifyCollectionChangedSynchronizedViewList<SshBookmarkModel>? Bookmarks {
+		get;
+		private set;
+	}
+
 	/// <summary>
 	///     現在のパス。
 	/// </summary>
@@ -49,15 +55,8 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 		get;
 	} = new();
 
-	/// <summary>ブックマーク追加コマンド。</summary>
-	public ReactiveCommand<FileSystemEntryViewModel> AddBookmarkCommand {
-		get;
-	} = new();
-
-	/// <summary>ブックマークトグルコマンド。</summary>
-	public ReactiveCommand<FileSystemEntryViewModel> ToggleBookmarkCommand {
-		get;
-	} = new();
+	/// <summary>ブックマークオープンコマンド。</summary>
+	public ReactiveCommand<SshBookmarkModel> OpenBookmarkCommand { get; } = new();
 
 	/// <summary>
 	/// テキストファイル閲覧 ViewModel。
@@ -72,6 +71,12 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!;
 		var view = this._model.Entries.CreateView(f => new FileSystemEntryViewModel(f, this._model));
 		this.Entries = view.ToNotifyCollectionChanged();
+		this._model.SelectedSshConnectionInfo.Subscribe(x => {
+			if (x == null) {
+				return;
+			}
+			this.Bookmarks = x.Bookmarks.CreateView(b => b).ToNotifyCollectionChanged();
+		});
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
 		this.OpenCommand.Subscribe(vm => {
 			var fso = vm?.Original;
@@ -84,6 +89,12 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 					this.TextFileViewerViewModel.OpenFile(this.CurrentPath.Value, fso);
 					break;
 			}
+		});
+		this.OpenBookmarkCommand.Subscribe(bm => {
+			if (bm == null) {
+				return;
+			}
+			this._model.NavigateTo(bm.Path.Value);
 		});
 		this.NavigatePathCommand.Subscribe(_ => {
 			this._model.NavigateTo(this.CurrentPath.Value);
