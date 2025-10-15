@@ -25,11 +25,17 @@ public class MainWindowViewModel {
 	public ReactiveCommand AddTabCommand { get; } = new();
 
 	/// <summary>
+	///     タブを閉じるコマンドです。
+	/// </summary>
+	public ReactiveCommand<LogViewerViewModel> CloseTabCommand { get; } = new();
+
+	/// <summary>
 	///     <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
 	/// </summary>
 	public MainWindowViewModel() {
 		this.Tabs = this._tabs.ToNotifyCollectionChanged();
 		this.AddTabCommand.Subscribe(_ => this.AddTab());
+		this.CloseTabCommand.Subscribe(vm => this.CloseTab(vm));
 	}
 
 	/// <summary>
@@ -40,5 +46,20 @@ public class MainWindowViewModel {
 		vm.Title = $"Log {this.Tabs.Count + 1}";
 		this._tabs.Add(vm);
 		this.SelectedTab.Value = vm;
+	}
+
+	/// <summary>
+	///     指定したタブを閉じます。SSH 接続中なら切断します。
+	/// </summary>
+	/// <param name="vm">閉じる対象タブ。</param>
+	private void CloseTab(LogViewerViewModel vm) {
+		if (!this._tabs.Contains(vm)) {
+			return;
+		}
+		vm.Disconnect();
+		this._tabs.Remove(vm);
+		if (this.SelectedTab.Value == vm) {
+			this.SelectedTab.Value = this._tabs.LastOrDefault();
+		}
 	}
 }

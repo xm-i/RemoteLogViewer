@@ -8,6 +8,7 @@ namespace RemoteLogViewer.ViewModels;
 /// </summary>
 [AddScoped]
 public class LogViewerViewModel {
+	private readonly SshSessionModel _sshSessionModel;
 	/// <summary>
 	///     タブタイトルを取得します。
 	/// </summary>
@@ -44,6 +45,7 @@ public class LogViewerViewModel {
 		this.SshServerSelectorViewModel = sshServerSelectorViewModel;
 		this.SshBrowserViewModel = sshBrowserViewModel;
 		this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;
+		this._sshSessionModel = sshSessionModel;
 
 		sshSessionModel.IsConnected.Subscribe(isConnected => {
 			if (isConnected) {
@@ -52,5 +54,12 @@ public class LogViewerViewModel {
 				this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;
 			}
 		});
+	}
+
+	/// <summary>
+	/// タブを閉じる際に呼び出され、SSH セッションを切断します。
+	/// </summary>
+	public void Disconnect() {
+		this._sshSessionModel.Disconnect();
 	}
 }

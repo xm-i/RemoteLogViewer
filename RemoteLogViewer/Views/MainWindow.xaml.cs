@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 using RemoteLogViewer.ViewModels;
 
@@ -19,5 +20,11 @@ public sealed partial class MainWindow : Window {
 
 	public MainWindowViewModel ViewModel {
 		get;
+	}
+
+	private void TabView_TabCloseRequested(object sender, TabViewTabCloseRequestedEventArgs e) {
+		if (e.Item is LogViewerViewModel vm) {
+			this.ViewModel.CloseTabCommand.Execute(vm);
+		}
 	}
 }

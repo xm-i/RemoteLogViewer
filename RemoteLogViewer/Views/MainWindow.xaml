@@ -28,10 +28,11 @@
 				VerticalAlignment="Stretch"
 				TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
 				SelectedItem="{x:Bind ViewModel.SelectedTab.Value, Mode=TwoWay}"
-				IsAddTabButtonVisible="False">
+				IsAddTabButtonVisible="False"
+				TabCloseRequested="TabView_TabCloseRequested">
 			<TabView.TabItemTemplate>
 				<DataTemplate x:DataType="vm:LogViewerViewModel">
-					<TabViewItem Header="{x:Bind Title}">
+					<TabViewItem Header="{x:Bind Title}" IsClosable="True">
 						<views:LogViewerControl ViewModel="{x:Bind }" />
 					</TabViewItem>
 				</DataTemplate>
