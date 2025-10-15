@@ -19,8 +19,8 @@
 		</ResourceDictionary>
 	</Page.Resources>
 
-	<controls:DockPanel Margin="4">
-		<Grid RowDefinitions="auto,auto,auto,2*,auto,*" controls:DockPanel.Dock="Left" Width="360">
+	<Grid Margin="4" RowDefinitions="*,Auto" ColumnDefinitions="300,Auto,*">
+		<Grid RowDefinitions="auto,auto,auto,2*,auto,*">
 			<StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4">
 				<TextBox Width="240" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
 				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
@@ -68,10 +68,21 @@
 				</ListView.ItemTemplate>
 			</ListView>
 		</Grid>
-		<controls:DockPanel controls:DockPanel.Dock="Bottom" >
+
+		<controls:GridSplitter
+			Grid.Column="1"
+			ResizeDirection="Columns"
+			ResizeBehavior="PreviousAndNext"
+			VerticalAlignment="Stretch"
+			Margin="5,0,5,0">
+			<controls:GridSplitter.RenderTransform>
+				<TranslateTransform Y="-7" />
+			</controls:GridSplitter.RenderTransform>
+		</controls:GridSplitter>
+		<fileViewer:TextFileViewer Grid.Column="2" MinWidth="100" ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" />
+		<controls:DockPanel Grid.Row="1" Grid.ColumnSpan="3" controls:DockPanel.Dock="Bottom" >
 			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" />
 			<Grid/>
 		</controls:DockPanel>
-		<fileViewer:TextFileViewer ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" />
-	</controls:DockPanel>
+	</Grid>
 </Page>
