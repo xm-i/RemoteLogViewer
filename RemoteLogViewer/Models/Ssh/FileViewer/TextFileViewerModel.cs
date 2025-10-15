@@ -59,11 +59,11 @@ public class TextFileViewerModel {
 		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
 			return;
 		}
+		this.ResetStates();
 		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName);
 		var escaped = fullPath.Replace("\"", "\\\"");
 		try {
 			this.TotalLines.Value = this._sshService.GetLineCount(fullPath);
-			this.LoadedLines.Clear();
 			this.OpenedFilePath.Value = fullPath;
 		} catch {
 			this.OpenedFilePath.Value = fullPath;
@@ -180,7 +180,7 @@ public class TextFileViewerModel {
 	/// </summary>
 	public void CloseFile() {
 		this.OpenedFilePath.Value = null;
-		this.GrepResults.Clear();
+		this.ResetStates();
 	}
 
 	/// <summary>
@@ -200,5 +200,16 @@ public class TextFileViewerModel {
 		endLine = Math.Min(endLine, this.TotalLines.Value);
 		var lines = this._sshService.GetLines(this.OpenedFilePath.Value, startLine, endLine, encoding);
 		return string.Join("\n", lines.Select(l => l.Content));
+	}
+
+	/// <summary>
+	/// リセット
+	/// </summary>
+	private void ResetStates() {
+		this.TotalLines.Value = 0;
+		this.OpenedFilePath.Value = null;
+		this.GrepResults.Clear();
+		this.LoadedLines.Clear();
+		this.Lines.Clear();
 	}
 }
