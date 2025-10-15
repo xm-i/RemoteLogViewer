@@ -7,19 +7,22 @@ using Microsoft.UI.Xaml.Input;
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
 
-namespace RemoteLogViewer.Views.Ssh.FileViewer; 
+namespace RemoteLogViewer.Views.Ssh.FileViewer;
+
 /// <summary>
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
 /// </summary>
 public sealed partial class TextFileViewer {
-	public TextFileViewerViewModel? ViewModel { get; set; }
+	public TextFileViewerViewModel? ViewModel {
+		get; set;
+	}
 	private const long LineHeight = 18;
 	public TextFileViewer() {
 		this.InitializeComponent();
 	}
 
 	private void VirtualScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e) {
-		if(this.ViewModel == null) {
+		if (this.ViewModel == null) {
 			return;
 		}
 		var visibleLines = Math.Max(1, (int)(e.NewSize.Height / LineHeight));
@@ -27,10 +30,10 @@ public sealed partial class TextFileViewer {
 	}
 
 	private void VirtualScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e) {
-		if(this.ViewModel == null) {
+		if (this.ViewModel == null) {
 			return;
 		}
-		if(e.IsIntermediate) {
+		if (e.IsIntermediate) {
 			// スクロール中は無視
 			return;
 		}
@@ -59,5 +62,15 @@ public sealed partial class TextFileViewer {
 
 		// ContentViewer 自体は縦スクロールしない
 		e.Handled = true;
+	}
+
+	private void GrepResultLineButton_Click(object sender, RoutedEventArgs e) {
+		if (this.ViewModel == null) {
+			return;
+		}
+		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
+			this.ViewModel.JumpToLineCommand.Execute(line);
+			this.VirtualScrollViewer.ScrollToVerticalOffset(this.ViewModel.WindowStartLine.Value * LineHeight);
+		}
 	}
 }

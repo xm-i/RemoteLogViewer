@@ -39,6 +39,16 @@ public class TextFileViewerViewModel {
 			}
 			view.AttachFilter(ae => ae.Contains(x, StringComparison.OrdinalIgnoreCase));
 		});
+
+		this.JumpToLineCommand.Subscribe(line => {
+			if (line < 1) {
+				return;
+			}
+			// 指定行を先頭に表示したいので WindowStartLine は (line - 1)
+			this.WindowStartLine.Value = line - 1;
+			// 表示更新
+			this.LoadLinesCommand.Execute(Unit.Default);
+		});
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -107,6 +117,11 @@ public class TextFileViewerViewModel {
 	public BindableReactiveProperty<string> SelectedEncoding {
 		get;
 	} = new();
+
+	/// <summary>
+	/// GREP 結果行番号ジャンプコマンド。
+	/// </summary>
+	public ReactiveCommand<long> JumpToLineCommand { get; } = new();
 
 	/// <summary>
 	///     ファイルを開きます。

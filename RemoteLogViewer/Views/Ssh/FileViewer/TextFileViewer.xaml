@@ -105,7 +105,7 @@
 						<DataTemplate x:DataType="models:TextLine">
 							<Grid ColumnDefinitions="60,Auto" MinHeight="18">
 								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0">
-									<TextBlock Text="{x:Bind LineNumber}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+									<HyperlinkButton Content="{x:Bind LineNumber}" Click="GrepResultLineButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right"/>
 								</Border>
 								<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
 							</Grid>
