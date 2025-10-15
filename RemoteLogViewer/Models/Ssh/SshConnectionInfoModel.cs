@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using System.Collections.Generic;
+
 namespace RemoteLogViewer.Models.Ssh;
 
 /// <summary>
@@ -27,6 +29,9 @@ public class SshConnectionInfoModel {
 	public IServiceProvider ServiceProvider {
 		get;
 	}
+
+	/// <summary>ブックマーク一覧。</summary>
+	public ObservableList<SshBookmarkModel> Bookmarks { get; } = [];
 
 	public SshConnectionInfoModel(IServiceProvider serviceProvider) {
 		this.ServiceProvider = serviceProvider;
@@ -78,6 +83,10 @@ public class SshConnectionInfoModelForJson {
 		get;
 		init;
 	}
+	/// <summary>ブックマーク。</summary>
+	public List<SshBookmarkModelForJson>? Bookmarks {
+		get; init;
+	}
 
 	public static SshConnectionInfoModel CreateSshConnectionInfoModel(SshConnectionInfoModelForJson json) {
 		var scope = Ioc.Default.CreateScope();
@@ -91,6 +100,11 @@ public class SshConnectionInfoModelForJson {
 		model.PrivateKeyPassphrase.Value = json.PrivateKeyPassphrase;
 		model.Name.Value = json.Name;
 		model.EncodingString.Value = json.EncodingString;
+		if (json.Bookmarks is not null) {
+			foreach (var b in json.Bookmarks.OrderBy(x => x.Order)) {
+				model.Bookmarks.Add(SshBookmarkModelForJson.CreateModel(b));
+			}
+		}
 		return model;
 	}
 
@@ -105,6 +119,7 @@ public class SshConnectionInfoModelForJson {
 			PrivateKeyPassphrase = string.IsNullOrWhiteSpace(model.PrivateKeyPassphrase.Value) ? null : model.PrivateKeyPassphrase.Value,
 			Name = model.Name.Value,
 			EncodingString = model.EncodingString.Value,
+			Bookmarks = [.. model.Bookmarks.Select(SshBookmarkModelForJson.CreateJson).OrderBy(x => x.Order)],
 		};
 	}
 }

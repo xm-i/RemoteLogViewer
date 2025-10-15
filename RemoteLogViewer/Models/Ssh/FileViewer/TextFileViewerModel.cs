@@ -1,4 +1,5 @@
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Utils;
 using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
@@ -58,7 +59,7 @@ public class TextFileViewerModel {
 		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
 			return;
 		}
-		var fullPath = path == "/" ? "/" + fso.FileName : path.TrimEnd('/') + "/" + fso.FileName;
+		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName);
 		var escaped = fullPath.Replace("\"", "\\\"");
 		try {
 			this.TotalLines.Value = this._sshService.GetLineCount(fullPath);

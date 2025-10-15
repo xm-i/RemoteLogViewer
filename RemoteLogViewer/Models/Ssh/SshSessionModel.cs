@@ -3,6 +3,7 @@ using System.Text;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Utils;
 using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh;
@@ -62,6 +63,9 @@ public class SshSessionModel {
 		this.NavigateTo("/");
 		this.IsConnected.Value = true;
 		this._textFileViewerModel.LoadAvailableEncoding();
+		this.SelectedSshConnectionInfo.Value.Bookmarks.ObserveChanged().Subscribe(x => {
+
+		});
 	}
 
 	/// <summary>
@@ -82,14 +86,8 @@ public class SshSessionModel {
 		if (string.IsNullOrWhiteSpace(path)) {
 			return;
 		}
-		if (!path.StartsWith('/')) {
-			path = this.CurrentPath.Value.TrimEnd('/') + "/" + path.Trim('/');
-		}
-		path = path.Replace("//", "/");
-		if (path.Length > 1 && path.EndsWith('/')) {
-			path = path[..^1];
-		}
-		this.CurrentPath.Value = path;
+
+		this.CurrentPath.Value = PathUtils.CombineUnixPath(this.CurrentPath.Value, path);
 		this.LoadDirectory(path);
 		this._textFileViewerModel.CloseFile();
 	}
@@ -103,9 +101,7 @@ public class SshSessionModel {
 			return;
 		}
 		string newPath;
-		if (directoryName.StartsWith('/')) {
-			newPath = directoryName;
-		} else if (directoryName == "..") {
+		if (directoryName == "..") {
 			if (this.CurrentPath.Value != "/") {
 				var trimmed = this.CurrentPath.Value.TrimEnd('/');
 				var idx = trimmed.LastIndexOf('/');
@@ -116,11 +112,7 @@ public class SshSessionModel {
 		} else if (directoryName == ".") {
 			newPath = this.CurrentPath.Value;
 		} else {
-			if (this.CurrentPath.Value == "/") {
-				newPath = "/" + directoryName.Trim('/');
-			} else {
-				newPath = this.CurrentPath.Value.TrimEnd('/') + "/" + directoryName.Trim('/');
-			}
+			newPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, directoryName);
 		}
 		this.NavigateTo(newPath);
 	}
@@ -147,5 +139,76 @@ public class SshSessionModel {
 
 	public void AddSavedConnection() {
 		this._store.Add();
+	}
+
+	/// <summary>
+	/// 指定エントリをブックマークへ追加します。
+	/// </summary>
+	/// <param name="fso">対象エントリ。</param>
+	public void AddBookmark(FileSystemObject fso) {
+		if (fso == null) {
+			return;
+		}
+		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
+			return;
+		}
+		var targetPath = this.BuildBookmarkTargetPath(fso);
+
+		var name = fso.FileName;
+		var list = ci.Bookmarks;
+		int order;
+		if (list.Count == 0) {
+			order = 1;
+		} else {
+			order = list.Max(b => b.Order.Value) + 1;
+		}
+		var bm = new SshBookmarkModel();
+		bm.Order.Value = order;
+		bm.Path.Value = targetPath;
+		bm.Name.Value = name;
+		list.Add(bm);
+		this._store.Save();
+	}
+
+	/// <summary>
+	/// 指定エントリがブックマークされているかを判定します。
+	/// </summary>
+	/// <param name="fso">対象エントリ。</param>
+	/// <returns>ブックマーク済みなら true。</returns>
+	public bool IsBookmarked(FileSystemObject fso) {
+		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
+			return false;
+		}
+		var path = this.BuildBookmarkTargetPath(fso);
+		return ci.Bookmarks.Any(b => string.Equals(b.Path.Value, path, StringComparison.Ordinal));
+	}
+
+	/// <summary>
+	/// ブックマークをトグルします (存在すれば削除、無ければ追加)。
+	/// </summary>
+	/// <param name="fso">対象エントリ。</param>
+	/// <returns>操作後にブックマーク状態なら true。</returns>
+	public bool ToggleBookmark(FileSystemObject fso) {
+		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
+			return false;
+		}
+		var path = this.BuildBookmarkTargetPath(fso);
+		var existing = ci.Bookmarks.FirstOrDefault(b => string.Equals(b.Path.Value, path, StringComparison.Ordinal));
+		if (existing != null) {
+			ci.Bookmarks.Remove(existing);
+			this._store.Save();
+			return false;
+		}
+		this.AddBookmark(fso);
+		return true;
+	}
+
+	/// <summary>
+	/// ブックマーク対象パスを計算します。
+	/// </summary>
+	/// <param name="fso">対象。</param>
+	/// <returns>ターゲットパス。</returns>
+	private string BuildBookmarkTargetPath(FileSystemObject fso) {
+		return PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName);
 	}
 }

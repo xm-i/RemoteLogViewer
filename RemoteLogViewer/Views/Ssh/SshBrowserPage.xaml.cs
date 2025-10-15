@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
-using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.ViewModels.Ssh;
 
 namespace RemoteLogViewer.Views.SshSession;
@@ -46,8 +45,8 @@ public sealed partial class SshBrowserPage : Page {
 		if (this.ViewModel == null) {
 			return;
 		}
-		if (sender is ListView lv && lv.SelectedItem is FileSystemObject fso) {
-			this.ViewModel.OpenCommand.Execute(fso);
+		if (sender is ListView lv && lv.SelectedItem is FileSystemEntryViewModel vm) {
+			this.ViewModel.OpenCommand.Execute(vm);
 		}
 	}
 

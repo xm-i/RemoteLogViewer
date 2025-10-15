@@ -64,7 +64,7 @@ public static class SshServiceEx {
 				lastUpdated = dto.UtcDateTime;
 			}
 
-			list.Add(new FileSystemObject(fileName, type, size, lastUpdated));
+			list.Add(new FileSystemObject(path, fileName, type, size, lastUpdated));
 		}
 
 		return [.. list];

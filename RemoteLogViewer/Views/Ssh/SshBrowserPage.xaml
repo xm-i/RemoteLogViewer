@@ -9,8 +9,17 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
+
+	<Page.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceDictionary Source="/Views/Styles/StarStyles.xaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Page.Resources>
+
 	<controls:DockPanel Margin="4">
-		<controls:DockPanel controls:DockPanel.Dock="Left" Width="340">
+		<controls:DockPanel controls:DockPanel.Dock="Left" Width="360">
 			<StackPanel controls:DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4">
 				<TextBox Width="240" Text="{x:Bind ViewModel.CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="CurrentPathTextBox_KeyDown" />
 				<Button Content="Go" Command="{x:Bind ViewModel.NavigatePathCommand,Mode=OneWay}" />
@@ -24,11 +33,20 @@
 					 ScrollViewer.VerticalScrollBarVisibility="Auto"
 					 IsItemClickEnabled="True" DoubleTapped="Entries_DoubleTapped">
 				<ListView.ItemTemplate>
-					<DataTemplate x:DataType="ssh:FileSystemObject">
-						<StackPanel Orientation="Horizontal" Spacing="8">
-							<FontIcon Glyph="&#xE8A5;" />
-							<TextBlock Text="{x:Bind FileName}" />
-						</StackPanel>
+					<DataTemplate x:DataType="sshVm:FileSystemEntryViewModel">
+						<Grid ColumnDefinitions="28,*" Padding="0,0,0,0">
+							<ToggleButton Style="{StaticResource StarToggleButtonStyle}" Width="24" Height="24"
+								IsChecked="{x:Bind IsBookmarked.Value, Mode=TwoWay}">
+								<Grid>
+									<FontIcon Glyph="&#xE735;" Foreground="Gold" Visibility="{x:Bind IsBookmarked.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
+									<FontIcon Glyph="&#xE734;" Foreground="Gray" Visibility="{x:Bind IsBookmarked.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+								</Grid>
+							</ToggleButton>
+							<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+								<FontIcon Glyph="&#xE8A5;" />
+								<TextBlock Text="{x:Bind FileName}" />
+							</StackPanel>
+						</Grid>
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>

@@ -9,4 +9,5 @@
 	<conv:FileSystemObjectToGlyphConverter x:Key="FileSystemObjectToGlyphConverter" />
 	<conv:LongToDoubleConverter x:Key="LongToDoubleConverter" />
 	<conv:NullToBooleanConverter x:Key="NullToBooleanConverter" />
+	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
 </ResourceDictionary>

@@ -11,13 +11,12 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 ///     SSH 接続設定と接続後の状態管理を行います。
 /// </summary>
 [AddScoped]
-public class SshBrowserViewModel: BaseSshPageViewModel {
+public class SshBrowserViewModel : BaseSshPageViewModel {
 	private readonly SshSessionModel _model;
-
 	/// <summary>
-	///     ディレクトリエントリ一覧。
+	///     ディレクトリエントリ一覧 (ViewModel)。
 	/// </summary>
-	public NotifyCollectionChangedSynchronizedViewList<FileSystemObject> Entries {
+	public NotifyCollectionChangedSynchronizedViewList<FileSystemEntryViewModel> Entries {
 		get;
 	}
 
@@ -46,7 +45,19 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 	public ReactiveCommand NavigatePathCommand { get; } = new();
 
 	/// <summary>ファイルシステムオープンコマンド。</summary>
-	public ReactiveCommand<FileSystemObject> OpenCommand { get; } = new();
+	public ReactiveCommand<FileSystemEntryViewModel> OpenCommand {
+		get;
+	} = new();
+
+	/// <summary>ブックマーク追加コマンド。</summary>
+	public ReactiveCommand<FileSystemEntryViewModel> AddBookmarkCommand {
+		get;
+	} = new();
+
+	/// <summary>ブックマークトグルコマンド。</summary>
+	public ReactiveCommand<FileSystemEntryViewModel> ToggleBookmarkCommand {
+		get;
+	} = new();
 
 	/// <summary>
 	/// テキストファイル閲覧 ViewModel。
@@ -59,10 +70,11 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 		this._model = model;
 		this.TextFileViewerViewModel = textFileViewerViewModel;
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!;
-		var view = this._model.Entries.CreateView(x => x);
+		var view = this._model.Entries.CreateView(f => new FileSystemEntryViewModel(f, this._model));
 		this.Entries = view.ToNotifyCollectionChanged();
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
-		this.OpenCommand.Subscribe(fso => {
+		this.OpenCommand.Subscribe(vm => {
+			var fso = vm?.Original;
 			switch (fso?.FileSystemObjectType) {
 				case FileSystemObjectType.Directory:
 				case FileSystemObjectType.Symlink:
@@ -81,7 +93,7 @@ public class SshBrowserViewModel: BaseSshPageViewModel {
 			if (string.IsNullOrWhiteSpace(word)) {
 				view.ResetFilter();
 			} else {
-				view.AttachFilter(fso => fso.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
+				view.AttachFilter(vm => vm.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
 			}
 		});
 	}
