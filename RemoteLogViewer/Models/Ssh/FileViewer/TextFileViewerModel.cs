@@ -1,7 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
-using Microsoft.UI.Xaml.Shapes;
-
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils.Extensions;
 
@@ -66,7 +62,7 @@ public class TextFileViewerModel {
 		var escaped = fullPath.Replace("\"", "\\\"");
 		try {
 			this.TotalLines.Value = this._sshService.GetLineCount(fullPath);
-			this.AvailableEncodings.Clear();
+			this.LoadedLines.Clear();
 			this.OpenedFilePath.Value = fullPath;
 		} catch {
 			this.OpenedFilePath.Value = fullPath;
@@ -100,7 +96,7 @@ public class TextFileViewerModel {
 			// 表示範囲に含まれる行を追加
 			if (this.LoadedLines.ContainsKey(i)) {
 				if (!this.Lines.Any(x => x.LineNumber == i)) {
-					this.Lines.Add(this.LoadedLines[i]);
+					this.Lines.Insert((int)(i - startLine), this.LoadedLines[i]);
 				}
 			}
 		}
@@ -165,7 +161,7 @@ public class TextFileViewerModel {
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
-		if (query.Length == 0) {
+		if ((query?.Length ?? 0) == 0) {
 			return;
 		}
 
