@@ -124,6 +124,12 @@ public class TextFileViewerViewModel {
 	public ReactiveCommand<long> JumpToLineCommand { get; } = new();
 
 	/// <summary>
+	/// 指定範囲のテキストを取得します。
+	/// </summary>
+	public string? GetRangeContent(long startLine, long endLine) {
+		return this._textFileViewerModel.GetRangeContent(startLine, endLine, this.SelectedEncoding.Value);
+	}
+	/// <summary>
 	///     ファイルを開きます。
 	/// </summary>
 	public void OpenFile(string path, FileSystemObject fso) {

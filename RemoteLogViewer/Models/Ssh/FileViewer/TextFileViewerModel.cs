@@ -183,4 +183,22 @@ public class TextFileViewerModel {
 		this.GrepResults.Clear();
 	}
 
+	/// <summary>
+	/// 指定行範囲のテキスト内容 (UTF-8) を取得します。
+	/// </summary>
+	/// <param name="startLine">開始行 (1 始まり)</param>
+	/// <param name="endLine">終了行 (1 始まり)</param>
+	/// <param name="encoding">ソースエンコーディング</param>
+	/// <returns>結合済みテキスト (末尾改行無し)</returns>
+	public string? GetRangeContent(long startLine, long endLine, string encoding) {
+		if (this.OpenedFilePath.Value == null) {
+			return null;
+		}
+		if (startLine < 1 || endLine < startLine) {
+			return null;
+		}
+		endLine = Math.Min(endLine, this.TotalLines.Value);
+		var lines = this._sshService.GetLines(this.OpenedFilePath.Value, startLine, endLine, encoding);
+		return string.Join("\n", lines.Select(l => l.Content));
+	}
 }

@@ -15,7 +15,7 @@
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="*" MinHeight="100"/>
 		</Grid.RowDefinitions>
-		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4">
+		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4" VerticalAlignment="Center">
 			<TextBlock Text="ファイル:"/>
 			<TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
 			<TextBlock Text=" 行数:"/>
@@ -27,7 +27,14 @@
 			<TextBlock Text=" Encoding:"/>
 			<AutoSuggestBox Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 			<Button Content="LoadLines" Command="{x:Bind ViewModel.LoadLinesCommand}"/>
+			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+				<TextBlock Text="|" Opacity="0.4"/>
+				<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
+				<TextBox x:Name="EndLineBox" Width="80" PlaceholderText="End"/>
+				<Button Content="Save Range" Click="SaveRangeButton_Click"/>
+			</StackPanel>
 		</StackPanel>
+
 		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto">
 			<ScrollViewer x:Name="LineViewer"
 				VerticalScrollBarVisibility="Hidden"

@@ -1,8 +1,12 @@
 using System;
-
+using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
@@ -71,6 +75,39 @@ public sealed partial class TextFileViewer {
 		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
 			this.ViewModel.JumpToLineCommand.Execute(line);
 			this.VirtualScrollViewer.ScrollToVerticalOffset(this.ViewModel.WindowStartLine.Value * LineHeight);
+		}
+	}
+
+	private async void SaveRangeButton_Click(object sender, RoutedEventArgs e) {
+		if (this.ViewModel == null) {
+			return;
+		}
+		var startBox = (TextBox)this.FindName("StartLineBox");
+		var endBox = (TextBox)this.FindName("EndLineBox");
+		if (!long.TryParse(startBox.Text, out var start) || !long.TryParse(endBox.Text, out var end)) {
+			return;
+		}
+		if (end < start) {
+			return;
+		}
+		var content = this.ViewModel.GetRangeContent(start, end);
+		if (string.IsNullOrEmpty(content)) {
+			return;
+		}
+
+		try {
+			var picker = new FileSavePicker();
+			var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
+			InitializeWithWindow.Initialize(picker, hwnd);
+			picker.FileTypeChoices.Add("Text", [".txt"]);
+			picker.SuggestedFileName = $"lines_{start}_{end}";
+			var file = await picker.PickSaveFileAsync();
+			if (file == null) {
+				return;
+			}
+			await FileIO.WriteTextAsync(file, content);
+		} catch {
+			// TODO: エラー通知
 		}
 	}
 }
