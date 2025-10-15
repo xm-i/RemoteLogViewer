@@ -36,6 +36,7 @@ public class MainWindowViewModel {
 		this.Tabs = this._tabs.ToNotifyCollectionChanged();
 		this.AddTabCommand.Subscribe(_ => this.AddTab());
 		this.CloseTabCommand.Subscribe(vm => this.CloseTab(vm));
+		this.AddTab();
 	}
 
 	/// <summary>
