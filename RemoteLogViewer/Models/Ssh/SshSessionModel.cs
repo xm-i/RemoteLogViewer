@@ -146,13 +146,16 @@ public class SshSessionModel {
 	/// </summary>
 	/// <param name="fso">対象エントリ。</param>
 	public void AddBookmark(FileSystemObject fso) {
-		if (fso == null) {
-			return;
-		}
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return;
 		}
-		var targetPath = this.BuildBookmarkTargetPath(fso);
+		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName);
+
+		var isExists = ci.Bookmarks.Any(b => string.Equals(b.Path.Value, targetPath, StringComparison.Ordinal));
+
+		if (isExists) {
+			return;
+		}
 
 		var name = fso.FileName;
 		var list = ci.Bookmarks;
@@ -171,44 +174,21 @@ public class SshSessionModel {
 	}
 
 	/// <summary>
-	/// 指定エントリがブックマークされているかを判定します。
+	/// ブックマークを削除します。
 	/// </summary>
 	/// <param name="fso">対象エントリ。</param>
-	/// <returns>ブックマーク済みなら true。</returns>
-	public bool IsBookmarked(FileSystemObject fso) {
+	public void RemoveBookmark(FileSystemObject fso) {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
-			return false;
+			return;
 		}
-		var path = this.BuildBookmarkTargetPath(fso);
-		return ci.Bookmarks.Any(b => string.Equals(b.Path.Value, path, StringComparison.Ordinal));
-	}
+		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName);
 
-	/// <summary>
-	/// ブックマークをトグルします (存在すれば削除、無ければ追加)。
-	/// </summary>
-	/// <param name="fso">対象エントリ。</param>
-	/// <returns>操作後にブックマーク状態なら true。</returns>
-	public bool ToggleBookmark(FileSystemObject fso) {
-		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
-			return false;
-		}
-		var path = this.BuildBookmarkTargetPath(fso);
-		var existing = ci.Bookmarks.FirstOrDefault(b => string.Equals(b.Path.Value, path, StringComparison.Ordinal));
-		if (existing != null) {
-			ci.Bookmarks.Remove(existing);
-			this._store.Save();
-			return false;
-		}
-		this.AddBookmark(fso);
-		return true;
-	}
+		var existing = ci.Bookmarks.FirstOrDefault(b => string.Equals(b.Path.Value, targetPath, StringComparison.Ordinal));
 
-	/// <summary>
-	/// ブックマーク対象パスを計算します。
-	/// </summary>
-	/// <param name="fso">対象。</param>
-	/// <returns>ターゲットパス。</returns>
-	private string BuildBookmarkTargetPath(FileSystemObject fso) {
-		return PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName);
+		if (existing == null) {
+			return;
+		}
+		ci.Bookmarks.Remove(existing);
+		this._store.Save();
 	}
 }

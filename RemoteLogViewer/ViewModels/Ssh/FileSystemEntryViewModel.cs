@@ -1,5 +1,3 @@
-using System.IO;
-
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils;
@@ -39,9 +37,11 @@ public class FileSystemEntryViewModel {
 		this.IsBookmarked.Value = bookmarks.Any(x => x.Path.Value == PathUtils.CombineUnixPath(this.Original.Path, this.Original.FileName));
 
 		this.IsBookmarked.Subscribe(x => {
-			var isExists = bookmarks.Any(x => x.Path.Value == PathUtils.CombineUnixPath(this.Original.Path, this.Original.FileName));
-			if (x && !isExists) {
+			if (x) {
 				sessionModel.AddBookmark(this.Original);
+			} else {
+				sessionModel.RemoveBookmark(this.Original);
+
 			}
 		});
 	}
