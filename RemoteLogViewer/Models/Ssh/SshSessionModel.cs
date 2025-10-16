@@ -63,9 +63,6 @@ public class SshSessionModel {
 		this.NavigateTo("/");
 		this.IsConnected.Value = true;
 		this._textFileViewerModel.LoadAvailableEncoding();
-		this.SelectedSshConnectionInfo.Value.Bookmarks.ObserveChanged().Subscribe(x => {
-
-		});
 	}
 
 	/// <summary>
