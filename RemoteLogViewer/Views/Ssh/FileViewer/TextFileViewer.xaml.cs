@@ -1,14 +1,9 @@
-using System;
-using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
-
-using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
 
 namespace RemoteLogViewer.Views.Ssh.FileViewer;
@@ -18,7 +13,16 @@ namespace RemoteLogViewer.Views.Ssh.FileViewer;
 /// </summary>
 public sealed partial class TextFileViewer {
 	public TextFileViewerViewModel? ViewModel {
-		get; set;
+		get;
+		set {
+			field = value;
+			if (field == null) {
+				return;
+			}
+			field.WindowStartLine.Subscribe(x => {
+				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight - 1);
+			});
+		}
 	}
 	private const long LineHeight = 18;
 	public TextFileViewer() {
@@ -41,11 +45,13 @@ public sealed partial class TextFileViewer {
 			// スクロール中は無視
 			return;
 		}
-		this.ViewModel.WindowStartLine.Value = (long)(this.VirtualScrollViewer.VerticalOffset / LineHeight);
-		this.ViewModel.LoadLinesCommand.Execute(Unit.Default);
+		this.ViewModel.JumpToLineCommand.Execute((long)((this.VirtualScrollViewer.VerticalOffset / LineHeight) + 1));
 	}
 
 	private void ContentViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
+		if (this.ViewModel == null) {
+			return;
+		}
 		var properties = e.GetCurrentPoint(this.ContentViewer).Properties;
 		if (properties.IsHorizontalMouseWheel) {
 			return;
@@ -53,16 +59,9 @@ public sealed partial class TextFileViewer {
 		// ホイール delta
 		var delta = properties.MouseWheelDelta;
 
-		// 1行分のスクロール量に変換（LineHeight をピクセル単位で定義）
-		var offsetChange = -delta / 120.0 * LineHeight;
+		var offsetChange = -delta / 120;
 
-		var newOffset = this.VirtualScrollViewer.VerticalOffset + offsetChange;
-
-		// ScrollableHeight を超えないように制限
-		newOffset = Math.Max(0, Math.Min(newOffset, this.VirtualScrollViewer.ScrollableHeight));
-
-		// VirtualScrollViewer に反映
-		this.VirtualScrollViewer.ChangeView(null, newOffset, null, true);
+		this.ViewModel.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + offsetChange);
 
 		// ContentViewer 自体は縦スクロールしない
 		e.Handled = true;
@@ -74,7 +73,6 @@ public sealed partial class TextFileViewer {
 		}
 		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
 			this.ViewModel.JumpToLineCommand.Execute(line);
-			this.VirtualScrollViewer.ScrollToVerticalOffset(this.ViewModel.WindowStartLine.Value * LineHeight);
 		}
 	}
 

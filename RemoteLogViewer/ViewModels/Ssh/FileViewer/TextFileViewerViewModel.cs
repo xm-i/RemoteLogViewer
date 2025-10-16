@@ -16,7 +16,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
-		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(1, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
+		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(0, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
 		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x + 1) * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
@@ -24,9 +24,6 @@ public class TextFileViewerViewModel : ViewModelBase {
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
-		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(10), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
-			this._textFileViewerModel.UpdateLines(this.WindowStartLine.Value + 1, this.VisibleLineCount.Value, this.SelectedEncoding.Value);
-		}).AddTo(this.CompositeDisposable);
 		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value)).AddTo(this.CompositeDisposable);
 		this.SelectedEncoding.Subscribe(x => {
 			if (string.IsNullOrWhiteSpace(x)) {
@@ -37,12 +34,17 @@ public class TextFileViewerViewModel : ViewModelBase {
 		}).AddTo(this.CompositeDisposable);
 
 		this.JumpToLineCommand.Subscribe(line => {
-			if (line < 1) {
-				return;
-			}
-			this.WindowStartLine.Value = line - 1;
-			this.LoadLinesCommand.Execute(Unit.Default);
+			this.WindowStartLine.Value = Math.Max(1, Math.Min(this.TotalLines.Value - this.VisibleLineCount.Value + 1, line));
 		}).AddTo(this.CompositeDisposable);
+
+		this.WindowStartLine
+			.CombineLatest(this.VisibleLineCount, (startLine, visibleLineCount) => (startLine, visibleLineCount))
+			.CombineLatest(this.OpenedFilePath.ObservePropertyChanged(x => x.Value), (a, path) => (a.startLine, a.visibleLineCount, path))
+			.Where(x => x.path != null)
+			.ThrottleFirstLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider)
+			.Subscribe(x => {
+				this._textFileViewerModel.UpdateLines(x.startLine, x.visibleLineCount, this.SelectedEncoding.Value);
+			}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -62,7 +64,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// <summary>現在ウィンドウ開始行。</summary>
 	public BindableReactiveProperty<long> WindowStartLine {
 		get;
-	} = new();
+	} = new(1);
 
 	/// <summary>表示行一覧。</summary>
 	public NotifyCollectionChangedSynchronizedViewList<TextLine> Lines {
@@ -77,10 +79,6 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// 画面上表示可能な行数
 	/// </summary>
 	public BindableReactiveProperty<int> VisibleLineCount {
-		get;
-	} = new();
-
-	public ReactiveCommand LoadLinesCommand {
 		get;
 	} = new();
 
