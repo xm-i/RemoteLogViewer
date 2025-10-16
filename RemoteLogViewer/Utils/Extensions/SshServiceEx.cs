@@ -185,8 +185,19 @@ public static class SshServiceEx {
 		var escapedPattern = EscapeSingleQuotes(pattern);
 		var ic = ignoreCase ? " -i" : string.Empty;
 
-		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {EscapeSingleQuotes(sshService.IconvEncoding)}//IGNORE" : string.Empty;
-		var cmd = $"LC_ALL=C grep -n -h -m {maxResults}{ic} -F --binary-files=text --color=never -- '{escapedPattern}' -- '{escapedPath}' 2>/dev/null" + convertPipe + " || true";
+		// パターン変換必要か
+		var needsPatternConversion = NeedsConversion(sshService.IconvEncoding, fileEncoding);
+		string patternExpr;
+		if (needsPatternConversion && !string.IsNullOrWhiteSpace(fileEncoding)) {
+			// command substitution を展開させるため、シングルクォートで囲まない
+			patternExpr = "$(printf '%s' '" + escapedPattern + "' | iconv -f " + EscapeSingleQuotes(sshService.IconvEncoding) + " -t " + EscapeSingleQuotes(fileEncoding!) + " 2>/dev/null)";
+		} else {
+			// 変換不要: 安全にシングルクォートで囲む
+			patternExpr = "'" + escapedPattern + "'";
+		}
+
+		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
+		var cmd = $"LC_ALL=C grep -n -h -m {maxResults}{ic} -F --binary-files=text --color=never -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
 		var output = sshService.Run(cmd);
 		if (string.IsNullOrWhiteSpace(output)) {
 			return Array.Empty<TextLine>();
@@ -223,7 +234,7 @@ public static class SshServiceEx {
 	/// <returns>変換が必要なら true。</returns>
 	private static bool NeedsConversion(string? encoding1, string? encoding2) {
 		if (string.IsNullOrWhiteSpace(encoding1) || string.IsNullOrWhiteSpace(encoding2)) {
-			return false; // 指定なしは 変換不要扱い
+			return false;
 		}
 		return !encoding1.Equals(encoding2, StringComparison.OrdinalIgnoreCase);
 	}
