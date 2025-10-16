@@ -1,11 +1,6 @@
-using System.Diagnostics;
-using System.Text;
-
 using Microsoft.Extensions.DependencyInjection;
 
 using RemoteLogViewer.Models.Ssh;
-using RemoteLogViewer.Services;
-using RemoteLogViewer.Services.Ssh; // for SshEntry
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 
@@ -68,13 +63,17 @@ public class SshServerSelectorViewModel : BaseSshPageViewModel {
 
 	public SshServerSelectorViewModel(SshSessionModel model) {
 		this._model = model;
-		this.IsConnected = this._model.IsConnected.ToReadOnlyBindableReactiveProperty();
-		this.SavedConnections = this._model.SavedConnections.ToNotifyCollectionChanged(x => x.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>());
-		this.SelectedSshConnectionInfo = this._model.SelectedSshConnectionInfo.Select(x => x?.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>()).ToReadOnlyBindableReactiveProperty();
-		this.ConnectCommand.Subscribe(_ => this._model.Connect());
-		this.TestConnectCommand.Subscribe(_ => this._model.TestConnect());
-		this.SelectSshConnectionInfoCommand.Subscribe(vm => this._model.SelectedSshConnectionInfo.Value = vm.Model);
-		this.AddSavedConnectionsCommand.Subscribe(_ => this._model.AddSavedConnection());
+		this.IsConnected = this._model.IsConnected.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		var savedConnectionsView = this._model.SavedConnections.CreateView(x => x.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>()).AddTo(this.CompositeDisposable);
+		this.SavedConnections = savedConnectionsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.SelectedSshConnectionInfo = this._model.SelectedSshConnectionInfo
+			.Select(x => x?.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>())
+			.ToReadOnlyBindableReactiveProperty()
+			.AddTo(this.CompositeDisposable);
+		this.ConnectCommand.Subscribe(_ => this._model.Connect()).AddTo(this.CompositeDisposable);
+		this.TestConnectCommand.Subscribe(_ => this._model.TestConnect()).AddTo(this.CompositeDisposable);
+		this.SelectSshConnectionInfoCommand.Subscribe(vm => this._model.SelectedSshConnectionInfo.Value = vm.Model).AddTo(this.CompositeDisposable);
+		this.AddSavedConnectionsCommand.Subscribe(_ => this._model.AddSavedConnection()).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = this._model.AvailableEncodings.Select(x => x.Name).ToArray();
 	}
 }

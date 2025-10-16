@@ -5,7 +5,7 @@ using RemoteLogViewer.Utils.Extensions;
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
 [AddScoped]
-public class TextFileViewerModel {
+public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
 	private const double loadingBuffer = 5;
 

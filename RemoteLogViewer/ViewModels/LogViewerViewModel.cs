@@ -7,7 +7,7 @@ namespace RemoteLogViewer.ViewModels;
 ///     ログ表示用の ViewModel です。タブタイトルなどの表示情報を提供します。
 /// </summary>
 [AddScoped]
-public class LogViewerViewModel {
+public class LogViewerViewModel : ViewModelBase {
 	private readonly SshSessionModel _sshSessionModel;
 	/// <summary>
 	///     タブタイトルを取得します。
@@ -53,7 +53,7 @@ public class LogViewerViewModel {
 			} else {
 				this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;
 			}
-		});
+		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>

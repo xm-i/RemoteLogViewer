@@ -1,7 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-
 using RemoteLogViewer.Models.Ssh;
-using RemoteLogViewer.Services;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer; // for SshEntry
 
@@ -68,16 +65,17 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 	public SshBrowserViewModel(SshSessionModel model, TextFileViewerViewModel textFileViewerViewModel) {
 		this._model = model;
 		this.TextFileViewerViewModel = textFileViewerViewModel;
-		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!;
-		var view = this._model.Entries.CreateView(f => new FileSystemEntryViewModel(f, this._model));
-		this.Entries = view.ToNotifyCollectionChanged();
+		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!.AddTo(this.CompositeDisposable)!;
+		var view = this._model.Entries.CreateView(f => new FileSystemEntryViewModel(f, this._model)).AddTo(this.CompositeDisposable);
+		this.Entries = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this._model.SelectedSshConnectionInfo.Subscribe(x => {
 			if (x == null) {
 				return;
 			}
-			this.Bookmarks = x.Bookmarks.CreateView(b => b).ToNotifyCollectionChanged();
-		});
-		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect());
+			var bmView = x.Bookmarks.CreateView(b => b).AddTo(this.CompositeDisposable);
+			this.Bookmarks = bmView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		}).AddTo(this.CompositeDisposable);
+		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect()).AddTo(this.CompositeDisposable);
 		this.OpenCommand.Subscribe(vm => {
 			var fso = vm?.Original;
 			switch (fso?.FileSystemObjectType) {
@@ -89,16 +87,16 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 					this.TextFileViewerViewModel.OpenFile(this.CurrentPath.Value, fso);
 					break;
 			}
-		});
+		}).AddTo(this.CompositeDisposable);
 		this.OpenBookmarkCommand.Subscribe(bm => {
 			if (bm == null) {
 				return;
 			}
 			this._model.NavigateTo(bm.Path.Value);
-		});
+		}).AddTo(this.CompositeDisposable);
 		this.NavigatePathCommand.Subscribe(_ => {
 			this._model.NavigateTo(this.CurrentPath.Value);
-		});
+		}).AddTo(this.CompositeDisposable);
 		this.EntryFilterWord.ThrottleLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
 			var word = this.EntryFilterWord.Value;
 			if (string.IsNullOrWhiteSpace(word)) {
@@ -106,6 +104,6 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 			} else {
 				view.AttachFilter(vm => vm.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
 			}
-		});
+		}).AddTo(this.CompositeDisposable);
 	}
 }

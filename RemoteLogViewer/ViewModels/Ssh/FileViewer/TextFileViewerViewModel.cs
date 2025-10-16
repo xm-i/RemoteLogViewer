@@ -7,42 +7,42 @@ namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 ///     テキストファイル閲覧 ViewModel。スクロール位置に応じて部分読み込み + GREP 検索を提供します。
 /// </summary>
 [AddScoped]
-public class TextFileViewerViewModel {
+public class TextFileViewerViewModel : ViewModelBase {
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private const long LineHeight = 18;
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
-		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty();
-		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty();
-		this.Lines = this._textFileViewerModel.Lines.ToNotifyCollectionChanged();
-		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(1, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]);
-		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x + 1) * LineHeight).ToReadOnlyBindableReactiveProperty();
-		this.GrepResults = this._textFileViewerModel.GrepResults.ToNotifyCollectionChanged();
-		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty();
-		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x);
-		this.AvailableEncodings = view.ToNotifyCollectionChanged();
+		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
+		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(1, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
+		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x + 1) * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
+		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
+		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
 		this.LoadLinesCommand.ThrottleFirstLast(TimeSpan.FromMilliseconds(10), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
 			this._textFileViewerModel.UpdateLines(this.WindowStartLine.Value + 1, this.VisibleLineCount.Value, this.SelectedEncoding.Value);
-		});
-		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value));
+		}).AddTo(this.CompositeDisposable);
+		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value)).AddTo(this.CompositeDisposable);
 		this.SelectedEncoding.Subscribe(x => {
 			if (string.IsNullOrWhiteSpace(x)) {
 				view.ResetFilter();
 				return;
 			}
 			view.AttachFilter(ae => ae.Contains(x, StringComparison.OrdinalIgnoreCase));
-		});
+		}).AddTo(this.CompositeDisposable);
 
 		this.JumpToLineCommand.Subscribe(line => {
 			if (line < 1) {
 				return;
 			}
-			// 指定行を先頭に表示したいので WindowStartLine は (line - 1)
 			this.WindowStartLine.Value = line - 1;
-			// 表示更新
 			this.LoadLinesCommand.Execute(Unit.Default);
-		});
+		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
