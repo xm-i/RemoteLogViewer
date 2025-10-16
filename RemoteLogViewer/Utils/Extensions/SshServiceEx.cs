@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
@@ -77,9 +78,6 @@ public static class SshServiceEx {
 	/// <returns>エンコーディング名配列。</returns>
 	public static string[] ListIconvEncodings(this SshService sshService) {
 		var output = sshService.Run("iconv -l 2>/dev/null || true");
-		if (string.IsNullOrWhiteSpace(output)) {
-			return ["UTF-8"]; // フォールバック
-		}
 		var tokens = output.Split(['\r', '\n', '\t', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var t in tokens) {
@@ -92,8 +90,7 @@ public static class SshServiceEx {
 			}
 			set.Add(name);
 		}
-		set.Add("UTF-8");
-		return set.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+		return set.Where(x => Constants.EncodingPairs.Any(ep => ep.Iconv == x)).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
 	}
 
 	/// <summary>
@@ -120,14 +117,14 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
-	///     指定した開始行から終了行までの行を取得します (UTF-8 以外は iconv 変換)。
+	///     指定した開始行から終了行までの行を取得します。
 	/// </summary>
 	/// <param name="remoteFilePath">対象ファイルのパス。</param>
 	/// <param name="startLine">開始行 (1 始まり)。</param>
 	/// <param name="endLine">終了行 (1 始まり)。</param>
-	/// <param name="sourceEncoding">ソースエンコーディング。UTF-8 の場合は変換無し。</param>
+	/// <param name="fileEncoding">ソースエンコーディング。</param>
 	/// <returns>取得行。</returns>
-	public static IEnumerable<TextLine> GetLines(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? sourceEncoding) {
+	public static IEnumerable<TextLine> GetLines(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? fileEncoding) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("File path is empty.", nameof(remoteFilePath));
 		}
@@ -137,9 +134,11 @@ public static class SshServiceEx {
 		if (endLine < startLine) {
 			throw new ArgumentException("endLine must be >= startLine.", nameof(endLine));
 		}
-
+		if (sshService.IconvEncoding == null) {
+			throw new InvalidOperationException("Iconv Encoding not found.");
+		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var convertPipe = NeedsConversion(sourceEncoding) ? $" | iconv -f {EscapeSingleQuotes(sourceEncoding!)} -t UTF-8//IGNORE" : string.Empty;
+		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
 		var output = sshService.Run($"LC_ALL=C sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null" + convertPipe);
 		if (string.IsNullOrEmpty(output)) {
 			return Array.Empty<TextLine>();
@@ -157,18 +156,21 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
-	///     grep 検索 (UTF-8 以外は iconv 変換) を行います。
+	///     grep 検索 を行います。
 	/// </summary>
 	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイル。</param>
 	/// <param name="pattern">パターン。</param>
 	/// <param name="maxResults">最大件数。</param>
 	/// <param name="ignoreCase">大文字小文字無視。</param>
-	/// <param name="sourceEncoding">ソースエンコーディング。</param>
+	/// <param name="fileEncoding">ファイルエンコーディング。</param>
 	/// <returns>一致行。</returns>
-	public static TextLine[] Grep(this SshService sshService, string remoteFilePath, string pattern, int maxResults, bool ignoreCase, string? sourceEncoding) {
+	public static TextLine[] Grep(this SshService sshService, string remoteFilePath, string pattern, int maxResults, bool ignoreCase, string? fileEncoding) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
+		}
+		if (sshService.IconvEncoding == null) {
+			throw new InvalidOperationException("Iconv Encoding not found.");
 		}
 		pattern ??= string.Empty;
 		pattern = pattern.Trim();
@@ -182,7 +184,8 @@ public static class SshServiceEx {
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
 		var escapedPattern = EscapeSingleQuotes(pattern);
 		var ic = ignoreCase ? " -i" : string.Empty;
-		var convertPipe = NeedsConversion(sourceEncoding) ? $" | iconv -f {EscapeSingleQuotes(sourceEncoding!)} -t UTF-8//IGNORE" : string.Empty;
+
+		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {EscapeSingleQuotes(sshService.IconvEncoding)}//IGNORE" : string.Empty;
 		var cmd = $"LC_ALL=C grep -n -h -m {maxResults}{ic} -F --binary-files=text --color=never -- '{escapedPattern}' -- '{escapedPath}' 2>/dev/null" + convertPipe + " || true";
 		var output = sshService.Run(cmd);
 		if (string.IsNullOrWhiteSpace(output)) {
@@ -214,14 +217,14 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
-	///     UTF-8 でない場合に変換が必要かを判定します。
+	///     2つの文字コードが不一致の場合に変換が必要と判定します。
 	/// </summary>
 	/// <param name="sourceEncoding">ソースエンコーディング。</param>
 	/// <returns>変換が必要なら true。</returns>
-	private static bool NeedsConversion(string? sourceEncoding) {
-		if (string.IsNullOrWhiteSpace(sourceEncoding)) {
-			return false; // 指定なしは UTF-8 扱い
+	private static bool NeedsConversion(string? encoding1, string? encoding2) {
+		if (string.IsNullOrWhiteSpace(encoding1) || string.IsNullOrWhiteSpace(encoding2)) {
+			return false; // 指定なしは 変換不要扱い
 		}
-		return !sourceEncoding.Equals("UTF-8", StringComparison.OrdinalIgnoreCase) && !sourceEncoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase);
+		return !encoding1.Equals(encoding2, StringComparison.OrdinalIgnoreCase);
 	}
 }

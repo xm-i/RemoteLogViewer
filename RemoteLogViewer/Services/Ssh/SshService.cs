@@ -1,7 +1,6 @@
 using Renci.SshNet;
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace RemoteLogViewer.Services.Ssh;
@@ -12,6 +11,20 @@ namespace RemoteLogViewer.Services.Ssh;
 [AddScoped]
 public class SshService : IDisposable {
 	private SshClient? _client;
+	public string? CSharpEncoding {
+		get;
+		private set;
+	}
+
+	public string? IconvEncoding {
+		get {
+			if (this.CSharpEncoding is null) {
+				return null;
+			}
+			var pair = Constants.EncodingPairs.FirstOrDefault(ep => ep.CSharp == this.CSharpEncoding);
+			return pair?.Iconv;
+		}
+	}
 
 	/// <summary>
 	///     パスワード / 鍵認証で接続します。password と privateKeyPath の両方が指定された場合は複数メソッドで試行します。
@@ -22,8 +35,8 @@ public class SshService : IDisposable {
 	/// <param name="password">パスワード (任意)。</param>
 	/// <param name="privateKeyPath">秘密鍵パス (任意)。</param>
 	/// <param name="privateKeyPassphrase">秘密鍵パスフレーズ (任意)。</param>
-	/// <param name="encoding">文字エンコード</param>
-	public void Connect(string host, int port, string user, string? password, string? privateKeyPath, string? privateKeyPassphrase, Encoding encoding) {
+	/// <param name="encoding">文字エンコード(CSharpのEncoding.GetEncoding()で取得可能な名称</param>
+	public void Connect(string host, int port, string user, string? password, string? privateKeyPath, string? privateKeyPassphrase, string encoding) {
 		this.Disconnect();
 
 		if (!string.IsNullOrWhiteSpace(privateKeyPath)) {
@@ -41,16 +54,17 @@ public class SshService : IDisposable {
 				methods.Add(new PasswordAuthenticationMethod(user, password));
 			}
 			var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]);
-			connectionInfo.Encoding = encoding;
+			connectionInfo.Encoding = Encoding.GetEncoding(encoding);
 			this._client = new SshClient(connectionInfo);
 		} else {
 			// 従来のパスワード専用
 			var connectionInfo = new ConnectionInfo(host, port, user, [new PasswordAuthenticationMethod(user, password ?? string.Empty)]);
-			connectionInfo.Encoding = encoding;
+			connectionInfo.Encoding = Encoding.GetEncoding(encoding);
 			this._client = new SshClient(connectionInfo);
 		}
 
 		this._client.Connect();
+		this.CSharpEncoding = encoding;
 	}
 
 	/// <summary>

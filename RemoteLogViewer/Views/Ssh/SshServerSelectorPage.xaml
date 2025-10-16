@@ -5,7 +5,7 @@
     xmlns:sshVm="using:RemoteLogViewer.ViewModels.Ssh"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">	
+    mc:Ignorable="d">
 	<Grid Padding="12">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="Auto" />
@@ -48,14 +48,8 @@
 			<ComboBox
 				Header="Encoding"
 				ItemsSource="{x:Bind ViewModel.AvailableEncodings,Mode=OneWay}"
-				SelectedValuePath="Name"
 				SelectedValue="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.EncodingString.Value,Mode=TwoWay}"
 				IsEnabled="{x:Bind ViewModel.SelectedSshConnectionInfo.Value, Mode=OneWay, Converter={StaticResource NullToBooleanConverter}}">
-				<ComboBox.ItemTemplate>
-					<DataTemplate>
-						<TextBlock> <Run Text="{Binding DisplayName}"/> <Run Text=" ("/> <Run Text="{Binding Name}"/> <Run Text=")"/></TextBlock>
-					</DataTemplate>
-				</ComboBox.ItemTemplate>
 			</ComboBox>
 			<StackPanel Orientation="Horizontal" Spacing="8">
 				<Button Content="Test" Command="{x:Bind ViewModel.TestConnectCommand}" IsEnabled="{x:Bind ViewModel.SelectedSshConnectionInfo.Value, Mode=OneWay, Converter={StaticResource NullToBooleanConverter}}" />

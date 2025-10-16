@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +39,7 @@ public class SshServerSelectorViewModel : BaseSshPageViewModel {
 	/// <summary>
 	/// 利用可能エンコード一覧。
 	/// </summary>
-	public EncodingInfo[] AvailableEncodings {
+	public string[] AvailableEncodings {
 		get;
 	}
 
@@ -74,6 +75,6 @@ public class SshServerSelectorViewModel : BaseSshPageViewModel {
 		this.TestConnectCommand.Subscribe(_ => this._model.TestConnect());
 		this.SelectSshConnectionInfoCommand.Subscribe(vm => this._model.SelectedSshConnectionInfo.Value = vm.Model);
 		this.AddSavedConnectionsCommand.Subscribe(_ => this._model.AddSavedConnection());
-		this.AvailableEncodings = this._model.AvailableEncodings;
+		this.AvailableEncodings = this._model.AvailableEncodings.Select(x => x.Name).ToArray();
 	}
 }
