@@ -74,6 +74,7 @@ public class TextFileViewerModel : ModelBase {
 	/// テキストファイル参照に利用可能なエンコードを取得します。
 	/// </summary>
 	public void LoadAvailableEncoding() {
+		this.AvailableEncodings.Clear();
 		this.AvailableEncodings.AddRange(this._sshService.ListIconvEncodings());
 	}
 
