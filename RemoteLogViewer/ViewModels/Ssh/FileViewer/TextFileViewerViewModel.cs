@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
 
@@ -30,7 +32,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 				view.ResetFilter();
 				return;
 			}
-			view.AttachFilter(ae => ae.Contains(x, StringComparison.OrdinalIgnoreCase));
+			view.AttachFilter(ae => Regex.IsMatch(ae, string.Join(".*?", x.Select(c => c)), RegexOptions.IgnoreCase));
 		}).AddTo(this.CompositeDisposable);
 
 		this.JumpToLineCommand.Subscribe(line => {
