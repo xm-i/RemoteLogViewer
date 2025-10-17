@@ -29,11 +29,11 @@ public sealed partial class TextFileViewer {
 		this.InitializeComponent();
 	}
 
-	private void VirtualScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e) {
+	private void ContentViewer_SizeChanged(object sender, SizeChangedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
-		var visibleLines = Math.Max(1, (int)(e.NewSize.Height / LineHeight));
+		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / LineHeight) - 1);
 		this.ViewModel.VisibleLineCount.Value = visibleLines;
 	}
 

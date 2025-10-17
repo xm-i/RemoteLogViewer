@@ -19,7 +19,8 @@ public class TextFileViewerViewModel : ViewModelBase {
 		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(0, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
-		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => (x + 1) * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.ViewerHeight = this.VisibleLineCount.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
@@ -60,6 +61,11 @@ public class TextFileViewerViewModel : ViewModelBase {
 
 	/// <summary>総高さ。(px)</summary>
 	public IReadOnlyBindableReactiveProperty<long> TotalHeight {
+		get;
+	}
+
+	/// <summary>ビュワー高さ。(px)</summary>
+	public IReadOnlyBindableReactiveProperty<long> ViewerHeight {
 		get;
 	}
 

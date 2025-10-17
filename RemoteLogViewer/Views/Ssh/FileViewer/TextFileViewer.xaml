@@ -58,6 +58,7 @@
 				VerticalScrollBarVisibility="Hidden"
 				HorizontalScrollBarVisibility="Auto"
 				Padding="0,8"
+				SizeChanged="ContentViewer_SizeChanged"
 				PointerWheelChanged="ContentViewer_PointerWheelChanged">
 				<ItemsControl ItemsSource="{x:Bind ViewModel.Lines, Mode=OneWay}"
 					PointerWheelChanged="ContentViewer_PointerWheelChanged">
@@ -69,13 +70,13 @@
 				</ItemsControl>
 			</ScrollViewer>
 			<ScrollViewer x:Name="VirtualScrollViewer"
+				Height="{x:Bind ViewModel.ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
 				Grid.Column="2"
 				VerticalScrollBarVisibility="Visible"
 				HorizontalScrollBarVisibility="Disabled"
 				Background="Transparent"
 				Padding="0"
 				IsTabStop="False"
-				SizeChanged="VirtualScrollViewer_SizeChanged"
 				ViewChanged="VirtualScrollViewer_ViewChanged">
 				<Grid Height="{x:Bind ViewModel.TotalHeight.Value, Mode=OneWay,Converter={StaticResource LongToDoubleConverter}}" />
 			</ScrollViewer>
