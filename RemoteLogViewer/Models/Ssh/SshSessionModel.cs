@@ -47,6 +47,13 @@ public class SshSessionModel : ModelBase {
 		this._store = store;
 		this._textFileViewerModel = textFileViewerModel;
 		this.SavedConnections = store.Items;
+		this._sshService.DisconnectedNotification.Subscribe(x => {
+			// TODO: エラー起因の場合エラー通知
+			this.IsConnected.Value = false;
+			this.Entries.Clear();
+			this.CurrentPath.Value = "/";
+			this._textFileViewerModel.CloseFile();
+		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>
@@ -124,10 +131,6 @@ public class SshSessionModel : ModelBase {
 
 	public void Disconnect() {
 		this._sshService.Disconnect();
-		this.IsConnected.Value = false;
-		this.Entries.Clear();
-		this.CurrentPath.Value = "/";
-		this._textFileViewerModel.CloseFile();
 	}
 
 	public void AddSavedConnection() {

@@ -1,4 +1,5 @@
 using Renci.SshNet;
+using Renci.SshNet.Common;
 
 using System.Collections.Generic;
 using System.Text;
@@ -23,6 +24,14 @@ public class SshService : IDisposable {
 			}
 			var pair = Constants.EncodingPairs.FirstOrDefault(ep => ep.CSharp == this.CSharpEncoding);
 			return pair?.Iconv;
+		}
+	}
+
+	private readonly Subject<Unit> disconnectedSubject = new();
+	public Observable<Unit> DisconnectedNotification {
+		get {
+			field ??= this.disconnectedSubject.AsObservable();
+			return field;
 		}
 	}
 
@@ -62,7 +71,8 @@ public class SshService : IDisposable {
 			connectionInfo.Encoding = Encoding.GetEncoding(encoding);
 			this._client = new SshClient(connectionInfo);
 		}
-
+		this._client.ErrorOccurred += this.SshClientErrorOccurred;
+		this._client.KeepAliveInterval = TimeSpan.FromSeconds(1);
 		this._client.Connect();
 		this.CSharpEncoding = encoding;
 	}
@@ -73,9 +83,16 @@ public class SshService : IDisposable {
 	public void Disconnect() {
 		if (this._client is { IsConnected: true }) {
 			this._client.Disconnect();
+			this.disconnectedSubject.OnNext(Unit.Default);
 		}
+		this._client?.ErrorOccurred -= this.SshClientErrorOccurred;
 		this._client?.Dispose();
 		this._client = null;
+	}
+
+	public void SshClientErrorOccurred(object? sender, ExceptionEventArgs exceptionEventArgs) {
+		// TODO: エラー通知
+		this.Disconnect();
 	}
 
 	/// <summary>
