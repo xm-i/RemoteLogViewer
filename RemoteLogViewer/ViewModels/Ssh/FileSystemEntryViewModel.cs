@@ -9,7 +9,6 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 /// </summary>
 public class FileSystemEntryViewModel {
 	private readonly SshSessionModel _sessionModel;
-	private bool _suppress;
 	/// <summary>元のファイルシステムオブジェクト。</summary>
 	public FileSystemObject Original {
 		get;

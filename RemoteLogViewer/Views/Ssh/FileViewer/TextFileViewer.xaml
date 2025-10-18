@@ -64,7 +64,10 @@
 					PointerWheelChanged="ContentViewer_PointerWheelChanged">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate x:DataType="models:TextLine">
-							<TextBlock Height="18" Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
+							<Grid ColumnDefinitions="Auto,*" HorizontalAlignment="Left">
+								<ProgressRing Width="16" Height="16" Margin="0,1,8,1" IsActive="True" VerticalAlignment="Center" HorizontalAlignment="Left" Visibility="{x:Bind IsLoaded, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+								<TextBlock Grid.Column="1" Height="18" Text="{x:Bind Content}" Visibility="{x:Bind IsLoaded, Converter={StaticResource BooleanToVisibilityConverter}}" IsTextSelectionEnabled="True" FontFamily="Consolas" HorizontalAlignment="Left"/>
+							</Grid>
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
@@ -92,7 +95,6 @@
 			</controls:GridSplitter.RenderTransform>
 		</controls:GridSplitter>
 
-
 		<Grid Grid.Row="3" RowDefinitions="Auto,*" Padding="0,8" CornerRadius="4">
 			<StackPanel Orientation="Horizontal" Spacing="8">
 				<TextBox Width="260" PlaceholderText="grep pattern" Text="{x:Bind ViewModel.GrepQuery.Value, Mode=TwoWay}"/>
@@ -112,7 +114,7 @@
 						<DataTemplate x:DataType="models:TextLine">
 							<Grid ColumnDefinitions="60,Auto" MinHeight="18">
 								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0">
-									<HyperlinkButton Content="{x:Bind LineNumber}" Click="GrepResultLineButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right"/>
+									<HyperlinkButton Content="{x:Bind LineNumber}" Click="GrepResultLineButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
 								</Border>
 								<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
 							</Grid>

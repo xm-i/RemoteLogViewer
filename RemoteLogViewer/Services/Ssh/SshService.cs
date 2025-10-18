@@ -1,8 +1,11 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+
 using Renci.SshNet;
 using Renci.SshNet.Common;
-
-using System.Collections.Generic;
-using System.Text;
 
 namespace RemoteLogViewer.Services.Ssh;
 
@@ -106,6 +109,31 @@ public class SshService : IDisposable {
 		}
 		using var cmd = this._client.CreateCommand(command);
 		return cmd.Execute();
+	}
+
+	/// <summary>
+	/// コマンドを非同期実行し、結果文字列を返します。
+	/// </summary>
+	/// <param name="command">コマンド。</param>
+	/// <param name="cancellationToken">キャンセルトークン</param>
+	/// <returns>標準出力</returns>
+	public async IAsyncEnumerable<string> RunAsync(string command, [EnumeratorCancellation] CancellationToken cancellationToken) {
+		if (this._client is not { IsConnected: true }) {
+			throw new InvalidOperationException("SSH not connected.");
+		}
+		using var cmd = this._client.CreateCommand(command);
+		var task = cmd.ExecuteAsync(cancellationToken);
+
+		using (var sr = new StreamReader(cmd.OutputStream)) {
+			while (true) {
+				var line = await sr.ReadLineAsync(cancellationToken);
+				if (line == null) {
+					break;
+				}
+				yield return line;
+			}
+		}
+		await task;
 	}
 
 	/// <summary>

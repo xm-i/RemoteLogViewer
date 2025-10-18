@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
@@ -124,7 +126,7 @@ public static class SshServiceEx {
 	/// <param name="endLine">終了行 (1 始まり)。</param>
 	/// <param name="fileEncoding">ソースエンコーディング。</param>
 	/// <returns>取得行。</returns>
-	public static IEnumerable<TextLine> GetLines(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? fileEncoding) {
+	public static async IAsyncEnumerable<TextLine> GetLinesAsync(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? fileEncoding, [EnumeratorCancellation] CancellationToken cancellationToken) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("File path is empty.", nameof(remoteFilePath));
 		}
@@ -139,20 +141,13 @@ public static class SshServiceEx {
 		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
-		var output = sshService.Run($"LC_ALL=C sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null" + convertPipe);
-		if (string.IsNullOrEmpty(output)) {
-			return Array.Empty<TextLine>();
+		var command = $"LC_ALL=C sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null" + convertPipe;
+		var lines = sshService.RunAsync(command, cancellationToken);
+
+		await foreach(var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {
+			cancellationToken.ThrowIfCancellationRequested();
+			yield return line;
 		}
-
-		var lines = output.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
-
-		// sed は末尾改行があると空行が最後にできるため除外
-		if (lines.Length > 0 && string.IsNullOrEmpty(lines[^1])) {
-			lines = lines[..^1];
-		}
-
-		// 実際の行番号を付けて返す
-		return lines.Select((content, i) => new TextLine(startLine + i, content));
 	}
 
 	/// <summary>
@@ -164,8 +159,9 @@ public static class SshServiceEx {
 	/// <param name="maxResults">最大件数。</param>
 	/// <param name="ignoreCase">大文字小文字無視。</param>
 	/// <param name="fileEncoding">ファイルエンコーディング。</param>
+	/// <param name="fileEncoding">ソースエンコーディング。</param>
 	/// <returns>一致行。</returns>
-	public static TextLine[] Grep(this SshService sshService, string remoteFilePath, string pattern, int maxResults, bool ignoreCase, string? fileEncoding) {
+	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, int maxResults, bool ignoreCase, string? fileEncoding, [EnumeratorCancellation] CancellationToken cancellationToken) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -175,7 +171,7 @@ public static class SshServiceEx {
 		pattern ??= string.Empty;
 		pattern = pattern.Trim();
 		if (pattern.Length == 0) {
-			return Array.Empty<TextLine>();
+			yield break;
 		}
 		if (maxResults < 1) {
 			throw new ArgumentException("maxResults must be >=1", nameof(maxResults));
@@ -198,13 +194,9 @@ public static class SshServiceEx {
 
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
 		var cmd = $"LC_ALL=C grep -n -h -m {maxResults}{ic} -F --binary-files=text --color=never -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
-		var output = sshService.Run(cmd);
-		if (string.IsNullOrWhiteSpace(output)) {
-			return Array.Empty<TextLine>();
-		}
-		var list = new List<TextLine>();
-		var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-		foreach (var line in lines) {
+		var lines = sshService.RunAsync(cmd, cancellationToken);
+		
+		await foreach (var line in lines) {
 			var idx = line.IndexOf(':');
 			if (idx <= 0) {
 				continue;
@@ -213,9 +205,8 @@ public static class SshServiceEx {
 				continue;
 			}
 			var content = line[(idx + 1)..];
-			list.Add(new TextLine(ln, content));
+			yield return new TextLine(ln, content);
 		}
-		return [.. list];
 	}
 
 	/// <summary>

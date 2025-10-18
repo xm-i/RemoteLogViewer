@@ -5,6 +5,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
+using System.Threading;
 
 namespace RemoteLogViewer.Views.Ssh.FileViewer;
 
@@ -20,7 +21,7 @@ public sealed partial class TextFileViewer {
 				return;
 			}
 			field.WindowStartLine.Subscribe(x => {
-				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight - 1);
+				this.VirtualScrollViewer.ScrollToVerticalOffset((x * LineHeight) - 1);
 			});
 		}
 	}
@@ -88,7 +89,7 @@ public sealed partial class TextFileViewer {
 		if (end < start) {
 			return;
 		}
-		var content = this.ViewModel.GetRangeContent(start, end);
+		var content = await this.ViewModel.GetRangeContent(start, end, new CancellationToken());
 		if (string.IsNullOrEmpty(content)) {
 			return;
 		}

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Threading;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
@@ -18,7 +19,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
-		this.LineNumbers = this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => Enumerable.Range(0, count).Select(x => start + x).ToArray()).ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
+		this.LineNumbers = this._textFileViewerModel.LineNumbers.ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
 		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.ViewerHeight = this.VisibleLineCount.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
@@ -27,7 +28,6 @@ public class TextFileViewerViewModel : ViewModelBase {
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
-		this.GrepCommand.Subscribe(_ => this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value)).AddTo(this.CompositeDisposable);
 		this.SelectedEncoding.Subscribe(x => {
 			if (string.IsNullOrWhiteSpace(x)) {
 				view.ResetFilter();
@@ -40,14 +40,14 @@ public class TextFileViewerViewModel : ViewModelBase {
 			this.WindowStartLine.Value = Math.Max(1, Math.Min(this.TotalLines.Value - this.VisibleLineCount.Value + 1, line));
 		}).AddTo(this.CompositeDisposable);
 
-		this.WindowStartLine
-			.CombineLatest(this.VisibleLineCount, (startLine, visibleLineCount) => (startLine, visibleLineCount))
-			.CombineLatest(this.OpenedFilePath.ObservePropertyChanged(x => x.Value), (a, path) => (a.startLine, a.visibleLineCount, path))
-			.Where(x => x.path != null)
-			.ThrottleFirstLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider)
-			.Subscribe(x => {
-				this._textFileViewerModel.UpdateLines(x.startLine, x.visibleLineCount, this.SelectedEncoding.Value);
-			}).AddTo(this.CompositeDisposable);
+		this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => (start, count)).Subscribe(val => {
+			this._textFileViewerModel.LineNumbers.Value = Enumerable.Range(0, val.count).Select(x => val.start + x).ToArray();
+		});
+
+		this.GrepCommand.SubscribeAwait(async (x, ct) => {
+			await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, ct);
+		}).AddTo(this.CompositeDisposable);
+
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -93,7 +93,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// <summary>GREP クエリ。</summary>
 	public BindableReactiveProperty<string> GrepQuery {
 		get;
-	} = new();
+	} = new("");
 
 	/// <summary>GREP 結果。</summary>
 	public NotifyCollectionChangedSynchronizedViewList<TextLine> GrepResults {
@@ -114,7 +114,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	}
 
 	/// <summary>選択エンコーディング。</summary>
-	public BindableReactiveProperty<string> SelectedEncoding {
+	public BindableReactiveProperty<string?> SelectedEncoding {
 		get;
 	} = new();
 
@@ -126,13 +126,13 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// <summary>
 	/// 指定範囲のテキストを取得します。
 	/// </summary>
-	public string? GetRangeContent(long startLine, long endLine) {
-		return this._textFileViewerModel.GetRangeContent(startLine, endLine, this.SelectedEncoding.Value);
+	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken cancellationToken) {
+		return await this._textFileViewerModel.GetRangeContent(startLine, endLine, cancellationToken);
 	}
 	/// <summary>
 	///     ファイルを開きます。
 	/// </summary>
 	public void OpenFile(string path, FileSystemObject fso) {
-		this._textFileViewerModel.OpenFile(path, fso);
+		this._textFileViewerModel.OpenFile(path, fso, this.SelectedEncoding.Value);
 	}
 }
