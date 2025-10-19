@@ -127,6 +127,11 @@ public class SshService : IDisposable {
 
 		using (var sr = new StreamReader(cmd.OutputStream)) {
 			while (true) {
+				try {
+					cancellationToken.ThrowIfCancellationRequested();
+				} catch (OperationCanceledException) {
+					yield break;
+				}
 				var line = await sr.ReadLineAsync(cancellationToken);
 				if (line == null) {
 					break;
@@ -134,7 +139,6 @@ public class SshService : IDisposable {
 				yield return line;
 			}
 		}
-		await task;
 	}
 
 	/// <summary>

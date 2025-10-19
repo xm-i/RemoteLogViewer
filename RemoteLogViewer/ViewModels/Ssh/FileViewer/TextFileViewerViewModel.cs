@@ -55,7 +55,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 			Debug.WriteLine($"Grep start: {x}");
 			await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, ct);
 			Debug.WriteLine("Grep end");
-		}).AddTo(this.CompositeDisposable);
+		}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 	}
 

@@ -153,7 +153,11 @@ public static class SshServiceEx {
 
 		var lines = sshService.RunAsync(command, cancellationToken);
 		await foreach (var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {
-			cancellationToken.ThrowIfCancellationRequested();
+			try {
+				cancellationToken.ThrowIfCancellationRequested();
+			} catch (OperationCanceledException) {
+				yield break;
+			}
 			yield return line;
 		}
 	}
@@ -197,10 +201,15 @@ public static class SshServiceEx {
 		}
 
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
-		var cmd = $"LC_ALL=C grep -n -h {ic} -F --binary-files=text --color=never -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
+		var cmd = $"LC_ALL=C grep -n -h {ic} -F --binary-files=text --color=never --line-buffered -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
 		var lines = sshService.RunAsync(cmd, cancellationToken);
 		
 		await foreach (var line in lines) {
+			try {
+				cancellationToken.ThrowIfCancellationRequested();
+			} catch (OperationCanceledException) {
+				yield break;
+			}
 			var idx = line.IndexOf(':');
 			if (idx <= 0) {
 				continue;
@@ -235,7 +244,12 @@ public static class SshServiceEx {
 		var cmd = $"awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR, offset }} END {{ if (NR%{interval} != 0) print NR, offset }}' '{escapedPath}' 2>/dev/null";
 		var lines = sshService.RunAsync(cmd, cancellationToken);
 
-		await foreach (var line in lines.WithCancellation(cancellationToken)) {
+		await foreach (var line in lines) {
+			try {
+				cancellationToken.ThrowIfCancellationRequested();
+			} catch (OperationCanceledException) {
+				yield break;
+			}
 			var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 			if (parts.Length != 2) {
 				continue;

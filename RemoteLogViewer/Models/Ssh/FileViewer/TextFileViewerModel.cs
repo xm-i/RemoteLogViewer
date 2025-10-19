@@ -44,7 +44,7 @@ public class TextFileViewerModel : ModelBase {
 			.ThrottleFirstLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider)
 			.SubscribeAwait(async (x, ct) => {
 				await this.PreLoadLinesAsync(x.lineNumbers.Min(), x.lineNumbers.Length, ct);
-			}).AddTo(this.CompositeDisposable);
+			}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		// 表示行内容更新
 		this.LoadedLines
@@ -229,7 +229,7 @@ public class TextFileViewerModel : ModelBase {
 		this.GrepResults.Clear();
 		try {
 			this.IsGrepRunning.Value = true;
-			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, 1000, false, encoding, cancellationToken);
+			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, cancellationToken);
 			await foreach(var line in lines) {
 				this.GrepResults.Add(line);
 			}
