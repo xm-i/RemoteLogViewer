@@ -141,7 +141,7 @@ public static class SshServiceEx {
 		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
-		var command = $"LC_ALL=C sed -n '{startLine},{endLine}p' '{escaped}' 2>/dev/null" + convertPipe;
+		var command = $"LC_ALL=C sed -n '{startLine},{endLine}p;{endLine}q' '{escaped}' 2>/dev/null" + convertPipe;
 		var lines = sshService.RunAsync(command, cancellationToken);
 
 		await foreach(var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {

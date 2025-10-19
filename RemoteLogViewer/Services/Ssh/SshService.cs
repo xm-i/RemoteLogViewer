@@ -121,6 +121,7 @@ public class SshService : IDisposable {
 		if (this._client is not { IsConnected: true }) {
 			throw new InvalidOperationException("SSH not connected.");
 		}
+		
 		using var cmd = this._client.CreateCommand(command);
 		var task = cmd.ExecuteAsync(cancellationToken);
 

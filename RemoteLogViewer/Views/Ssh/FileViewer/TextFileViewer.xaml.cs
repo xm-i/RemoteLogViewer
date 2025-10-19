@@ -6,6 +6,7 @@ using Windows.Storage.Pickers;
 using WinRT.Interop;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
 using System.Threading;
+using System.Diagnostics;
 
 namespace RemoteLogViewer.Views.Ssh.FileViewer;
 
@@ -34,6 +35,7 @@ public sealed partial class TextFileViewer {
 		if (this.ViewModel == null) {
 			return;
 		}
+		Debug.WriteLine($"ContentViewer_SizeChanged: {e.NewSize.Height}");
 		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / LineHeight) - 1);
 		this.ViewModel.VisibleLineCount.Value = visibleLines;
 	}
@@ -46,6 +48,7 @@ public sealed partial class TextFileViewer {
 			// スクロール中は無視
 			return;
 		}
+		Debug.WriteLine($"VirtualScrollViewer_ViewChanged: {this.VirtualScrollViewer.VerticalOffset}");
 		this.ViewModel.JumpToLineCommand.Execute((long)this.VirtualScrollViewer.VerticalOffset / LineHeight);
 	}
 
@@ -57,6 +60,7 @@ public sealed partial class TextFileViewer {
 		if (properties.IsHorizontalMouseWheel) {
 			return;
 		}
+		Debug.WriteLine($"ContentViewer_PointerWheelChanged: {properties.MouseWheelDelta}");
 		// ホイール delta
 		var delta = properties.MouseWheelDelta;
 

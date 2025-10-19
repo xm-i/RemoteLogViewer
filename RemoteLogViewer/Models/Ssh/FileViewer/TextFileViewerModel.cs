@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +18,8 @@ public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
 	private const double loadingBuffer = 5;
 	private readonly Lock _syncObj = new();
+	private readonly ConcurrentDictionary<Guid,CancellationToken> _cancellationTokens = [];
+
 	public TextFileViewerModel(SshService sshService) {
 		this._sshService = sshService;
 
@@ -23,10 +29,12 @@ public class TextFileViewerModel : ModelBase {
 
 		// 表示行枠確保
 		lineNumbersChangedStream.Subscribe(x => {
+			Debug.WriteLine($"lineNumbersChanged start:{x.lineNumbers.FirstOrDefault()}");
 			lock (this._syncObj) {
 				this.Lines.Clear();
 				this.Lines.AddRange(x.lineNumbers.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val : new TextLine(num, "", false)));
 			}
+			Debug.WriteLine("lineNumbersChanged end");
 		});
 
 		// 表示行データ取得
@@ -37,19 +45,23 @@ public class TextFileViewerModel : ModelBase {
 			}).AddTo(this.CompositeDisposable);
 
 		// 表示行内容更新
-		this.LoadedLines.ObserveChanged().Subscribe(x => {
-			if (x.Action != NotifyCollectionChangedAction.Add && x.Action != NotifyCollectionChangedAction.Replace) {
-				return;
-			}
-			lock (this._syncObj) {
-				foreach (var (tl, i) in this.Lines.Select((tl, i) => (tl, i)).ToArray()) {
-					if (tl.LineNumber != x.NewItem.Value.LineNumber) {
-						continue;
+		this.LoadedLines
+			.ObserveChanged()
+			.ObserveOn(TimeProvider.System)
+			.Where(x => x.Action == NotifyCollectionChangedAction.Add || x.Action == NotifyCollectionChangedAction.Replace)
+			.ObserveOn(ObservableSystem.DefaultTimeProvider)
+			.Subscribe(x => {
+				Debug.WriteLine($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
+				lock (this._syncObj) {
+					foreach (var (tl, i) in this.Lines.Select((tl, i) => (tl, i)).ToArray()) {
+						if (tl.LineNumber != x.NewItem.Value.LineNumber) {
+							continue;
+						}
+						this.Lines[i] = x.NewItem.Value;
 					}
-					this.Lines[i] = x.NewItem.Value;
 				}
-			}
-		});
+				Debug.WriteLine($"loadedLines updated end");
+			});
 	}
 
 	public ReactiveProperty<long[]> LineNumbers {
@@ -136,47 +148,54 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="visibleCount">表示可能行</param>
 	/// <param name="cancellationToken">キャンセルトークン</param>
 	private async Task PreLoadLinesAsync(long startLine, long visibleCount, CancellationToken cancellationToken) {
-		if (this.OpenedFilePath.Value == null) {
-			throw new InvalidOperationException();
-		}
+		var guid = Guid.NewGuid();
+		this._cancellationTokens.TryAdd(guid, cancellationToken);
 
-		// 読み込み行設定
-		var loadStartLine = Math.Max(1, startLine - (int)(visibleCount * loadingBuffer));
-		var loadEndLine = Math.Min(this.TotalLines.Value, startLine + (int)(visibleCount * loadingBuffer));
+		try {
+			if (this.OpenedFilePath.Value == null) {
+				throw new InvalidOperationException();
+			}
 
-		// 読み込み済み範囲は除外 (開始行)
-		for (var i = loadStartLine; i <= loadEndLine; i++) {
-			if (this.LoadedLines.ContainsKey(i)) {
-				if (i == loadStartLine) {
-					loadStartLine++;
+			// 読み込み行設定
+			var loadStartLine = Math.Max(1, startLine - (int)(visibleCount * loadingBuffer));
+			var loadEndLine = Math.Min(this.TotalLines.Value, startLine + (int)(visibleCount * loadingBuffer));
+
+			// 読み込み済み範囲は除外 (開始行)
+			for (var i = loadStartLine; i <= loadEndLine; i++) {
+				if (this.LoadedLines.ContainsKey(i)) {
+					if (i == loadStartLine) {
+						loadStartLine++;
+					}
 				}
 			}
-		}
 
-		// 読み込み済み範囲は除外 (終了行)
-		for (var i = loadEndLine; i >= loadStartLine; i--) {
-			if (this.LoadedLines.ContainsKey(i)) {
-				if (i == loadEndLine) {
-					loadEndLine--;
+			// 読み込み済み範囲は除外 (終了行)
+			for (var i = loadEndLine; i >= loadStartLine; i--) {
+				if (this.LoadedLines.ContainsKey(i)) {
+					if (i == loadEndLine) {
+						loadEndLine--;
+					}
 				}
 			}
-		}
 
-		if (
-			loadEndLine < loadStartLine ||
-			((
-				loadStartLine > startLine + visibleCount ||
-				loadEndLine < startLine
-			) &&
-			loadEndLine - loadStartLine < visibleCount)) {
-			// 読み込み対象行がないか、読み込み対象が表示範囲外かつ、読み込み対象が少ない場合は読み込みスキップ
-			return;
-		}
+			if (
+				loadEndLine < loadStartLine ||
+				((
+					loadStartLine > startLine + visibleCount ||
+					loadEndLine < startLine
+				) &&
+				loadEndLine - loadStartLine < visibleCount)) {
+				// 読み込み対象行がないか、読み込み対象が表示範囲外かつ、読み込み対象が少ない場合は読み込みスキップ
+				return;
+			}
 
-		var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, cancellationToken);
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, cancellationToken);
 
-		await foreach (var line in lines) {
-			this.LoadedLines[line.LineNumber] = line;
+			await foreach (var line in lines) {
+				this.LoadedLines[line.LineNumber] = line;
+			}
+		} finally {
+			this._cancellationTokens.TryRemove(guid, out _);
 		}
 	}
 
@@ -184,6 +203,8 @@ public class TextFileViewerModel : ModelBase {
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
 	public async Task Grep(string? query, string? encoding, CancellationToken cancellationToken) {
+		var guid = Guid.NewGuid();
+		this._cancellationTokens.TryAdd(guid, cancellationToken);
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
@@ -200,6 +221,7 @@ public class TextFileViewerModel : ModelBase {
 			}
 		} finally {
 			this.IsGrepRunning.Value = false;
+			this._cancellationTokens.TryRemove(guid, out _);
 		}
 	}
 
@@ -212,7 +234,7 @@ public class TextFileViewerModel : ModelBase {
 	}
 
 	/// <summary>
-	/// 指定行範囲のテキスト内容 (UTF-8) を取得します。
+	/// 指定行範囲のテキスト内容を取得します。
 	/// </summary>
 	/// <param name="startLine">開始行 (1 始まり)</param>
 	/// <param name="endLine">終了行 (1 始まり)</param>
@@ -220,15 +242,21 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="cancellationToken">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
 	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken cancellationToken) {
-		if (this.OpenedFilePath.Value == null) {
-			return null;
+		var guid = Guid.NewGuid();
+		this._cancellationTokens.TryAdd(guid, cancellationToken);
+		try {
+			if (this.OpenedFilePath.Value == null) {
+				return null;
+			}
+			if (startLine < 1 || endLine < startLine) {
+				return null;
+			}
+			endLine = Math.Min(endLine, this.TotalLines.Value);
+			var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, cancellationToken).ToArrayAsync();
+			return string.Join("\n", lines.Select(l => l.Content));
+		} finally {
+			this._cancellationTokens.TryRemove(guid, out _);
 		}
-		if (startLine < 1 || endLine < startLine) {
-			return null;
-		}
-		endLine = Math.Min(endLine, this.TotalLines.Value);
-		var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, cancellationToken).ToArrayAsync();
-		return string.Join("\n", lines.Select(l => l.Content));
 	}
 
 	/// <summary>
@@ -240,5 +268,12 @@ public class TextFileViewerModel : ModelBase {
 		this.GrepResults.Clear();
 		this.LoadedLines.Clear();
 		this.Lines.Clear();
+		foreach (var ct in this._cancellationTokens.Values) {
+			try {
+				ct.ThrowIfCancellationRequested();
+			} catch {
+				// ignore
+			}
+		}
 	}
 }

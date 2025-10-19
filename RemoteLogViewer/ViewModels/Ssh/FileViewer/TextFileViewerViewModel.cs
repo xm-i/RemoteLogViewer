@@ -1,5 +1,8 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
+
+using Microsoft.UI.Xaml.Shapes;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
@@ -36,16 +39,22 @@ public class TextFileViewerViewModel : ViewModelBase {
 			view.AttachFilter(ae => Regex.IsMatch(ae, string.Join(".*?", x.Select(c => c)), RegexOptions.IgnoreCase));
 		}).AddTo(this.CompositeDisposable);
 
-		this.JumpToLineCommand.Subscribe(line => {
+		this.JumpToLineCommand.Where(x => x != this.WindowStartLine.Value).Subscribe(line => {
+			Debug.WriteLine($"Jump to Line Command start: {line}");
 			this.WindowStartLine.Value = Math.Max(1, Math.Min(this.TotalLines.Value - this.VisibleLineCount.Value + 1, line));
+			Debug.WriteLine("Jump to Line Command end");
 		}).AddTo(this.CompositeDisposable);
 
 		this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => (start, count)).Subscribe(val => {
+			Debug.WriteLine("Set LineNumbers start: " + val.start + " - " + (val.start + val.count - 1));
 			this._textFileViewerModel.LineNumbers.Value = Enumerable.Range(0, val.count).Select(x => val.start + x).ToArray();
+			Debug.WriteLine("Set LineNumbers end: " + val.start + " - " + (val.start + val.count - 1));
 		});
 
 		this.GrepCommand.SubscribeAwait(async (x, ct) => {
+			Debug.WriteLine($"Grep start: {x}");
 			await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, ct);
+			Debug.WriteLine("Grep end");
 		}).AddTo(this.CompositeDisposable);
 
 	}
