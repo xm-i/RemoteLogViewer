@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,7 @@ public class TextFileViewerModel : ModelBase {
 	private const double loadingBuffer = 5;
 	private readonly Lock _syncObj = new();
 	private readonly ConcurrentDictionary<Guid,CancellationToken> _cancellationTokens = [];
+	private readonly List<ByteOffset> _byteOffsetMap = [];
 
 	public TextFileViewerModel(SshService sshService) {
 		this._sshService = sshService;
@@ -47,9 +49,7 @@ public class TextFileViewerModel : ModelBase {
 		// 表示行内容更新
 		this.LoadedLines
 			.ObserveChanged()
-			.ObserveOn(TimeProvider.System)
 			.Where(x => x.Action == NotifyCollectionChangedAction.Add || x.Action == NotifyCollectionChangedAction.Replace)
-			.ObserveOn(ObservableSystem.DefaultTimeProvider)
 			.Subscribe(x => {
 				Debug.WriteLine($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
 				lock (this._syncObj) {
@@ -116,18 +116,31 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="path">パス。</param>
 	/// <param name="fso">ファイル。</param>
 	/// <param name="encoding">エンコード</param>
-	public void OpenFile(string path, FileSystemObject fso, string? encoding) {
+	/// <param name="cancellationToken">キャンセルトークン。</param>
+	public async Task OpenFile(string path, FileSystemObject fso, string? encoding, CancellationToken cancellationToken = default) {
 		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
 			return;
 		}
 		this.ResetStates();
 		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName);
 		var escaped = fullPath.Replace("\"", "\\\"");
+
 		try {
-			this.TotalLines.Value = this._sshService.GetLineCount(fullPath);
 			this.OpenedFilePath.Value = fullPath;
 			this.FileEncoding.Value = encoding;
-		} catch {
+			// 非同期でバイトオフセットマップ作成
+			if (this.OpenedFilePath.Value != null) {
+				this._byteOffsetMap.Clear();
+				try {
+					await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, 10000, cancellationToken)) {
+						this._byteOffsetMap.Add(entry);
+						this.TotalLines.Value = entry.LineNumber;
+					}
+				} catch {
+					// TODO: エラー処理
+				}
+			}
+		} finally {
 			this.OpenedFilePath.Value = fullPath;
 		}
 	}
@@ -189,7 +202,8 @@ public class TextFileViewerModel : ModelBase {
 				return;
 			}
 
-			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, cancellationToken);
+			var byteOffset = this.FindOffset(loadStartLine);
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, byteOffset, cancellationToken);
 
 			await foreach (var line in lines) {
 				this.LoadedLines[line.LineNumber] = line;
@@ -252,7 +266,8 @@ public class TextFileViewerModel : ModelBase {
 				return null;
 			}
 			endLine = Math.Min(endLine, this.TotalLines.Value);
-			var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, cancellationToken).ToArrayAsync();
+			var byteOffset = this.FindOffset(startLine);
+			var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, cancellationToken).ToArrayAsync();
 			return string.Join("\n", lines.Select(l => l.Content));
 		} finally {
 			this._cancellationTokens.TryRemove(guid, out _);
@@ -263,11 +278,6 @@ public class TextFileViewerModel : ModelBase {
 	/// リセット
 	/// </summary>
 	private void ResetStates() {
-		this.TotalLines.Value = 0;
-		this.OpenedFilePath.Value = null;
-		this.GrepResults.Clear();
-		this.LoadedLines.Clear();
-		this.Lines.Clear();
 		foreach (var ct in this._cancellationTokens.Values) {
 			try {
 				ct.ThrowIfCancellationRequested();
@@ -275,5 +285,23 @@ public class TextFileViewerModel : ModelBase {
 				// ignore
 			}
 		}
+		this.TotalLines.Value = 0;
+		this.OpenedFilePath.Value = null;
+		this.GrepResults.Clear();
+		this.LoadedLines.Clear();
+		this.Lines.Clear();
+		this._byteOffsetMap.Clear();
+	}
+
+	private ByteOffset FindOffset(long targetLine) {
+		ByteOffset result = new(0, 0);
+		foreach (var bo in this._byteOffsetMap) {
+			if (bo.LineNumber < targetLine) {
+				result = bo;
+			} else {
+				break; // assuming map sorted ascending
+			}
+		}
+		return result;
 	}
 }

@@ -126,7 +126,7 @@ public static class SshServiceEx {
 	/// <param name="endLine">終了行 (1 始まり)。</param>
 	/// <param name="fileEncoding">ソースエンコーディング。</param>
 	/// <returns>取得行。</returns>
-	public static async IAsyncEnumerable<TextLine> GetLinesAsync(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? fileEncoding, [EnumeratorCancellation] CancellationToken cancellationToken) {
+	public static async IAsyncEnumerable<TextLine> GetLinesAsync(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? fileEncoding, ByteOffset byteOffset, [EnumeratorCancellation] CancellationToken cancellationToken) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("File path is empty.", nameof(remoteFilePath));
 		}
@@ -139,12 +139,20 @@ public static class SshServiceEx {
 		if (sshService.IconvEncoding == null) {
 			throw new InvalidOperationException("Iconv Encoding not found.");
 		}
+		if (byteOffset.LineNumber > startLine) {
+			throw new ArgumentException("byteOffset.LineNumber is less than startLine", nameof(byteOffset));
+		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
-		var command = $"LC_ALL=C sed -n '{startLine},{endLine}p;{endLine}q' '{escaped}' 2>/dev/null" + convertPipe;
-		var lines = sshService.RunAsync(command, cancellationToken);
 
-		await foreach(var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {
+		string command;
+		var relativeStart = startLine - byteOffset.LineNumber;
+		var relativeEnd = endLine - byteOffset.LineNumber;
+		var startBytes = byteOffset.bytes + 1;
+		command = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | sed -n '{relativeStart},{relativeEnd}p;{relativeEnd}q' 2>/dev/null" + convertPipe;
+
+		var lines = sshService.RunAsync(command, cancellationToken);
+		await foreach (var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {
 			cancellationToken.ThrowIfCancellationRequested();
 			yield return line;
 		}
@@ -206,6 +214,43 @@ public static class SshServiceEx {
 			}
 			var content = line[(idx + 1)..];
 			yield return new TextLine(ln, content);
+		}
+	}
+
+	/// <summary>
+	///     大規模ファイル向け: 行番号からおおよそのバイトオフセットを取得するためのインデックスを一定間隔で作成します。
+	///     返されるByteOffset は <paramref name="remoteFilePath"/> 先頭からのオフセット (改行含む) です。
+	///     最終行後(EOF) の行番号 + 1 と最終オフセットも出力されます。
+	/// </summary>
+	/// <param name="sshService">SSH サービス。</param>
+	/// <param name="remoteFilePath">対象ファイル 。</param>
+	/// <param name="interval">インデックス間隔行数。1 以上。</param>
+	/// <param name="cancellationToken">キャンセルトークン</param>
+	/// <returns>インデックス列挙。</returns>
+	public static async IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(this SshService sshService, string remoteFilePath, int interval, [EnumeratorCancellation] CancellationToken cancellationToken) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
+		}
+
+		if (interval < 1) {
+			throw new ArgumentException("interval must be >=1", nameof(interval));
+		}
+		var escapedPath = EscapeSingleQuotes(remoteFilePath);
+		var cmd = $"awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR, offset }} END {{ if (NR%{interval} != 0) print NR, offset }}' '{escapedPath}' 2>/dev/null";
+		var lines = sshService.RunAsync(cmd, cancellationToken);
+
+		await foreach (var line in lines.WithCancellation(cancellationToken)) {
+			var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			if (parts.Length != 2) {
+				continue;
+			}
+			if (!long.TryParse(parts[0], out var ln)) {
+				continue;
+			}
+			if (!ulong.TryParse(parts[1], out var off)) {
+				continue;
+			}
+			yield return new ByteOffset(ln, off);
 		}
 	}
 
