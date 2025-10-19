@@ -25,7 +25,7 @@
 				AddTabButtonCommand="{x:Bind ViewModel.AddTabCommand}">
 			<TabView.TabItemTemplate>
 				<DataTemplate x:DataType="vm:LogViewerViewModel">
-					<TabViewItem Header="{x:Bind Title}" IsClosable="True">
+					<TabViewItem Header="{x:Bind Title.Value, Mode=OneWay}" IsClosable="True">
 						<views:LogViewerControl ViewModel="{x:Bind }" />
 					</TabViewItem>
 				</DataTemplate>

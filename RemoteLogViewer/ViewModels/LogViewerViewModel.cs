@@ -1,3 +1,5 @@
+using System.IO;
+
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.ViewModels.Ssh;
 
@@ -12,10 +14,9 @@ public class LogViewerViewModel : ViewModelBase {
 	/// <summary>
 	///     タブタイトルを取得します。
 	/// </summary>
-	public string Title {
+	public BindableReactiveProperty<string> Title {
 		get;
-		set;
-	} = string.Empty;
+	} = new();
 
 	/// <summary>
 	///     セッションマネージャ ViewModel への参照。
@@ -46,6 +47,19 @@ public class LogViewerViewModel : ViewModelBase {
 		this.SshBrowserViewModel = sshBrowserViewModel;
 		this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;
 		this._sshSessionModel = sshSessionModel;
+
+		this.SshBrowserViewModel
+			.TextFileViewerViewModel
+			.OpenedFilePath
+			.ObservePropertyChanged(x => x.Value)
+			.CombineLatest(
+				sshServerSelectorViewModel
+					.SelectedSshConnectionInfo
+					.ObservePropertyChanged(x => x.Value),
+				(filePath, connInfo) => (filePath, connInfo))
+			.Subscribe(x => {
+			this.Title.Value = $"{Path.GetFileName(x.filePath) ?? string.Empty} @ {x.connInfo?.Name.Value ?? string.Empty}";
+		}).AddTo(this.CompositeDisposable);
 
 		sshSessionModel.IsConnected.Subscribe(isConnected => {
 			if (isConnected) {
