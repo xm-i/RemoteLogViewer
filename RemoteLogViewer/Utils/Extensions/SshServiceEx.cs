@@ -164,12 +164,11 @@ public static class SshServiceEx {
 	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイル。</param>
 	/// <param name="pattern">パターン。</param>
-	/// <param name="maxResults">最大件数。</param>
 	/// <param name="ignoreCase">大文字小文字無視。</param>
 	/// <param name="fileEncoding">ファイルエンコーディング。</param>
 	/// <param name="fileEncoding">ソースエンコーディング。</param>
 	/// <returns>一致行。</returns>
-	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, int maxResults, bool ignoreCase, string? fileEncoding, [EnumeratorCancellation] CancellationToken cancellationToken) {
+	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, [EnumeratorCancellation] CancellationToken cancellationToken) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -180,9 +179,6 @@ public static class SshServiceEx {
 		pattern = pattern.Trim();
 		if (pattern.Length == 0) {
 			yield break;
-		}
-		if (maxResults < 1) {
-			throw new ArgumentException("maxResults must be >=1", nameof(maxResults));
 		}
 
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
@@ -201,7 +197,7 @@ public static class SshServiceEx {
 		}
 
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
-		var cmd = $"LC_ALL=C grep -n -h -m {maxResults}{ic} -F --binary-files=text --color=never -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
+		var cmd = $"LC_ALL=C grep -n -h {ic} -F --binary-files=text --color=never -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
 		var lines = sshService.RunAsync(cmd, cancellationToken);
 		
 		await foreach (var line in lines) {
