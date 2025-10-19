@@ -1,6 +1,7 @@
 using System.Text;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
+using RemoteLogViewer.Services;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Utils.Extensions;
 
@@ -14,6 +15,7 @@ public class SshSessionModel : ModelBase {
 	private readonly SshService _sshService;
 	private readonly SshConnectionStoreModel _store;
 	private readonly TextFileViewerModel _textFileViewerModel;
+	private readonly NotificationService _notificationService;
 	/// <summary>接続済みか。</summary>
 	public ReactiveProperty<bool> IsConnected {
 		get;
@@ -42,10 +44,11 @@ public class SshSessionModel : ModelBase {
 		get;
 	} = Encoding.GetEncodings().Where(x => Constants.EncodingPairs.Any(ep => ep.CSharp == x.Name)).ToArray();
 
-	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store) {
+	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService) {
 		this._sshService = sshService;
 		this._store = store;
 		this._textFileViewerModel = textFileViewerModel;
+		this._notificationService = notificationService;
 		this.SavedConnections = store.Items;
 		this._sshService.DisconnectedNotification.Subscribe(x => {
 			// TODO: エラー起因の場合エラー通知
@@ -127,6 +130,7 @@ public class SshSessionModel : ModelBase {
 		}
 		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, ci.EncodingString.Value);
 		this.Disconnect();
+		this._notificationService.Publish("SSH", "接続に成功しました。", NotificationSeverity.Info);
 	}
 
 	public void Disconnect() {

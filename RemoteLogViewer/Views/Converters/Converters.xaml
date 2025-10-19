@@ -10,4 +10,5 @@
 	<conv:LongToDoubleConverter x:Key="LongToDoubleConverter" />
 	<conv:NullToBooleanConverter x:Key="NullToBooleanConverter" />
 	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />
+	<conv:SeverityToGlyphConverter x:Key="SeverityToGlyphConverter" />
 </ResourceDictionary>

@@ -14,6 +14,7 @@ namespace RemoteLogViewer.Services.Ssh;
 /// </summary>
 [AddScoped]
 public class SshService : IDisposable {
+	private readonly NotificationService _notificationService;
 	private SshClient? _client;
 	public string? CSharpEncoding {
 		get;
@@ -38,6 +39,10 @@ public class SshService : IDisposable {
 		}
 	}
 
+	public SshService(NotificationService notificationService) {
+		this._notificationService = notificationService;
+	}
+
 	/// <summary>
 	///     パスワード / 鍵認証で接続します。password と privateKeyPath の両方が指定された場合は複数メソッドで試行します。
 	/// </summary>
@@ -50,34 +55,38 @@ public class SshService : IDisposable {
 	/// <param name="encoding">文字エンコード(CSharpのEncoding.GetEncoding()で取得可能な名称</param>
 	public void Connect(string host, int port, string user, string? password, string? privateKeyPath, string? privateKeyPassphrase, string encoding) {
 		this.Disconnect();
-
-		if (!string.IsNullOrWhiteSpace(privateKeyPath)) {
-			var methods = new List<AuthenticationMethod>();
-			// 鍵認証
-			PrivateKeyFile pkFile;
-			if (!string.IsNullOrEmpty(privateKeyPassphrase)) {
-				pkFile = new PrivateKeyFile(privateKeyPath, privateKeyPassphrase);
+		try {
+			if (!string.IsNullOrWhiteSpace(privateKeyPath)) {
+				var methods = new List<AuthenticationMethod>();
+				// 鍵認証
+				PrivateKeyFile pkFile;
+				if (!string.IsNullOrEmpty(privateKeyPassphrase)) {
+					pkFile = new PrivateKeyFile(privateKeyPath, privateKeyPassphrase);
+				} else {
+					pkFile = new PrivateKeyFile(privateKeyPath);
+				}
+				methods.Add(new PrivateKeyAuthenticationMethod(user, pkFile));
+				// 併用できる場合はパスワードも追加
+				if (!string.IsNullOrWhiteSpace(password)) {
+					methods.Add(new PasswordAuthenticationMethod(user, password));
+				}
+				var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]);
+				connectionInfo.Encoding = Encoding.GetEncoding(encoding);
+				this._client = new SshClient(connectionInfo);
 			} else {
-				pkFile = new PrivateKeyFile(privateKeyPath);
+				// 従来のパスワード専用
+				var connectionInfo = new ConnectionInfo(host, port, user, [new PasswordAuthenticationMethod(user, password ?? string.Empty)]);
+				connectionInfo.Encoding = Encoding.GetEncoding(encoding);
+				this._client = new SshClient(connectionInfo);
 			}
-			methods.Add(new PrivateKeyAuthenticationMethod(user, pkFile));
-			// 併用できる場合はパスワードも追加
-			if (!string.IsNullOrWhiteSpace(password)) {
-				methods.Add(new PasswordAuthenticationMethod(user, password));
-			}
-			var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]);
-			connectionInfo.Encoding = Encoding.GetEncoding(encoding);
-			this._client = new SshClient(connectionInfo);
-		} else {
-			// 従来のパスワード専用
-			var connectionInfo = new ConnectionInfo(host, port, user, [new PasswordAuthenticationMethod(user, password ?? string.Empty)]);
-			connectionInfo.Encoding = Encoding.GetEncoding(encoding);
-			this._client = new SshClient(connectionInfo);
+			this._client.ErrorOccurred += this.SshClientErrorOccurred;
+			this._client.KeepAliveInterval = TimeSpan.FromSeconds(1);
+			this._client.Connect();
+			this.CSharpEncoding = encoding;
+		} catch (Exception ex) {
+			this._notificationService.Publish("SSH", $"接続に失敗しました: {ex.Message}", NotificationSeverity.Error, ex);
+			throw;
 		}
-		this._client.ErrorOccurred += this.SshClientErrorOccurred;
-		this._client.KeepAliveInterval = TimeSpan.FromSeconds(1);
-		this._client.Connect();
-		this.CSharpEncoding = encoding;
 	}
 
 	/// <summary>
@@ -94,7 +103,7 @@ public class SshService : IDisposable {
 	}
 
 	public void SshClientErrorOccurred(object? sender, ExceptionEventArgs exceptionEventArgs) {
-		// TODO: エラー通知
+		this._notificationService.Publish("SSH", exceptionEventArgs.Exception.Message, NotificationSeverity.Error, exceptionEventArgs.Exception);
 		this.Disconnect();
 	}
 
@@ -109,7 +118,12 @@ public class SshService : IDisposable {
 		}
 		using var cmd = this._client.CreateCommand(command);
 		Debug.WriteLine($"Run: {command}");
-		return cmd.Execute();
+		try {
+			return cmd.Execute();
+		} catch (Exception ex) {
+			this._notificationService.Publish("SSH", $"コマンド失敗: {command} : {ex.Message}", NotificationSeverity.Error, ex);
+			throw;
+		}
 	}
 
 	/// <summary>
@@ -122,7 +136,6 @@ public class SshService : IDisposable {
 		if (this._client is not { IsConnected: true }) {
 			throw new InvalidOperationException("SSH not connected.");
 		}
-		
 		using var cmd = this._client.CreateCommand(command);
 		var task = cmd.ExecuteAsync(ct);
 		Debug.WriteLine($"RunAsync: {command}");
