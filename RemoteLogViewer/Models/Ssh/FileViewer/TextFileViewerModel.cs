@@ -42,7 +42,9 @@ public class TextFileViewerModel : ModelBase {
 		lineNumbersChangedStream
 			.ThrottleFirstLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider)
 			.SubscribeAwait(async (x, ct) => {
+				Debug.WriteLine($"PreLoadLines start:{x.lineNumbers.Min()},{x.lineNumbers.Length}");
 				await this.PreLoadLinesAsync(x.lineNumbers.Min(), x.lineNumbers.Length, ct);
+				Debug.WriteLine($"PreLoadLines end");
 			}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		// 表示行内容更新
@@ -170,7 +172,7 @@ public class TextFileViewerModel : ModelBase {
 
 			// 読み込み行設定
 			var loadStartLine = Math.Max(1, startLine - (int)(visibleCount * loadingBuffer));
-			var loadEndLine = Math.Min(this.TotalLines.Value, startLine + (int)(visibleCount * loadingBuffer));
+			var loadEndLine = startLine + (int)(visibleCount * loadingBuffer);
 
 			// 読み込み済み範囲は除外 (開始行)
 			for (var i = loadStartLine; i <= loadEndLine; i++) {
