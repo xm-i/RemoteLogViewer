@@ -116,25 +116,25 @@ public class SshService : IDisposable {
 	/// コマンドを非同期実行し、結果文字列を返します。
 	/// </summary>
 	/// <param name="command">コマンド。</param>
-	/// <param name="cancellationToken">キャンセルトークン</param>
+	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>標準出力</returns>
-	public async IAsyncEnumerable<string> RunAsync(string command, [EnumeratorCancellation] CancellationToken cancellationToken) {
+	public async IAsyncEnumerable<string> RunAsync(string command, [EnumeratorCancellation] CancellationToken ct) {
 		if (this._client is not { IsConnected: true }) {
 			throw new InvalidOperationException("SSH not connected.");
 		}
 		
 		using var cmd = this._client.CreateCommand(command);
-		var task = cmd.ExecuteAsync(cancellationToken);
+		var task = cmd.ExecuteAsync(ct);
 		Debug.WriteLine($"RunAsync: {command}");
 
 		using (var sr = new StreamReader(cmd.OutputStream)) {
 			while (true) {
 				try {
-					cancellationToken.ThrowIfCancellationRequested();
+					ct.ThrowIfCancellationRequested();
 				} catch (OperationCanceledException) {
 					yield break;
 				}
-				var line = await sr.ReadLineAsync(cancellationToken);
+				var line = await sr.ReadLineAsync(ct);
 				if (line == null) {
 					break;
 				}

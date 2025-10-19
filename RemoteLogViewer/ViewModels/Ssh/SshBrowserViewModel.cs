@@ -76,18 +76,19 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 			this.Bookmarks = bmView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		}).AddTo(this.CompositeDisposable);
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect()).AddTo(this.CompositeDisposable);
-		this.OpenCommand.Subscribe(vm => {
-			var fso = vm?.Original;
-			switch (fso?.FileSystemObjectType) {
-				case FileSystemObjectType.Directory:
-				case FileSystemObjectType.Symlink:
-					this._model.EnterDirectory(fso.FileName);
-					break;
-				case FileSystemObjectType.File:
-					this.TextFileViewerViewModel.OpenFile(this.CurrentPath.Value, fso);
-					break;
-			}
-		}).AddTo(this.CompositeDisposable);
+		this.OpenCommand
+			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.File)
+			.SubscribeAwait(async (vm, ct) => {
+
+				await this.TextFileViewerViewModel.OpenFileAsync(this.CurrentPath.Value, vm.Original, ct);
+		}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
+
+		this.OpenCommand
+			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.Directory || vm?.FileSystemObjectType == FileSystemObjectType.Symlink)
+			.Subscribe(vm => {
+				this._model.EnterDirectory(vm.FileName);
+			}).AddTo(this.CompositeDisposable);
+
 		this.OpenBookmarkCommand.Subscribe(bm => {
 			if (bm == null) {
 				return;

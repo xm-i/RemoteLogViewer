@@ -134,13 +134,13 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// <summary>
 	/// 指定範囲のテキストを取得します。
 	/// </summary>
-	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken cancellationToken) {
-		return await this._textFileViewerModel.GetRangeContent(startLine, endLine, cancellationToken);
+	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken ct) {
+		return await this._textFileViewerModel.GetRangeContent(startLine, endLine, ct);
 	}
 	/// <summary>
 	///     ファイルを開きます。
 	/// </summary>
-	public void OpenFile(string path, FileSystemObject fso) {
-		this._textFileViewerModel.OpenFile(path, fso, this.SelectedEncoding.Value);
+	public async Task OpenFileAsync(string path, FileSystemObject fso, CancellationToken ct) {
+		await this._textFileViewerModel.OpenFileAsync(path, fso, this.SelectedEncoding.Value, ct);
 	}
 }

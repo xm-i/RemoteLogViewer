@@ -18,7 +18,7 @@ public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
 	private const double loadingBuffer = 5;
 	private readonly Lock _syncObj = new();
-	private readonly ConcurrentDictionary<Guid,CancellationToken> _cancellationTokens = [];
+	private readonly ConcurrentDictionary<Guid,CancellationTokenSource> _cancellationTokenSources = [];
 	private readonly List<ByteOffset> _byteOffsetMap = [];
 
 	public TextFileViewerModel(SshService sshService) {
@@ -117,8 +117,8 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="path">パス。</param>
 	/// <param name="fso">ファイル。</param>
 	/// <param name="encoding">エンコード</param>
-	/// <param name="cancellationToken">キャンセルトークン。</param>
-	public async Task OpenFile(string path, FileSystemObject fso, string? encoding, CancellationToken cancellationToken = default) {
+	/// <param name="ct">キャンセルトークン。</param>
+	public async Task OpenFileAsync(string path, FileSystemObject fso, string? encoding, CancellationToken ct) {
 		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
 			return;
 		}
@@ -126,6 +126,9 @@ public class TextFileViewerModel : ModelBase {
 		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName);
 		var escaped = fullPath.Replace("\"", "\\\"");
 
+		var guid = Guid.NewGuid();
+		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		this._cancellationTokenSources.TryAdd(guid, linkedCts);
 		try {
 			this.OpenedFilePath.Value = fullPath;
 			this.FileEncoding.Value = encoding;
@@ -133,7 +136,7 @@ public class TextFileViewerModel : ModelBase {
 			if (this.OpenedFilePath.Value != null) {
 				this._byteOffsetMap.Clear();
 				try {
-					await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, 10000, cancellationToken)) {
+					await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, 10000, linkedCts.Token)) {
 						this._byteOffsetMap.Add(entry);
 						this.TotalLines.Value = entry.LineNumber;
 					}
@@ -142,7 +145,7 @@ public class TextFileViewerModel : ModelBase {
 				}
 			}
 		} finally {
-			this.OpenedFilePath.Value = fullPath;
+			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
@@ -160,10 +163,11 @@ public class TextFileViewerModel : ModelBase {
 	/// </summary>
 	/// <param name="startLine">開始行</param>
 	/// <param name="visibleCount">表示可能行</param>
-	/// <param name="cancellationToken">キャンセルトークン</param>
-	private async Task PreLoadLinesAsync(long startLine, long visibleCount, CancellationToken cancellationToken) {
+	/// <param name="ct">キャンセルトークン</param>
+	private async Task PreLoadLinesAsync(long startLine, long visibleCount, CancellationToken ct) {
 		var guid = Guid.NewGuid();
-		this._cancellationTokens.TryAdd(guid, cancellationToken);
+		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		this._cancellationTokenSources.TryAdd(guid, linkedCts);
 
 		try {
 			if (this.OpenedFilePath.Value == null) {
@@ -204,22 +208,23 @@ public class TextFileViewerModel : ModelBase {
 			}
 
 			var byteOffset = this.FindOffset(loadStartLine);
-			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, byteOffset, cancellationToken);
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, byteOffset, linkedCts.Token);
 
 			await foreach (var line in lines) {
 				this.LoadedLines[line.LineNumber] = line;
 			}
 		} finally {
-			this._cancellationTokens.TryRemove(guid, out _);
+			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
 	/// <summary>
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
-	public async Task Grep(string? query, string? encoding, CancellationToken cancellationToken) {
+	public async Task Grep(string? query, string? encoding, CancellationToken ct) {
 		var guid = Guid.NewGuid();
-		this._cancellationTokens.TryAdd(guid, cancellationToken);
+		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		this._cancellationTokenSources.TryAdd(guid, linkedCts);
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
@@ -230,13 +235,13 @@ public class TextFileViewerModel : ModelBase {
 		this.GrepResults.Clear();
 		try {
 			this.IsGrepRunning.Value = true;
-			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, cancellationToken);
+			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, linkedCts.Token);
 			await foreach(var line in lines) {
 				this.GrepResults.Add(line);
 			}
 		} finally {
 			this.IsGrepRunning.Value = false;
-			this._cancellationTokens.TryRemove(guid, out _);
+			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
@@ -254,11 +259,12 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="startLine">開始行 (1 始まり)</param>
 	/// <param name="endLine">終了行 (1 始まり)</param>
 	/// <param name="encoding">ソースエンコーディング</param>
-	/// <param name="cancellationToken">キャンセルトークン</param>
+	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
-	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken cancellationToken) {
+	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken ct) {
 		var guid = Guid.NewGuid();
-		this._cancellationTokens.TryAdd(guid, cancellationToken);
+		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		this._cancellationTokenSources.TryAdd(guid, linkedCts);
 		try {
 			if (this.OpenedFilePath.Value == null) {
 				return null;
@@ -268,10 +274,10 @@ public class TextFileViewerModel : ModelBase {
 			}
 			endLine = Math.Min(endLine, this.TotalLines.Value);
 			var byteOffset = this.FindOffset(startLine);
-			var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, cancellationToken).ToArrayAsync();
+			var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, linkedCts.Token).ToArrayAsync();
 			return string.Join("\n", lines.Select(l => l.Content));
 		} finally {
-			this._cancellationTokens.TryRemove(guid, out _);
+			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
@@ -279,9 +285,9 @@ public class TextFileViewerModel : ModelBase {
 	/// リセット
 	/// </summary>
 	private void ResetStates() {
-		foreach (var ct in this._cancellationTokens.Values) {
+		foreach (var cts in this._cancellationTokenSources.Values) {
 			try {
-				ct.ThrowIfCancellationRequested();
+				cts.Cancel();
 			} catch {
 				// ignore
 			}
