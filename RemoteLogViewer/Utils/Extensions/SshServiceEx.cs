@@ -96,29 +96,6 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
-	///     リモートファイルの総行数を取得します。<br/>
-	///     wc を利用して高速に最終行番号 (行数) を取得します。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイルのパス。</param>
-	/// <returns>総行数。</returns>
-	/// <exception cref="InvalidOperationException">SSH 未接続の場合。</exception>
-	/// <exception cref="ArgumentException">パスが無効な場合。</exception>
-	public static long GetLineCount(this SshService sshService, string remoteFilePath) {
-		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
-			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
-		}
-		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var output = sshService.Run($"wc -l '{escaped}' 2>/dev/null | awk '{{print $1}}'").Trim();
-		if (string.IsNullOrEmpty(output)) {
-			return 0;
-		}
-		if (long.TryParse(output, out var count)) {
-			return count;
-		}
-		throw new InvalidOperationException($"行数取得に失敗しました: {output}");
-	}
-
-	/// <summary>
 	///     指定した開始行から終了行までの行を取得します。
 	/// </summary>
 	/// <param name="remoteFilePath">対象ファイルのパス。</param>
