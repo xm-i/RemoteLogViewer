@@ -12,7 +12,7 @@ namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 [AddScoped]
 public class TextFileViewerViewModel : ViewModelBase {
 	private readonly TextFileViewerModel _textFileViewerModel;
-	private const long LineHeight = 18;
+	private const long LineHeight = 16;
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);

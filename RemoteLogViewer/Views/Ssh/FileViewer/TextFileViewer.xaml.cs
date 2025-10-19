@@ -21,11 +21,11 @@ public sealed partial class TextFileViewer {
 				return;
 			}
 			field.WindowStartLine.Subscribe(x => {
-				this.VirtualScrollViewer.ScrollToVerticalOffset((x * LineHeight) - 1);
+				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
 			});
 		}
 	}
-	private const long LineHeight = 18;
+	private const long LineHeight = 16;
 	public TextFileViewer() {
 		this.InitializeComponent();
 	}
@@ -46,7 +46,7 @@ public sealed partial class TextFileViewer {
 			// スクロール中は無視
 			return;
 		}
-		this.ViewModel.JumpToLineCommand.Execute((long)((this.VirtualScrollViewer.VerticalOffset / LineHeight) + 1));
+		this.ViewModel.JumpToLineCommand.Execute((long)this.VirtualScrollViewer.VerticalOffset / LineHeight);
 	}
 
 	private void ContentViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
