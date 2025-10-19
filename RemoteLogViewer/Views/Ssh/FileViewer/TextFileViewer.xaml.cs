@@ -63,7 +63,7 @@ public sealed partial class TextFileViewer {
 		// ホイール delta
 		var delta = properties.MouseWheelDelta;
 
-		var offsetChange = -delta / 120;
+		var offsetChange = -delta / 40;
 
 		this.ViewModel.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + offsetChange);
 
