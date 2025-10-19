@@ -6,4 +6,5 @@ global using ObservableCollections;
 global using R3;
 global using RemoteLogViewer.Utils;
 global using RemoteLogViewer.Utils.Attributes;
+global using RemoteLogViewer.Utils.Extensions;
 global using CommunityToolkit.Mvvm.DependencyInjection;

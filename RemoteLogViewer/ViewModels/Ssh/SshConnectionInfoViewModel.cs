@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
+using R3;
+
 using RemoteLogViewer.Models.Ssh;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
@@ -18,7 +20,9 @@ public class SshConnectionInfoViewModel {
 	/// <summary>
 	/// 接続表示名。
 	/// </summary>
-	public BindableReactiveProperty<string> Name { get; }
+	public BindableReactiveProperty<string> Name {
+		get;
+	}
 
 	/// <summary>
 	/// ホスト名。
@@ -48,22 +52,28 @@ public class SshConnectionInfoViewModel {
 	/// <summary>
 	/// 秘密鍵パス。
 	/// </summary>
-	public BindableReactiveProperty<string?> PrivateKeyPath { get; }
+	public BindableReactiveProperty<string?> PrivateKeyPath {
+		get;
+	}
 
 	/// <summary>
 	/// 秘密鍵パスフレーズ。
 	/// </summary>
-	public BindableReactiveProperty<string?> PrivateKeyPassphrase { get; }
+	public BindableReactiveProperty<string?> PrivateKeyPassphrase {
+		get;
+	}
 
 	/// <summary>
 	/// 文字エンコード名。
 	/// </summary>
-	public BindableReactiveProperty<string> EncodingString { get; }
+	public BindableReactiveProperty<string> EncodingString {
+		get;
+	}
 
 	/// <summary>
 	/// 表示用文字列 (Name が空なら user@host:port)。
 	/// </summary>
-	public BindableReactiveProperty<string> DisplayName {
+	public IReadOnlyBindableReactiveProperty<string> DisplayName {
 		get;
 	}
 
@@ -78,6 +88,10 @@ public class SshConnectionInfoViewModel {
 		get;
 	} = new();
 
+	public IReadOnlyBindableReactiveProperty<bool> IsEdited {
+		get;
+	}
+
 	public SshConnectionInfoViewModel(SshConnectionInfoModel sshConnectionInfoModel, SshConnectionStoreModel sshConnectionStoreModel) {
 		this.Model = sshConnectionInfoModel;
 		this.Name = this.Model.Name!.ToBindableReactiveProperty()!;
@@ -90,7 +104,28 @@ public class SshConnectionInfoViewModel {
 		this.EncodingString = this.Model.EncodingString!.ToBindableReactiveProperty()!;
 		this.DisplayName = this.Name
 			.CombineLatest(this.User, this.Host, this.Port, (n, u, h, p) => string.IsNullOrWhiteSpace(n) ? $"{u}@{h}:{p}" : n)
-			.ToBindableReactiveProperty(string.Empty);
+			.ToReadOnlyBindableReactiveProperty(string.Empty);
+
+		this.IsEdited = this.Name.ToUnit()
+			.Merge(this.Host.ToUnit())
+			.Merge(this.Port.ToUnit())
+			.Merge(this.User.ToUnit())
+			.Merge(this.Password.ToUnit())
+			.Merge(this.PrivateKeyPath.ToUnit())
+			.Merge(this.PrivateKeyPassphrase.ToUnit())
+			.Merge(this.EncodingString.ToUnit())
+			.Select(_ => {
+				return !(
+					(this.Name.Value ?? string.Empty) == (this.Model.Name.Value ?? string.Empty) &&
+					(this.Host.Value ?? string.Empty) == (this.Model.Host.Value ?? string.Empty) &&
+					this.Port.Value == this.Model.Port.Value &&
+					(this.User.Value ?? string.Empty) == (this.Model.User.Value ?? string.Empty) &&
+					(this.Password.Value ?? string.Empty) == (this.Model.Password.Value ?? string.Empty) &&
+					(this.PrivateKeyPath.Value ?? string.Empty) == (this.Model.PrivateKeyPath.Value ?? string.Empty) &&
+					(this.PrivateKeyPassphrase.Value ?? string.Empty) == (this.Model.PrivateKeyPassphrase.Value ?? string.Empty) &&
+					(this.EncodingString.Value ?? string.Empty) == (this.Model.EncodingString.Value ?? string.Empty)
+				);
+			}).ToReadOnlyBindableReactiveProperty(false);
 
 		this.SaveConnectionInfoCommand.Subscribe(_ => {
 			this.Model.Name.Value = this.Name.Value;
