@@ -130,9 +130,7 @@ public static class SshServiceEx {
 
 		var lines = sshService.RunAsync(command, ct);
 		await foreach (var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {
-			try {
-				ct.ThrowIfCancellationRequested();
-			} catch (OperationCanceledException) {
+			if (ct.IsCancellationRequested) {
 				yield break;
 			}
 			yield return line;
@@ -182,9 +180,7 @@ public static class SshServiceEx {
 		var lines = sshService.RunAsync(cmd, ct);
 		
 		await foreach (var line in lines) {
-			try {
-				ct.ThrowIfCancellationRequested();
-			} catch (OperationCanceledException) {
+			if (ct.IsCancellationRequested) {
 				yield break;
 			}
 			var idx = line.IndexOf(':');
@@ -222,9 +218,7 @@ public static class SshServiceEx {
 		var lines = sshService.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {
-			try {
-				ct.ThrowIfCancellationRequested();
-			} catch (OperationCanceledException) {
+			if (ct.IsCancellationRequested) {
 				yield break;
 			}
 			var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

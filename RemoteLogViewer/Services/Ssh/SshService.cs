@@ -127,19 +127,16 @@ public class SshService : IDisposable {
 		var task = cmd.ExecuteAsync(ct);
 		Debug.WriteLine($"RunAsync: {command}");
 
-		using (var sr = new StreamReader(cmd.OutputStream)) {
-			while (true) {
-				try {
-					ct.ThrowIfCancellationRequested();
-				} catch (OperationCanceledException) {
-					yield break;
-				}
-				var line = await sr.ReadLineAsync(ct);
-				if (line == null) {
-					break;
-				}
-				yield return line;
+		using var sr = new StreamReader(cmd.OutputStream);
+		while (true) {
+			if (ct.IsCancellationRequested) {
+				yield break;
 			}
+			var line = await sr.ReadLineAsync(ct);
+			if (line == null) {
+				break;
+			}
+			yield return line;
 		}
 	}
 
