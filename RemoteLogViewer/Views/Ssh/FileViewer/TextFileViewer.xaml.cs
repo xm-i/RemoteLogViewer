@@ -6,7 +6,6 @@ using Windows.Storage.Pickers;
 using WinRT.Interop;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
 using System.Threading;
-using System.Diagnostics;
 
 namespace RemoteLogViewer.Views.Ssh.FileViewer;
 

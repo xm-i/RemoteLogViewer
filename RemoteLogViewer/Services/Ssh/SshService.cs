@@ -108,6 +108,7 @@ public class SshService : IDisposable {
 			throw new InvalidOperationException("SSH not connected.");
 		}
 		using var cmd = this._client.CreateCommand(command);
+		Debug.WriteLine($"Run: {command}");
 		return cmd.Execute();
 	}
 
@@ -124,6 +125,7 @@ public class SshService : IDisposable {
 		
 		using var cmd = this._client.CreateCommand(command);
 		var task = cmd.ExecuteAsync(cancellationToken);
+		Debug.WriteLine($"RunAsync: {command}");
 
 		using (var sr = new StreamReader(cmd.OutputStream)) {
 			while (true) {
