@@ -18,7 +18,7 @@ public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
 	private const double loadingBuffer = 5;
 	private readonly Lock _syncObj = new();
-	private readonly ConcurrentDictionary<Guid,CancellationTokenSource> _cancellationTokenSources = [];
+	private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _cancellationTokenSources = [];
 	private readonly List<ByteOffset> _byteOffsetMap = [];
 
 	public TextFileViewerModel(SshService sshService) {
@@ -40,6 +40,7 @@ public class TextFileViewerModel : ModelBase {
 
 		// 表示行データ取得
 		lineNumbersChangedStream
+			.Where(x => x.lineNumbers.Length > 0)
 			.ThrottleFirstLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider)
 			.SubscribeAwait(async (x, ct) => {
 				Debug.WriteLine($"PreLoadLines start:{x.lineNumbers.Min()},{x.lineNumbers.Length}");
@@ -236,7 +237,7 @@ public class TextFileViewerModel : ModelBase {
 		try {
 			this.IsGrepRunning.Value = true;
 			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, linkedCts.Token);
-			await foreach(var line in lines) {
+			await foreach (var line in lines) {
 				this.GrepResults.Add(line);
 			}
 		} finally {

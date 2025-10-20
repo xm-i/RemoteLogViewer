@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -44,11 +46,23 @@ public class TextFileViewerViewModel : ViewModelBase {
 			Debug.WriteLine("Jump to Line Command end");
 		}).AddTo(this.CompositeDisposable);
 
-		this.WindowStartLine.CombineLatest(this.VisibleLineCount, (start, count) => (start, count)).Subscribe(val => {
-			Debug.WriteLine("Set LineNumbers start: " + val.start + " - " + (val.start + val.count - 1));
-			this._textFileViewerModel.LineNumbers.Value = Enumerable.Range(0, val.count).Select(x => val.start + x).ToArray();
-			Debug.WriteLine("Set LineNumbers end: " + val.start + " - " + (val.start + val.count - 1));
-		});
+		this.WindowStartLine
+			.CombineLatest(this.VisibleLineCount, (start, count) => (start, count))
+			.CombineLatest(
+				this.TotalLines
+					.ObservePropertyChanged(x => x.Value)
+					.Where(x => {
+						var count = this.LineNumbers.Value.Count();
+						return
+							(x < count && this.VisibleLineCount.Value == count) ||
+							(x > count && this.VisibleLineCount.Value > count);
+					}),
+				(x, total) => (x.start, count: (int)Math.Min(x.count, total)))
+			.Subscribe(val => {
+				Debug.WriteLine("Set LineNumbers start: " + val.start + " - " + (val.start + val.count - 1));
+				this._textFileViewerModel.LineNumbers.Value = Enumerable.Range(0, val.count).Select(x => val.start + x).ToArray();
+				Debug.WriteLine("Set LineNumbers end: " + val.start + " - " + (val.start + val.count - 1));
+			});
 
 		this.GrepCommand.SubscribeAwait(async (x, ct) => {
 			Debug.WriteLine($"Grep start: {x}");
