@@ -15,6 +15,7 @@ namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 public class TextFileViewerViewModel : ViewModelBase {
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private const long LineHeight = 16;
+	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
@@ -71,12 +72,18 @@ public class TextFileViewerViewModel : ViewModelBase {
 				Debug.WriteLine("Set LineNumbers end: " + val.start + " - " + (val.start + val.count - 1));
 			});
 
-		this.GrepCommand.SubscribeAwait(async (x, ct) => {
-			Debug.WriteLine($"Grep start: {x}");
-			await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, ct);
+		// GREP 実行: 既存タスクをキャンセルして新規開始
+		this.GrepCommand.SubscribeAwait(async (_, ct) => {
+			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+			Debug.WriteLine($"Grep start: {this.GrepQuery.Value}");
+			await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this._grepCts.Token);
 			Debug.WriteLine("Grep end");
 		}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
+		// GREP キャンセルコマンド
+		this.GrepCancelCommand.Subscribe(_ => {
+			this._grepCts?.Cancel();
+		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -134,6 +141,10 @@ public class TextFileViewerViewModel : ViewModelBase {
 	}
 	/// <summary>GREP 実行コマンド。</summary>
 	public ReactiveCommand GrepCommand {
+		get;
+	} = new();
+	/// <summary>GREP キャンセルコマンド。</summary>
+	public ReactiveCommand GrepCancelCommand {
 		get;
 	} = new();
 

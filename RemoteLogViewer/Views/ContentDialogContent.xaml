@@ -8,9 +8,9 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
 	<Grid>
-		<StackPanel Orientation="Horizontal" Spacing="12">
+		<Grid ColumnSpacing="12" ColumnDefinitions="20,*">
 			<TextBlock FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,2,0,0" Text="{x:Bind Severity, Mode=OneTime, Converter={StaticResource SeverityToGlyphConverter}}" />
-			<TextBlock Text="{x:Bind MessageText, Mode=OneTime}" TextWrapping="Wrap" VerticalAlignment="Center" />
-		</StackPanel>
+			<TextBlock Grid.Column="1" Text="{x:Bind MessageText, Mode=OneTime}" TextWrapping="Wrap" VerticalAlignment="Center" />
+		</Grid>
 	</Grid>
 </Page>
