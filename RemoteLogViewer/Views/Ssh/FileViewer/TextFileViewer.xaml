@@ -43,9 +43,9 @@
 				HorizontalScrollBarVisibility="Hidden"
 				Padding="0,8"
 				PointerWheelChanged="ContentViewer_PointerWheelChanged">
-				<ItemsControl ItemsSource="{x:Bind ViewModel.LineNumbers.Value, Mode=OneWay}"
+				<ItemsRepeater ItemsSource="{x:Bind ViewModel.LineNumbers.Value, Mode=OneWay}"
 					PointerWheelChanged="ContentViewer_PointerWheelChanged">
-					<ItemsControl.ItemTemplate>
+					<ItemsRepeater.ItemTemplate>
 						<DataTemplate x:DataType="sys:Int64">
 							<Grid Height="16">
 								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}" >
@@ -53,8 +53,8 @@
 								</Border>
 							</Grid>
 						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+					</ItemsRepeater.ItemTemplate>
+				</ItemsRepeater>
 			</ScrollViewer>
 			<ScrollViewer x:Name="ContentViewer"
 				Grid.Column="1"
@@ -63,9 +63,9 @@
 				Padding="0,8"
 				SizeChanged="ContentViewer_SizeChanged"
 				PointerWheelChanged="ContentViewer_PointerWheelChanged">
-				<ItemsControl ItemsSource="{x:Bind ViewModel.Lines, Mode=OneWay}"
+				<ItemsRepeater ItemsSource="{x:Bind ViewModel.Lines, Mode=OneWay}"
 					PointerWheelChanged="ContentViewer_PointerWheelChanged">
-					<ItemsControl.ItemTemplate>
+					<ItemsRepeater.ItemTemplate>
 						<DataTemplate x:DataType="models:TextLine">
 							<Grid ColumnDefinitions="60, *" HorizontalAlignment="Stretch" Height="16">
 								<ProgressRing Width="14" Height="14" Margin="0,1,8,1" IsActive="True" VerticalAlignment="Center" Visibility="{x:Bind IsLoaded, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
@@ -73,8 +73,8 @@
 								<TextBlock Grid.ColumnSpan="2" Height="16" Text="{x:Bind Content}" Visibility="{x:Bind IsLoaded, Converter={StaticResource BooleanToVisibilityConverter}}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
 							</Grid>
 						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+					</ItemsRepeater.ItemTemplate>
+				</ItemsRepeater>
 			</ScrollViewer>
 			<ScrollViewer x:Name="VirtualScrollViewer"
 				Height="{x:Bind ViewModel.ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
@@ -110,14 +110,13 @@
 						<TextBlock Text="結果:"/>
 						<TextBlock Text="{x:Bind ViewModel.GrepResults.Count, Mode=OneWay}"/>
 					</StackPanel>
-						<ScrollViewer
+					<ScrollViewer
 						Grid.Row="1"
 						VerticalScrollBarVisibility="Auto"
 						Padding="0,8"
-						HorizontalScrollBarVisibility="Auto"
-						PointerWheelChanged="ContentViewer_PointerWheelChanged">
-						<ItemsControl ItemsSource="{x:Bind ViewModel.GrepResults}">
-							<ItemsControl.ItemTemplate>
+						HorizontalScrollBarVisibility="Auto">
+						<ItemsRepeater ItemsSource="{x:Bind ViewModel.GrepResults}">
+							<ItemsRepeater.ItemTemplate>
 								<DataTemplate x:DataType="models:TextLine">
 									<Grid ColumnDefinitions="Auto,*" MinHeight="16">
 										<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}">
@@ -126,8 +125,8 @@
 										<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
 									</Grid>
 								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
+							</ItemsRepeater.ItemTemplate>
+						</ItemsRepeater>
 					</ScrollViewer>
 				</Grid>
 			</TabViewItem>

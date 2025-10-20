@@ -21,6 +21,7 @@ public class TextFileViewerModel : ModelBase {
 
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
+			.Throttle()
 			.Where(x => x.path != null);
 
 		// 表示行枠確保

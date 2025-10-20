@@ -21,9 +21,10 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this._textFileViewerModel.LoadedBytes
 			.CombineLatest(this._textFileViewerModel.TotalBytes, (loaded, total) => total == 0 ? 0d : (double)loaded / total)
+			.Throttle()
 			.ToReadOnlyBindableReactiveProperty(0)
 			.AddTo(this.CompositeDisposable);
-		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TotalLines = this._textFileViewerModel.TotalLines.Throttle().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.LineNumbers = this._textFileViewerModel.LineNumbers.ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
@@ -33,7 +34,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.GrepProgress = this._textFileViewerModel.TotalLines
-			.CombineLatest(this._textFileViewerModel.GrepResults.ObserveChanged(), (total, greped) => total == 0 ? 0d : (double)greped.NewItem.LineNumber / total)
+			.CombineLatest(this._textFileViewerModel.GrepResults.ObserveChanged().Throttle(), (total, greped) => total == 0 ? 0d : (double)greped.NewItem.LineNumber / total)
 			.ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
