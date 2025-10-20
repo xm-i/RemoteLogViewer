@@ -111,4 +111,14 @@ public sealed partial class TextFileViewer {
 			// TODO: エラー通知
 		}
 	}
+
+	private void HyperlinkButton_Click(object sender, RoutedEventArgs e) {
+		if (this.ViewModel == null) {
+			return;
+		}
+		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
+			this.ViewModel.SelectedTextLine.Value = this.ViewModel.Lines.FirstOrDefault(ln => ln.LineNumber == line);
+			this.BottomTabView.SelectedItem = this.SelectedLineView;
+		}
+	}
 }

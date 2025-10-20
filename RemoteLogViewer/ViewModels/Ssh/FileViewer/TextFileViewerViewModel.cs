@@ -187,6 +187,10 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// </summary>
 	public BindableReactiveProperty<double> LineNumberColumnWidth { get; } = new(60d);
 
+	public BindableReactiveProperty<TextLine?> SelectedTextLine {
+		get;
+	} = new();
+
 	/// <summary>
 	/// 指定範囲のテキストを取得します。
 	/// </summary>
