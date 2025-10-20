@@ -20,7 +20,7 @@ public sealed partial class MainWindow : Window {
 			var dialog = new ContentDialog {
 				XamlRoot = this.Content.XamlRoot,
 				Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
-				Title = "Save your work?",
+				Title = "Message",
 				PrimaryButtonText = "OK",
 				DefaultButton = ContentDialogButton.Primary,
 				Content = new ContentDialogContent(notification.Message, notification.Severity)
