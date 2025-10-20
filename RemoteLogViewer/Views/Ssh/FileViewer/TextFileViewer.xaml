@@ -27,6 +27,8 @@
 			<TextBlock Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
 			<TextBlock Text=" Encoding:"/>
 			<AutoSuggestBox Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+			<TextBlock Text=" 読込:"/>
+			<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
 			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
 				<TextBlock Text="|" Opacity="0.4"/>
 				<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
@@ -102,7 +104,7 @@
 				<TextBox Width="260" PlaceholderText="grep pattern" Text="{x:Bind ViewModel.GrepQuery.Value, Mode=TwoWay}"/>
 				<Button Content="Search" Command="{x:Bind ViewModel.GrepCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 				<Button Content="Cancel" Command="{x:Bind ViewModel.GrepCancelCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-				<TextBlock Text="検索中" Foreground="OrangeRed" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+				<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.GrepProgress.Value, Mode=OneWay}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 				<TextBlock Text="結果:"/>
 				<TextBlock Text="{x:Bind ViewModel.GrepResults.Count, Mode=OneWay}"/>
 			</StackPanel>

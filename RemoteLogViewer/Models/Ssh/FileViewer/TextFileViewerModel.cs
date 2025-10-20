@@ -1,15 +1,10 @@
-using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 using RemoteLogViewer.Services.Ssh;
-using RemoteLogViewer.Utils;
-using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
@@ -113,6 +108,20 @@ public class TextFileViewerModel : ModelBase {
 	} = [];
 
 	/// <summary>
+	/// バイトオフセット作成済みサイズ
+	/// </summary>
+	public ReactiveProperty<ulong> LoadedBytes {
+		get;
+	} = new(0);
+
+	/// <summary>
+	/// ファイルサイズ
+	/// </summary>
+	public ReactiveProperty<ulong> TotalBytes {
+		get;
+	} = new(0);
+
+	/// <summary>
 	///     ファイルを開き内容を取得します。
 	/// </summary>
 	/// <param name="path">パス。</param>
@@ -133,6 +142,7 @@ public class TextFileViewerModel : ModelBase {
 		try {
 			this.OpenedFilePath.Value = fullPath;
 			this.FileEncoding.Value = encoding;
+			this.TotalBytes.Value = fso.FileSize;
 			// 非同期でバイトオフセットマップ作成
 			if (this.OpenedFilePath.Value != null) {
 				this._byteOffsetMap.Clear();
@@ -140,6 +150,7 @@ public class TextFileViewerModel : ModelBase {
 					await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, 10000, linkedCts.Token)) {
 						this._byteOffsetMap.Add(entry);
 						this.TotalLines.Value = entry.LineNumber;
+						this.LoadedBytes.Value = entry.Bytes;
 					}
 				} catch {
 					// TODO: エラー処理

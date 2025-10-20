@@ -59,7 +59,7 @@ public static class SshServiceEx {
 				};
 			}
 
-			long.TryParse(sizeStr, out var size);
+			ulong.TryParse(sizeStr, out var size);
 
 			var normalizedTs = ts.Insert(ts.Length - 2, ":");
 			DateTime? lastUpdated = null;
@@ -125,7 +125,7 @@ public static class SshServiceEx {
 		string command;
 		var relativeStart = startLine - byteOffset.LineNumber;
 		var relativeEnd = endLine - byteOffset.LineNumber;
-		var startBytes = byteOffset.bytes + 1;
+		var startBytes = byteOffset.Bytes + 1;
 		command = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | sed -n '{relativeStart},{relativeEnd}p;{relativeEnd}q' 2>/dev/null" + convertPipe;
 
 		var lines = sshService.RunAsync(command, ct);
@@ -178,7 +178,7 @@ public static class SshServiceEx {
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
 		var cmd = $"LC_ALL=C grep -n -h {ic} -F --binary-files=text --color=never --line-buffered -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
 		var lines = sshService.RunAsync(cmd, ct);
-		
+
 		await foreach (var line in lines) {
 			if (ct.IsCancellationRequested) {
 				yield break;

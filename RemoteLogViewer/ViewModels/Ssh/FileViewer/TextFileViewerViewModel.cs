@@ -19,6 +19,10 @@ public class TextFileViewerViewModel : ViewModelBase {
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.FileLoadProgress = this._textFileViewerModel.LoadedBytes
+			.CombineLatest(this._textFileViewerModel.TotalBytes, (loaded, total) => total == 0 ? 0d : (double)loaded / total)
+			.ToReadOnlyBindableReactiveProperty(0)
+			.AddTo(this.CompositeDisposable);
 		this.TotalLines = this._textFileViewerModel.TotalLines.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
@@ -28,6 +32,9 @@ public class TextFileViewerViewModel : ViewModelBase {
 		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.GrepProgress = this._textFileViewerModel.TotalLines
+			.CombineLatest(this._textFileViewerModel.GrepResults.ObserveChanged(), (total, greped) => total == 0 ? 0d : (double)greped.NewItem.LineNumber / total)
+			.ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
@@ -90,6 +97,13 @@ public class TextFileViewerViewModel : ViewModelBase {
 	public IReadOnlyBindableReactiveProperty<string?> OpenedFilePath {
 		get;
 	}
+
+	/// <summary>ファイル読み込み進捗率。</summary>
+	public IReadOnlyBindableReactiveProperty<double> FileLoadProgress {
+		get;
+	}
+
+
 	/// <summary>総行数。</summary>
 	public IReadOnlyBindableReactiveProperty<long> TotalLines {
 		get;
@@ -139,6 +153,11 @@ public class TextFileViewerViewModel : ViewModelBase {
 	public IReadOnlyBindableReactiveProperty<bool> IsGrepRunning {
 		get;
 	}
+
+	public IReadOnlyBindableReactiveProperty<double> GrepProgress {
+		get;
+	}
+
 	/// <summary>GREP 実行コマンド。</summary>
 	public ReactiveCommand GrepCommand {
 		get;
