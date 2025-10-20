@@ -92,10 +92,7 @@ public sealed partial class TextFileViewer {
 		if (end < start) {
 			return;
 		}
-		var content = await this.ViewModel.GetRangeContent(start, end, new CancellationToken());
-		if (string.IsNullOrEmpty(content)) {
-			return;
-		}
+		var lines = this.ViewModel.GetRangeContent(start, end, new CancellationToken());
 
 		try {
 			var picker = new FileSavePicker();
@@ -107,7 +104,9 @@ public sealed partial class TextFileViewer {
 			if (file == null) {
 				return;
 			}
-			await FileIO.WriteTextAsync(file, content);
+			await foreach (var line in lines) {
+				await FileIO.AppendLinesAsync(file, [line]);
+			}
 		} catch {
 			// TODO: エラー通知
 		}

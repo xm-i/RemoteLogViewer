@@ -261,21 +261,23 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="encoding">ソースエンコーディング</param>
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
-	public async Task<string?> GetRangeContent(long startLine, long endLine, CancellationToken ct) {
+	public async IAsyncEnumerable<string> GetRangeContent(long startLine, long endLine, [EnumeratorCancellation] CancellationToken ct) {
 		var guid = Guid.NewGuid();
 		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		this._cancellationTokenSources.TryAdd(guid, linkedCts);
 		try {
 			if (this.OpenedFilePath.Value == null) {
-				return null;
+				yield break;
 			}
 			if (startLine < 1 || endLine < startLine) {
-				return null;
+				yield break;
 			}
 			endLine = Math.Min(endLine, this.TotalLines.Value);
 			var byteOffset = this.FindOffset(startLine);
-			var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, linkedCts.Token).ToArrayAsync();
-			return string.Join("\n", lines.Select(l => l.Content));
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, linkedCts.Token);
+			await foreach (var line in lines.Select(l => l.Content!)) {
+				yield return line;
+			}
 		} finally {
 			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
