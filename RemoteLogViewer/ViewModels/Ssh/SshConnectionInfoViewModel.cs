@@ -1,7 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
-
-using R3;
 
 using RemoteLogViewer.Models.Ssh;
 
@@ -9,7 +6,7 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 
 [AddScoped]
 public class SshConnectionInfoViewModel {
-	private static readonly ConcurrentDictionary<SshConnectionInfoModel, SshConnectionInfoViewModel> _createdInstances = [];
+	private Subject<Unit> _sshConnectionInfoUpdated = new();
 	/// <summary>
 	/// モデル
 	/// </summary>
@@ -114,6 +111,8 @@ public class SshConnectionInfoViewModel {
 			.Merge(this.PrivateKeyPath.ToUnit())
 			.Merge(this.PrivateKeyPassphrase.ToUnit())
 			.Merge(this.EncodingString.ToUnit())
+			.Merge(this.SaveConnectionInfoCommand.ToUnit())
+			.Merge(this._sshConnectionInfoUpdated)
 			.Select(_ => {
 				return !(
 					(this.Name.Value ?? string.Empty) == (this.Model.Name.Value ?? string.Empty) &&
@@ -137,6 +136,7 @@ public class SshConnectionInfoViewModel {
 			this.Model.PrivateKeyPassphrase.Value = this.PrivateKeyPassphrase.Value;
 			this.Model.EncodingString.Value = this.EncodingString.Value;
 			sshConnectionStoreModel.Save();
+			this._sshConnectionInfoUpdated.OnNext(Unit.Default);
 		});
 
 		this.RemoveConnectionInfoCommand.Subscribe(_ => {

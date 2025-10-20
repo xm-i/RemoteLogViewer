@@ -1,15 +1,12 @@
 using System.Reflection;
 using System.Text;
 
-using CommunityToolkit.Mvvm.DependencyInjection;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
+using RemoteLogViewer.Services;
 using RemoteLogViewer.Views;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using System.IO;
 
 namespace RemoteLogViewer;
 
@@ -38,9 +35,28 @@ public partial class App : Application {
 		Build();
 		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => Trace.WriteLine(ex.ToString()));
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-		MainWindow.Activate();
+
+		var workspaceService = Ioc.Default.GetRequiredService<WorkspaceService>();
+		if (string.IsNullOrWhiteSpace(workspaceService.WorkspacePath)) {
+			this.ShowWorkspaceSelectionWindow(workspaceService);
+		} else {
+			MainWindow.Activate();
+		}
 	}
 
+	/// <summary>ワークスペース選択ウィンドウ表示。</summary>
+	private void ShowWorkspaceSelectionWindow(WorkspaceService workspaceService) {
+		var wsWindow = Ioc.Default.GetRequiredService<WorkspaceSelectionWindow>();
+		wsWindow.WorkspaceSelected += (path, persist) => {
+			if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path)) {
+				workspaceService.SetWorkspace(path, persist);
+			}
+			MainWindow.Activate();
+		};
+		wsWindow.Activate();
+	}
+
+	/// <summary>DI コンテナ構築。</summary>
 	private static void Build() {
 		var serviceCollection = new ServiceCollection();
 		var targetTypes = Assembly

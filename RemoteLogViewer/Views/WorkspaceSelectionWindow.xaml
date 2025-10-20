@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+  x:Class="RemoteLogViewer.Views.WorkspaceSelectionWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d"
+  Title="ワークスペース選択">
+	<Grid Padding="16" RowDefinitions="Auto,Auto,Auto,*">
+		<TextBlock Text="設定ファイルを保存するワークスペースフォルダを選択してください。" TextWrapping="Wrap" />
+		<StackPanel Orientation="Horizontal" Margin="0,12,0,0" Grid.Row="1">
+			<TextBox x:Name="PathTextBox" Width="340" IsReadOnly="True" />
+			<Button Content="参照..." Margin="8,0,0,0" Click="Browse_Click" />
+		</StackPanel>
+		<CheckBox x:Name="SkipCheckBox" Content="次回以降この確認を省略" Margin="0,12,0,0" Grid.Row="2" />
+		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0" Grid.Row="3">
+			<Button Content="OK" Width="96" Click="Ok_Click" />
+		</StackPanel>
+	</Grid>
+</Window>

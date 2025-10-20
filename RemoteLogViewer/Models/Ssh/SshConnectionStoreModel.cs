@@ -4,6 +4,8 @@ using System.Text.Json;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using RemoteLogViewer.Services;
+
 namespace RemoteLogViewer.Models.Ssh;
 
 /// <summary>
@@ -11,7 +13,12 @@ namespace RemoteLogViewer.Models.Ssh;
 /// </summary>
 [AddSingleton]
 public class SshConnectionStoreModel {
-	private readonly string _filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "connections.json");
+	private readonly WorkspaceService _workspaceService;
+	private string FilePath {
+		get {
+			return this._workspaceService.GetConfigFilePath("connections.json");
+		}
+	}
 	private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
 	/// <summary>
 	///     設定一覧を取得します。
@@ -20,7 +27,8 @@ public class SshConnectionStoreModel {
 		get;
 	} = [];
 
-	public SshConnectionStoreModel() {
+	public SshConnectionStoreModel(WorkspaceService workspaceService) {
+		this._workspaceService = workspaceService;
 		this.Load();
 	}
 
@@ -29,8 +37,8 @@ public class SshConnectionStoreModel {
 	/// </summary>
 	public void Load() {
 		try {
-			if (File.Exists(this._filePath)) {
-				var json = File.ReadAllText(this._filePath);
+			if (File.Exists(this.FilePath)) {
+				var json = File.ReadAllText(this.FilePath);
 				var loaded = JsonSerializer.Deserialize<List<SshConnectionInfoModelForJson>>(json) ?? [];
 				this.Items.Clear();
 				foreach (var c in loaded) {
@@ -47,9 +55,9 @@ public class SshConnectionStoreModel {
 	/// </summary>
 	public void Save() {
 		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(this._filePath)!);
+			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
 			var json = JsonSerializer.Serialize(this.Items.Select(SshConnectionInfoModelForJson.CreateSshConnectionInfoModelForJson), _jsonSerializerOptions);
-			File.WriteAllText(this._filePath, json);
+			File.WriteAllText(this.FilePath, json);
 		} catch {
 			// TODO: 失敗通知
 		}
