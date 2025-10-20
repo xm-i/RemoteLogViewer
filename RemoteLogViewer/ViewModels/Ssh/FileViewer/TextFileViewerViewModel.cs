@@ -3,8 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-using Microsoft.UI.Xaml.Shapes;
-
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
 
@@ -31,6 +29,15 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.IsGrepRunning = this._textFileViewerModel.IsGrepRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+
+		// 行番号列幅: 桁数に応じて更新
+		this.TotalLines.ObservePropertyChanged(x => x.Value).Subscribe(total => {
+			var digits = total <= 0 ? 1 : (int)Math.Floor(Math.Log10(total)) + 1;
+			if (digits < 2) {
+				digits = 2;
+			}
+			this.LineNumberColumnWidth.Value = (digits * (LineHeight / 2)) + 12; // 余白込み
+		}).AddTo(this.CompositeDisposable);
 
 		this.SelectedEncoding.Subscribe(x => {
 			if (string.IsNullOrWhiteSpace(x)) {
@@ -144,6 +151,11 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// GREP 結果行番号ジャンプコマンド。
 	/// </summary>
 	public ReactiveCommand<long> JumpToLineCommand { get; } = new();
+
+	/// <summary>
+	/// 行数列幅。
+	/// </summary>
+	public BindableReactiveProperty<double> LineNumberColumnWidth { get; } = new(60d);
 
 	/// <summary>
 	/// 指定範囲のテキストを取得します。
