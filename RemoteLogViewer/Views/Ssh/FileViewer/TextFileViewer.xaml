@@ -99,7 +99,7 @@
 			</controls:GridSplitter.RenderTransform>
 		</controls:GridSplitter>
 
-		<TabView Grid.Row="3" x:Name="BottomTabView" IsAddTabButtonVisible="False">
+		<TabView Grid.Row="3" x:Name="BottomTabView" IsAddTabButtonVisible="False" VerticalAlignment="Stretch">
 			<TabViewItem Header="Grep" IsClosable="False">
 				<Grid RowDefinitions="Auto,*" Padding="0,8" CornerRadius="4">
 					<StackPanel Orientation="Horizontal" Spacing="8">
@@ -131,11 +131,18 @@
 				</Grid>
 			</TabViewItem>
 			<TabViewItem x:Name="SelectedLineView" Header="選択行表示" IsClosable="False">
-				<Grid ColumnDefinitions="Auto,*" MinHeight="16">
-					<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{x:Bind ViewModel.LineNumberColumnWidth.Value, Mode=OneWay}">
-						<TextBlock Text="{x:Bind ViewModel.SelectedTextLine.Value.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
-					</Border>
-					<TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SelectedTextLine.Value.Value.Content,Mode=OneWay}" TextWrapping="WrapWholeWords" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
+				<Grid VerticalAlignment="Stretch">
+					<ScrollViewer
+						 VerticalScrollBarVisibility="Auto"
+						 HorizontalScrollBarVisibility="Disabled"
+						 VerticalAlignment="Stretch">
+						<Grid ColumnDefinitions="Auto,*" MinHeight="16" VerticalAlignment="Stretch">
+							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{x:Bind ViewModel.LineNumberColumnWidth.Value, Mode=OneWay}">
+								<TextBlock Text="{x:Bind ViewModel.SelectedTextLine.Value.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+							</Border>
+							<TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SelectedTextLine.Value.Value.Content,Mode=OneWay}" TextWrapping="WrapWholeWords" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
+						</Grid>
+					</ScrollViewer>
 				</Grid>
 			</TabViewItem>
 		</TabView>
