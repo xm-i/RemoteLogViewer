@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -13,49 +12,47 @@ public static class SshServiceEx {
 	/// <summary>
 	/// SSH サーバー上のディレクトリを一覧表示します。
 	/// </summary>
-	/// <param name="sshService">SSHサービス</param>
-	/// <param name="path">パス</param>
+	/// <param name="sshService">SSHサービス。</param>
+	/// <param name="path">対象ディレクトリのパス。</param>
 	/// <returns>ディレクトリエントリ一覧。</returns>
 	public static FileSystemObject[] ListDirectory(this SshService sshService, string path) {
-		var escaped = path.Replace("\"", "\\\"");
-		var output = sshService.Run($"ls -al --time-style=+%Y-%m-%dT%H:%M:%S%z \"{escaped}\"");
-
+		var escapedPath = path.Replace("\"", "\\\"");
+		var awk =
+			"/^total / { next } " +
+			"/^l/ { target=$NF; testpath=substr(target,1,1)==\"/\"?target:P\"/\"target; if (system(\"[ -d \" testpath \" ]\")==0) code=4; else code=3; print code, $0; next } " +
+			"/^d/ { print 2, $0; next } " +
+			"/^-/ { print 1, $0; next } " +
+			"{ print 0, $0 }";
+		var cmd = $"ls -al --time-style=+%Y-%m-%dT%H:%M:%S%z \"{escapedPath}\" | awk -v P=\"{escapedPath}\" '{awk}'";
+		var output = sshService.Run(cmd);
 		var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		var list = new List<FileSystemObject>();
-		// lrwxrwxrwx   1 root root          7 2024-04-22T22:08:03+0900 bin -> usr/bin
-		// drwxr-xr-x   2 root root       4096 2024-02-26T21:58:31+0900 bin.usr-is-merged
-		// -rw-------   1 root root 3028287488 2024-07-12T15:31:21+0900 swap.img
+		// 4 lrwxrwxrwx   1 root root          7 2024-04-22T22:08:03+0900 bin -> usr/bin
+		// 2 drwxr-xr-x   2 root root       4096 2024-02-26T21:58:31+0900 bin.usr-is-merged
+		// 1 -rw-------   1 root root 3028287488 2024-07-12T15:31:21+0900 swap.img
 		foreach (var line in lines) {
-			if (line.StartsWith("total ", StringComparison.OrdinalIgnoreCase)) {
-				continue;
-			}
-
 			var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-			if (parts.Length < 7) {
+			// code perms links owner group size ts name...
+			if (parts.Length < 8) {
 				continue;
 			}
-
-			var perms = parts[0];
-			var sizeStr = parts[4];
-			var ts = parts[5];
-			var nameWithMaybeLink = string.Join(' ', parts.Skip(6));
-
+			var code = parts[0];
+			var sizeStr = parts[5];
+			var ts = parts[6];
+			var nameWithMaybeLink = string.Join(' ', parts.Skip(7));
 			var fileName = nameWithMaybeLink;
 			var arrowIndex = nameWithMaybeLink.IndexOf(" -> ", StringComparison.Ordinal);
 			if (arrowIndex >= 0) {
 				fileName = nameWithMaybeLink[..arrowIndex];
 			}
-			if (fileName == ".") {
+			if (fileName == "." || fileName == "..") {
 				continue;
 			}
 
-			if (perms.Length == 0) {
-				continue;
-			}
-			var type = perms[0] switch {
-				'd' => FileSystemObjectType.Directory,
-				'l' => FileSystemObjectType.Symlink,
+			FileSystemObjectType fsoType = code switch {
+				"2" => FileSystemObjectType.Directory,
+				"4" => FileSystemObjectType.SymlinkDirectory,
+				"3" => FileSystemObjectType.SymlinkFile,
 				_ => FileSystemObjectType.File
 			};
 
@@ -66,8 +63,7 @@ public static class SshServiceEx {
 			if (DateTimeOffset.TryParseExact(normalizedTs, "yyyy-MM-dd'T'HH:mm:ssK", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dto)) {
 				lastUpdated = dto.UtcDateTime;
 			}
-
-			list.Add(new FileSystemObject(path, fileName, type, size, lastUpdated));
+			list.Add(new FileSystemObject(path, fileName, fsoType, size, lastUpdated));
 		}
 
 		return [.. list];

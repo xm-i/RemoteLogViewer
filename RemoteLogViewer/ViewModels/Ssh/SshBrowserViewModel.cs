@@ -77,14 +77,14 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 		}).AddTo(this.CompositeDisposable);
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect()).AddTo(this.CompositeDisposable);
 		this.OpenCommand
-			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.File)
+			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.File || vm?.FileSystemObjectType == FileSystemObjectType.SymlinkFile)
 			.SubscribeAwait(async (vm, ct) => {
 
 				await this.TextFileViewerViewModel.OpenFileAsync(this.CurrentPath.Value, vm.Original, ct);
 		}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		this.OpenCommand
-			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.Directory || vm?.FileSystemObjectType == FileSystemObjectType.Symlink)
+			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.Directory || vm?.FileSystemObjectType == FileSystemObjectType.SymlinkDirectory)
 			.Subscribe(vm => {
 				this._model.EnterDirectory(vm.FileName);
 			}).AddTo(this.CompositeDisposable);

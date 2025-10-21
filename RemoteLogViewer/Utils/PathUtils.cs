@@ -7,8 +7,6 @@ public static class PathUtils {
 		if (path2.StartsWith('/')) {
 			return path2;
 		}
-
-		return path1.TrimEnd('/') + "/" + path2 + (fsoType == FileSystemObjectType.Symlink || fsoType == FileSystemObjectType.Directory ? "/" : "");
-
+		return path1.TrimEnd('/') + "/" + path2 + (fsoType == FileSystemObjectType.Directory || fsoType == FileSystemObjectType.SymlinkDirectory ? "/" : "");
 	}
 }

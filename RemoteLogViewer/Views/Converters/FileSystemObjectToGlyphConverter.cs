@@ -10,12 +10,13 @@ namespace RemoteLogViewer.Views.Converters;
 public sealed class FileSystemObjectTypeToGlyphConverter : IValueConverter {
 	public object Convert(object value, Type targetType, object parameter, string language) {
 		if (value is not FileSystemObjectType fsoType) {
-			return "";
+			return string.Empty;
 		}
 		return fsoType switch {
 			FileSystemObjectType.Directory => "\uED25", // フォルダー
-			FileSystemObjectType.Symlink => "\uE71B",   // リンク
-			FileSystemObjectType.File => "\uE8A5",      // ファイル
+			FileSystemObjectType.SymlinkDirectory => "\uE71B", // ディレクトリリンク
+			FileSystemObjectType.SymlinkFile => "\uE71B", // ファイルリンク
+			FileSystemObjectType.File => "\uE8A5", // ファイル
 			_ => "\uE8A5"
 		};
 	}

@@ -5,5 +5,6 @@ public record FileSystemObject(string Path, string FileName, FileSystemObjectTyp
 public enum FileSystemObjectType {
 	File,
 	Directory,
-	Symlink
+	SymlinkFile,
+	SymlinkDirectory
 }

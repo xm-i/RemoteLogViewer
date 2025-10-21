@@ -130,7 +130,7 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="encoding">エンコード</param>
 	/// <param name="ct">キャンセルトークン。</param>
 	public async Task OpenFileAsync(string path, FileSystemObject fso, string? encoding, CancellationToken ct) {
-		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.Symlink)) {
+		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.SymlinkFile)) {
 			return;
 		}
 		this.ResetStates();
