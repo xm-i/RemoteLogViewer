@@ -50,14 +50,14 @@ public static class SshServiceEx {
 				continue;
 			}
 
-			FileSystemObjectType? type = null;
-			if (perms.Length > 0) {
-				type = perms[0] switch {
-					'd' => FileSystemObjectType.Directory,
-					'l' => FileSystemObjectType.Symlink,
-					_ => FileSystemObjectType.File
-				};
+			if (perms.Length == 0) {
+				continue;
 			}
+			var type = perms[0] switch {
+				'd' => FileSystemObjectType.Directory,
+				'l' => FileSystemObjectType.Symlink,
+				_ => FileSystemObjectType.File
+			};
 
 			ulong.TryParse(sizeStr, out var size);
 

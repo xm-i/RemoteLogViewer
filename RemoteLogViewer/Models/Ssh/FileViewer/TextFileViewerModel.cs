@@ -134,7 +134,7 @@ public class TextFileViewerModel : ModelBase {
 			return;
 		}
 		this.ResetStates();
-		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName);
+		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName, fso.FileSystemObjectType);
 		var escaped = fullPath.Replace("\"", "\\\"");
 
 		var guid = Guid.NewGuid();

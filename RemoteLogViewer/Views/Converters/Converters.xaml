@@ -6,7 +6,7 @@
 	<!-- 共通コンバーター定義 -->
 	<conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 	<conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
-	<conv:FileSystemObjectToGlyphConverter x:Key="FileSystemObjectToGlyphConverter" />
+	<conv:FileSystemObjectTypeToGlyphConverter x:Key="FileSystemObjectTypeToGlyphConverter" />
 	<conv:LongToDoubleConverter x:Key="LongToDoubleConverter" />
 	<conv:NullToBooleanConverter x:Key="NullToBooleanConverter" />
 	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" />

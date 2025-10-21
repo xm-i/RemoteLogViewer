@@ -33,7 +33,7 @@ public class FileSystemEntryViewModel {
 		this.Original = fso;
 		this._sessionModel = sessionModel;
 		var bookmarks = sessionModel.SelectedSshConnectionInfo.Value!.Bookmarks;
-		this.IsBookmarked.Value = bookmarks.Any(x => x.Path.Value == PathUtils.CombineUnixPath(this.Original.Path, this.Original.FileName));
+		this.IsBookmarked.Value = bookmarks.Any(x => x.Path.Value == PathUtils.CombineUnixPath(this.Original.Path, this.Original.FileName, fso.FileSystemObjectType));
 
 		this.IsBookmarked.Subscribe(x => {
 			if (x) {

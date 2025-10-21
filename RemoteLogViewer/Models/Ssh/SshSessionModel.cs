@@ -91,7 +91,7 @@ public class SshSessionModel : ModelBase {
 			return;
 		}
 
-		this.CurrentPath.Value = PathUtils.CombineUnixPath(this.CurrentPath.Value, path);
+		this.CurrentPath.Value = path;
 		this.LoadDirectory(path);
 		this._textFileViewerModel.CloseFile();
 	}
@@ -108,7 +108,7 @@ public class SshSessionModel : ModelBase {
 		if (directoryName == "..") {
 			if (this.CurrentPath.Value != "/") {
 				var trimmed = this.CurrentPath.Value.TrimEnd('/');
-				var idx = trimmed.LastIndexOf('/');
+				var idx = trimmed.LastIndexOf('/') + 1;
 				newPath = idx <= 0 ? "/" : trimmed[..idx];
 			} else {
 				newPath = "/";
@@ -116,7 +116,7 @@ public class SshSessionModel : ModelBase {
 		} else if (directoryName == ".") {
 			newPath = this.CurrentPath.Value;
 		} else {
-			newPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, directoryName);
+			newPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, directoryName, FileSystemObjectType.Directory);
 		}
 		this.NavigateTo(newPath);
 	}
@@ -149,7 +149,7 @@ public class SshSessionModel : ModelBase {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return;
 		}
-		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName);
+		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName, fso.FileSystemObjectType);
 
 		var isExists = ci.Bookmarks.Any(b => string.Equals(b.Path.Value, targetPath, StringComparison.Ordinal));
 
@@ -181,7 +181,7 @@ public class SshSessionModel : ModelBase {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return;
 		}
-		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName);
+		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName, fso.FileSystemObjectType);
 
 		var existing = ci.Bookmarks.FirstOrDefault(b => string.Equals(b.Path.Value, targetPath, StringComparison.Ordinal));
 
