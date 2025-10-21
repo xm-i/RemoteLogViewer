@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 using RemoteLogViewer.ViewModels;
+using RemoteLogViewer.Views.Settings;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,5 +39,10 @@ public sealed partial class MainWindow : Window {
 		if (e.Item is LogViewerViewModel vm) {
 			this.ViewModel.CloseTabCommand.Execute(vm);
 		}
+	}
+
+	private void OpenHighlightSettings_Click(object sender, RoutedEventArgs e) {
+		var win = new SettingsWindow();
+		win.Activate();
 	}
 }

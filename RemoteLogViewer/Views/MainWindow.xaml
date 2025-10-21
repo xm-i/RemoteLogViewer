@@ -15,8 +15,17 @@
 		<MicaBackdrop />
 	</Window.SystemBackdrop>
 
-	<Grid Padding="4">
-		<TabView 
+	<Grid Padding="4" RowSpacing="4">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<MenuBar>
+			<MenuBarItem Title="Tools">
+				<MenuFlyoutItem Text="Highlight Settings" Click="OpenHighlightSettings_Click"/>
+			</MenuBarItem>
+		</MenuBar>
+		<TabView Grid.Row="1"
 				VerticalAlignment="Stretch"
 				TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
 				SelectedItem="{x:Bind ViewModel.SelectedTab.Value, Mode=TwoWay}"
