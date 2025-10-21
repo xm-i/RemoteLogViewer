@@ -6,6 +6,7 @@ using Windows.Storage.Pickers;
 using WinRT.Interop;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
 using System.Threading;
+using System.IO;
 
 namespace RemoteLogViewer.Views.Ssh.FileViewer;
 
@@ -92,8 +93,6 @@ public sealed partial class TextFileViewer {
 		if (end < start) {
 			return;
 		}
-		var lines = this.ViewModel.GetRangeContent(start, end, new CancellationToken());
-
 		try {
 			var picker = new FileSavePicker();
 			var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
@@ -104,9 +103,9 @@ public sealed partial class TextFileViewer {
 			if (file == null) {
 				return;
 			}
-			await foreach (var line in lines) {
-				await FileIO.AppendLinesAsync(file, [line]);
-			}
+			using var stream = await file.OpenStreamForWriteAsync();
+			using var writer = new StreamWriter(stream);
+			await this.ViewModel.SaveRangeContent(writer, start, end);
 		} catch {
 			// TODO: エラー通知
 		}

@@ -33,7 +33,9 @@
 				<TextBlock Text="|" Opacity="0.4"/>
 				<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
 				<TextBox x:Name="EndLineBox" Width="80" PlaceholderText="End"/>
-				<Button Content="Save Range" Click="SaveRangeButton_Click"/>
+				<Button Content="Save Range" Click="SaveRangeButton_Click" Visibility="{x:Bind ViewModel.IsSavingRange.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+				<Button Content="Cancel" Command="{x:Bind ViewModel.SaveRangeContentCancelCommand}" Visibility="{x:Bind ViewModel.IsSavingRange.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+				<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.SaveRangeProgress.Value, Mode=OneWay}"/>
 			</StackPanel>
 		</StackPanel>
 

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -121,6 +122,17 @@ public class TextFileViewerModel : ModelBase {
 	public ReactiveProperty<ulong> TotalBytes {
 		get;
 	} = new(0);
+
+	/// <summary>
+	/// ファイル保存進捗率(0-1)
+	/// </summary>
+	public ReactiveProperty<double> SaveRangeProgress {
+		get;
+	} = new(0);
+
+	public ReactiveProperty<bool> IsSavingRange {
+		get;
+	} = new();
 
 	/// <summary>
 	///     ファイルを開き内容を取得します。
@@ -267,32 +279,37 @@ public class TextFileViewerModel : ModelBase {
 	}
 
 	/// <summary>
-	/// 指定行範囲のテキスト内容を取得します。
+	/// 指定行範囲のテキスト内容を保存します。
 	/// </summary>
 	/// <param name="startLine">開始行 (1 始まり)</param>
 	/// <param name="endLine">終了行 (1 始まり)</param>
-	/// <param name="encoding">ソースエンコーディング</param>
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
-	public async IAsyncEnumerable<string> GetRangeContent(long startLine, long endLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async Task SaveRangeContent(StreamWriter streamWriter,long startLine, long endLine, CancellationToken ct) {
 		var guid = Guid.NewGuid();
 		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		this._cancellationTokenSources.TryAdd(guid, linkedCts);
 		try {
 			if (this.OpenedFilePath.Value == null) {
-				yield break;
+				return;
 			}
 			if (startLine < 1 || endLine < startLine) {
-				yield break;
+				return;
 			}
 			endLine = Math.Min(endLine, this.TotalLines.Value);
 			var byteOffset = this.FindOffset(startLine);
 			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, linkedCts.Token);
-			await foreach (var line in lines.Select(l => l.Content!)) {
-				yield return line;
+
+			this.IsSavingRange.Value = true;
+			this.SaveRangeProgress.Value = 0;
+			await foreach (var line in lines) {
+				await streamWriter.WriteLineAsync(line.Content);
+				this.SaveRangeProgress.Value = (double)(line.LineNumber - startLine + 1) / (endLine - startLine + 1);
 			}
+			this.SaveRangeProgress.Value = 1;
 		} finally {
 			this._cancellationTokenSources.TryRemove(guid, out _);
+			this.IsSavingRange.Value = false;
 		}
 	}
 

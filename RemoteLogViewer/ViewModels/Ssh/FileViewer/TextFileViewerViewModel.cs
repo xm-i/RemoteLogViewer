@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -16,6 +17,8 @@ public class TextFileViewerViewModel : ViewModelBase {
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private const long LineHeight = 16;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
+	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
+
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
@@ -92,6 +95,14 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.GrepCancelCommand.Subscribe(_ => {
 			this._grepCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
+
+		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeProgress.Throttle().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsSavingRange = this._textFileViewerModel.IsSavingRange.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.SaveRangeContentCancelCommand =
+			this.IsSavingRange
+			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())
+			.AddTo(this.CompositeDisposable);
+		
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -193,13 +204,24 @@ public class TextFileViewerViewModel : ViewModelBase {
 	} = new();
 
 	/// <summary>
-	/// 指定範囲のテキストを取得します。
+	/// 指定範囲テキスト保存キャンセルコマンド。
 	/// </summary>
-	public async IAsyncEnumerable<string> GetRangeContent(long startLine, long endLine, [EnumeratorCancellation] CancellationToken ct) {
-		var lines = this._textFileViewerModel.GetRangeContent(startLine, endLine, ct);
-		await foreach (var line in lines) {
-			yield return line;
-		}
+	public ReactiveCommand SaveRangeContentCancelCommand{ get; } = new();
+
+	public BindableReactiveProperty<double> SaveRangeProgress {
+		get;
+	}
+
+	public BindableReactiveProperty<bool> IsSavingRange {
+		get;
+	}
+
+	/// <summary>
+	/// 指定範囲のテキストを保存します。
+	/// </summary>
+	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine) {
+		this._saveContentCts = new CancellationTokenSource();
+		await this._textFileViewerModel.SaveRangeContent(streamWriter, startLine, endLine, this._saveContentCts.Token);
 	}
 
 	/// <summary>
