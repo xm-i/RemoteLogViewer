@@ -6,6 +6,8 @@ using RemoteLogViewer.Views.Settings;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
+using RemoteLogViewer.ViewModels.Settings;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RemoteLogViewer.Views;
 
@@ -14,7 +16,9 @@ namespace RemoteLogViewer.Views;
 /// </summary>
 [AddSingleton]
 public sealed partial class MainWindow : Window {
-	public MainWindow(MainWindowViewModel mainWindowViewModel) {
+	private readonly IServiceProvider _services;
+	public MainWindow(MainWindowViewModel mainWindowViewModel, IServiceProvider services) {
+		this._services = services;
 		this.InitializeComponent();
 		this.ViewModel = mainWindowViewModel;
 		this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
@@ -42,7 +46,7 @@ public sealed partial class MainWindow : Window {
 	}
 
 	private void OpenHighlightSettings_Click(object sender, RoutedEventArgs e) {
-		var win = new SettingsWindow();
-		win.Activate();
+		var window = this._services.GetRequiredService<SettingsWindow>();
+		window.Activate();
 	}
 }

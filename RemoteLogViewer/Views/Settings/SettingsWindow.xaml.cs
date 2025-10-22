@@ -1,25 +1,35 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Windowing;
+using RemoteLogViewer.ViewModels.Settings;
+using RemoteLogViewer.ViewModels.Settings.Highlight;
 
 namespace RemoteLogViewer.Views.Settings;
 
+[AddSingleton]
 public sealed partial class SettingsWindow : Window {
-	public SettingsWindow() {
+	public SettingsWindow(SettingsWindowViewModel vm) {
+		this.ViewModel = vm;
 		this.InitializeComponent();
-
-		// ウィンドウサイズを設定
 		this.AppWindow?.Resize(new Windows.Graphics.SizeInt32(1000, 650));
+		this.ViewModel.SelectedSettingsPage.Subscribe(vm => {
+			if (vm is null) {
+				return;
+			}
+			Type view;
+			switch (vm) {
+				case HighlightSettingsPageViewModel _:
+					view = typeof(HighlightSettingsPage);
+					break;
+				default:
+					return;
+			}
 
-		this.CategoryList.SelectedIndex = 0;
+			this.ContentFrame.Navigate(view, vm);
+		});
 	}
 
-	private void CategoryList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-		if (this.CategoryList.SelectedItem is not ListViewItem item) {
-			return;
-		}
-		if ((item.Content as string) == "Highlight") {
-			this.ContentFrame.Navigate(typeof(HighlightSettingsPage));
-		}
+	public SettingsWindowViewModel ViewModel {
+		get;
 	}
 }
