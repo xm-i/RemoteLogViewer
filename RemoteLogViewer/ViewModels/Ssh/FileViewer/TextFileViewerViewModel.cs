@@ -18,6 +18,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	private const long LineHeight = 16;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
+	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
 
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
@@ -41,6 +42,27 @@ public class TextFileViewerViewModel : ViewModelBase {
 			.ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+
+		// Tail 実行状態
+		this.IsTailRunning = this._textFileViewerModel.IsTailRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TailStartCommand =
+			this._textFileViewerModel
+				.IsTailRunning
+				.Select(x => !x)
+				.ToReactiveCommand().AddTo(this.CompositeDisposable);
+		this.TailStartCommand.SubscribeAwait(async (_, ct) => {
+			this._tailCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+			try {
+				await this._textFileViewerModel.TailFollowAsync(this._tailCts.Token);
+			} finally {
+				this._tailCts?.Dispose();
+				this._tailCts = null;
+			}
+		});
+
+		this.TailStopCommand = this._textFileViewerModel.IsTailRunning.ToReactiveCommand(_ => {
+			this._tailCts?.Cancel();
+		}).AddTo(this.CompositeDisposable);
 
 		// 行番号列幅: 桁数に応じて更新
 		this.TotalLines.ObservePropertyChanged(x => x.Value).Subscribe(total => {
@@ -213,6 +235,27 @@ public class TextFileViewerViewModel : ViewModelBase {
 	}
 
 	public BindableReactiveProperty<bool> IsSavingRange {
+		get;
+	}
+
+	/// <summary>
+	/// tail 実行中。
+	/// </summary>
+	public IReadOnlyBindableReactiveProperty<bool> IsTailRunning {
+		get;
+	}
+
+	/// <summary>
+	/// tail 開始コマンド。
+	/// </summary>
+	public ReactiveCommand TailStartCommand {
+		get;
+	}
+
+	/// <summary>
+	/// tail 停止コマンド。
+	/// </summary>
+	public ReactiveCommand TailStopCommand {
 		get;
 	}
 

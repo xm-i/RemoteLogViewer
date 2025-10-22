@@ -29,6 +29,8 @@
 			<AutoSuggestBox Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 			<TextBlock Text=" 読込:"/>
 			<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
+			<Button Content="Tail Start" Command="{x:Bind ViewModel.TailStartCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+			<Button Content="Tail Stop" Command="{x:Bind ViewModel.TailStopCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
 				<TextBlock Text="|" Opacity="0.4"/>
 				<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>

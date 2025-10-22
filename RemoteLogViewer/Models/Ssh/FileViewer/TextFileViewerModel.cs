@@ -2,8 +2,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
+
+using Microsoft.UI.Xaml.Shapes;
 
 using RemoteLogViewer.Services.Ssh;
 
@@ -16,6 +17,7 @@ public class TextFileViewerModel : ModelBase {
 	private readonly Lock _syncObj = new();
 	private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _cancellationTokenSources = [];
 	private readonly List<ByteOffset> _byteOffsetMap = [];
+	private const int ByteOffsetMapChunkSize = 10000;
 
 	public TextFileViewerModel(SshService sshService) {
 		this._sshService = sshService;
@@ -116,6 +118,10 @@ public class TextFileViewerModel : ModelBase {
 		get;
 	} = new(0);
 
+	public ReactiveProperty<bool> IsLoadingByteOffsetMap {
+		get;
+	} = new(false);
+
 	/// <summary>
 	/// ファイルサイズ
 	/// </summary>
@@ -133,6 +139,12 @@ public class TextFileViewerModel : ModelBase {
 	public ReactiveProperty<bool> IsSavingRange {
 		get;
 	} = new();
+
+
+	/// <summary>Tail 実行中か。</summary>
+	public ReactiveProperty<bool> IsTailRunning {
+		get;
+	} = new(false);
 
 	/// <summary>
 	///     ファイルを開き内容を取得します。
@@ -157,19 +169,19 @@ public class TextFileViewerModel : ModelBase {
 			this.FileEncoding.Value = encoding;
 			this.TotalBytes.Value = fso.FileSize;
 			// 非同期でバイトオフセットマップ作成
-			if (this.OpenedFilePath.Value != null) {
-				this._byteOffsetMap.Clear();
-				try {
-					await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, 10000, linkedCts.Token)) {
-						this._byteOffsetMap.Add(entry);
-						this.TotalLines.Value = entry.LineNumber;
-						this.LoadedBytes.Value = entry.Bytes;
-					}
-				} catch {
-					// TODO: エラー処理
+			this.IsLoadingByteOffsetMap.Value = true;
+			this._byteOffsetMap.Clear();
+			try {
+				await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, ByteOffsetMapChunkSize, linkedCts.Token)) {
+					this._byteOffsetMap.Add(entry);
+					this.TotalLines.Value = entry.LineNumber;
+					this.LoadedBytes.Value = entry.Bytes;
 				}
+			} catch {
+				// TODO: エラー処理
 			}
 		} finally {
+			this.IsLoadingByteOffsetMap.Value = false;
 			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
@@ -279,13 +291,61 @@ public class TextFileViewerModel : ModelBase {
 	}
 
 	/// <summary>
+	/// tail -f によりファイル末尾の追記を監視し、新規行を LoadedLines / TotalLines に反映します。
+	///監視開始時点の末尾行の次の行から取得します。
+	/// </summary>
+	/// <param name="ct">キャンセルトークン。</param>
+	public async Task TailFollowAsync(CancellationToken ct) {
+		if (this.OpenedFilePath.Value == null) {
+			return;
+		}
+
+		if (this.IsLoadingByteOffsetMap.Value) {
+			// バイトオフセットマップ作成中は待機
+			await this.IsLoadingByteOffsetMap.Where(x => !x).FirstAsync(ct);
+		}
+
+		var guid = Guid.NewGuid();
+		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		this._cancellationTokenSources.TryAdd(guid, linkedCts);
+		try {
+			this.IsTailRunning.Value = true;
+			var currentLastLine = this.TotalLines.Value;
+			var startOffset = this.FindOffset(currentLastLine);
+			var lines = this._sshService.TailFollowAsync(this.OpenedFilePath.Value, this.FileEncoding.Value, startOffset, currentLastLine, linkedCts.Token);
+			await foreach (var line in lines) {
+				this.LoadedLines[line.LineNumber] = line;
+				this.TotalLines.Value = line.LineNumber;
+				if (line.LineNumber % ByteOffsetMapChunkSize == 0) {
+					var prevOffset = this.FindOffset(line.LineNumber);
+					var newOffset = await this._sshService.CreateByteOffsetUntilLineAsync(this.OpenedFilePath.Value!, prevOffset, line.LineNumber, linkedCts.Token);
+					this._byteOffsetMap.Add(newOffset);
+					this.TotalBytes.Value = newOffset.Bytes;
+					this.LoadedBytes.Value = newOffset.Bytes;
+				}
+				if (linkedCts.IsCancellationRequested) {
+					break;
+				}
+			}
+		} finally {
+			var prevOffset = this.FindOffset(this.TotalLines.Value);
+			var finalOffset = await this._sshService.CreateByteOffsetUntilLineAsync(this.OpenedFilePath.Value!, prevOffset, this.TotalLines.Value, linkedCts.Token);
+			this._byteOffsetMap.Add(finalOffset);
+			this.TotalBytes.Value = finalOffset.Bytes;
+			this.LoadedBytes.Value = finalOffset.Bytes;
+			this.IsTailRunning.Value = false;
+			this._cancellationTokenSources.TryRemove(guid, out _);
+		}
+	}
+
+	/// <summary>
 	/// 指定行範囲のテキスト内容を保存します。
 	/// </summary>
 	/// <param name="startLine">開始行 (1 始まり)</param>
 	/// <param name="endLine">終了行 (1 始まり)</param>
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
-	public async Task SaveRangeContent(StreamWriter streamWriter,long startLine, long endLine, CancellationToken ct) {
+	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine, CancellationToken ct) {
 		var guid = Guid.NewGuid();
 		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		this._cancellationTokenSources.TryAdd(guid, linkedCts);

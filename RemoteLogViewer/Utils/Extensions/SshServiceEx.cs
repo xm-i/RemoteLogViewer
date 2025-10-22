@@ -232,6 +232,74 @@ public static class SshServiceEx {
 	}
 
 	/// <summary>
+	///既存のバイトオフセット (<paramref name="startOffset"/>)から指定行番号 (<paramref name="targetLine"/>)まで追加で読み込まれるバイト数を AWKで算出し、新しい <see cref="ByteOffset"/> を返します。
+	/// startOffset.LineNumber 行までの内容が既に取得済みである前提で、tail -c +{startOffset.Bytes+1}で残りを読み進めます。
+	/// </summary>
+	/// <param name="sshService">SSH サービス。</param>
+	/// <param name="remoteFilePath">対象ファイルパス。</param>
+	/// <param name="startOffset">開始バイトオフセット。</param>
+	/// <param name="targetLine">新規に算出したい行番号 (startOffset.LineNumber以上)。</param>
+	/// <param name="ct">キャンセルトークン。</param>
+	/// <returns>対象行までの累積バイトオフセット。</returns>
+	public static async Task<ByteOffset> CreateByteOffsetUntilLineAsync(this SshService sshService, string remoteFilePath, ByteOffset startOffset, long targetLine, CancellationToken ct) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
+		}
+		if (targetLine < startOffset.LineNumber) {
+			throw new ArgumentException("targetLine must be >= startOffset.LineNumber", nameof(targetLine));
+		}
+		if (targetLine == startOffset.LineNumber) {
+			return startOffset;
+		}
+		var escaped = EscapeSingleQuotes(remoteFilePath);
+		var relativeLines = targetLine - startOffset.LineNumber;
+		var startBytes = startOffset.Bytes + 1;
+		var cmd = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | awk -v base={startOffset.Bytes} -v maxLines={relativeLines} '{{ base+=length($0)+1; if (NR==maxLines) {{ print base; exit }} }} END {{ if (NR<maxLines) print base }}' 2>/dev/null";
+		var lines = await sshService.RunAsync(cmd, ct).ToArrayAsync();
+		if (lines.Length != 1) {
+			throw new InvalidOperationException("Failed to calculate byte offset.");
+		}
+		if (!ulong.TryParse(lines[0].Trim(), out var parsed)) {
+			throw new InvalidCastException("Failed to parse byte offset.");
+		}
+
+		return new ByteOffset(targetLine, parsed);
+	}
+
+	/// <summary>
+	/// ファイル末尾の新規追記行を取得します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
+	/// </summary>
+	/// <param name="sshService">SSH サービス。</param>
+	/// <param name="remoteFilePath">対象ファイル。</param>
+	/// <param name="fileEncoding">ファイルエンコーディング。</param>
+	/// <param name="startOffset">開始オフセット。</param>
+	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
+	/// <param name="ct">キャンセルトークン。</param>
+	public static async IAsyncEnumerable<TextLine> TailFollowAsync(this SshService sshService, string remoteFilePath, string? fileEncoding, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			yield break;
+		}
+		if (sshService.IconvEncoding == null) {
+			yield break;
+		}
+		var escaped = EscapeSingleQuotes(remoteFilePath);
+		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
+		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
+		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null" + convertPipe;
+		var nextLine = startOffset.LineNumber + 1;
+		await foreach (var line in sshService.RunAsync(cmd, ct)) {
+			if (ct.IsCancellationRequested) {
+				yield break;
+			}
+			var ln = nextLine++;
+			if (ln <= currentLastLine) {
+				continue;
+			} //既存行はスキップ
+			yield return new TextLine(ln, line, true);
+		}
+	}
+
+	/// <summary>
 	///     シェルのシングルクォートで囲むためにパス内のシングルクォートをエスケープします。
 	/// </summary>
 	/// <param name="path">パス。</param>
