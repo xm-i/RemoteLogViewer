@@ -108,9 +108,14 @@ public class TextFileViewerViewModel : ViewModelBase {
 		// GREP 実行: 既存タスクをキャンセルして新規開始
 		this.GrepCommand.SubscribeAwait(async (_, ct) => {
 			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-			Debug.WriteLine($"Grep start: {this.GrepQuery.Value}");
-			await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this._grepCts.Token);
-			Debug.WriteLine("Grep end");
+			try {
+				Debug.WriteLine($"Grep start: {this.GrepQuery.Value}");
+				await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this._grepCts.Token);
+				Debug.WriteLine("Grep end");
+			} finally {
+				this._grepCts?.Dispose();
+				this._grepCts = null;
+			}
 		}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		// GREP キャンセルコマンド
@@ -119,12 +124,12 @@ public class TextFileViewerViewModel : ViewModelBase {
 		}).AddTo(this.CompositeDisposable);
 
 		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeProgress.Throttle().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.IsSavingRange = this._textFileViewerModel.IsSavingRange.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsRangeContentSaving = this._textFileViewerModel.IsRangeContentSaving.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.SaveRangeContentCancelCommand =
-			this.IsSavingRange
+			this.IsRangeContentSaving
 			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())
 			.AddTo(this.CompositeDisposable);
-		
+
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -228,13 +233,13 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// <summary>
 	/// 指定範囲テキスト保存キャンセルコマンド。
 	/// </summary>
-	public ReactiveCommand SaveRangeContentCancelCommand{ get; } = new();
+	public ReactiveCommand SaveRangeContentCancelCommand { get; } = new();
 
 	public BindableReactiveProperty<double> SaveRangeProgress {
 		get;
 	}
 
-	public BindableReactiveProperty<bool> IsSavingRange {
+	public BindableReactiveProperty<bool> IsRangeContentSaving {
 		get;
 	}
 
@@ -264,7 +269,12 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// </summary>
 	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine) {
 		this._saveContentCts = new CancellationTokenSource();
-		await this._textFileViewerModel.SaveRangeContent(streamWriter, startLine, endLine, this._saveContentCts.Token);
+		try {
+			await this._textFileViewerModel.SaveRangeContent(streamWriter, startLine, endLine, this._saveContentCts.Token);
+		} finally {
+			this._saveContentCts?.Dispose();
+			this._saveContentCts = null;
+		}
 	}
 
 	/// <summary>

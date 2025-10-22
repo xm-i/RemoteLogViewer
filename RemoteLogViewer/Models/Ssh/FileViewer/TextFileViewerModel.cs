@@ -136,7 +136,7 @@ public class TextFileViewerModel : ModelBase {
 		get;
 	} = new(0);
 
-	public ReactiveProperty<bool> IsSavingRange {
+	public ReactiveProperty<bool> IsRangeContentSaving {
 		get;
 	} = new();
 
@@ -360,7 +360,7 @@ public class TextFileViewerModel : ModelBase {
 			var byteOffset = this.FindOffset(startLine);
 			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, linkedCts.Token);
 
-			this.IsSavingRange.Value = true;
+			this.IsRangeContentSaving.Value = true;
 			this.SaveRangeProgress.Value = 0;
 			await foreach (var line in lines) {
 				await streamWriter.WriteLineAsync(line.Content);
@@ -369,7 +369,7 @@ public class TextFileViewerModel : ModelBase {
 			this.SaveRangeProgress.Value = 1;
 		} finally {
 			this._cancellationTokenSources.TryRemove(guid, out _);
-			this.IsSavingRange.Value = false;
+			this.IsRangeContentSaving.Value = false;
 		}
 	}
 
