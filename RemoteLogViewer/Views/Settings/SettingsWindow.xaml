@@ -1,23 +1,22 @@
 <Window
- x:Class="RemoteLogViewer.Views.Settings.SettingsWindow"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
- xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
- mc:Ignorable="d"
- Title="Settings"
- Width="1000" Height="650">
- <Grid ColumnSpacing="8">
- <Grid.ColumnDefinitions>
- <ColumnDefinition Width="220" />
- <ColumnDefinition Width="*" />
- </Grid.ColumnDefinitions>
- <StackPanel Grid.Column="0" Padding="12" Spacing="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
- <TextBlock Text="Categories" FontWeight="SemiBold" />
- <ListView x:Name="CategoryList" SelectionMode="Single">
- <ListViewItem Content="Highlight" />
- </ListView>
- </StackPanel>
- <Frame x:Name="ContentFrame" Grid.Column="1" />
- </Grid>
+  x:Class="RemoteLogViewer.Views.Settings.SettingsWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d"
+  Title="Settings">
+	<Grid ColumnSpacing="8">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="220"/>
+			<ColumnDefinition Width="*"/>
+		</Grid.ColumnDefinitions>
+		<StackPanel Grid.Column="0" Padding="12" Spacing="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+			<TextBlock Text="Categories" FontWeight="SemiBold"/>
+			<ListView x:Name="CategoryList" SelectionMode="Single" SelectionChanged="CategoryList_SelectionChanged">
+				<ListViewItem Content="Highlight"/>
+			</ListView>
+		</StackPanel>
+		<Frame x:Name="ContentFrame" Grid.Column="1"/>
+	</Grid>
 </Window>
