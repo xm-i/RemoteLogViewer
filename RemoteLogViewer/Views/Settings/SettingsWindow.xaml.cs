@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Windowing;
+
 using RemoteLogViewer.ViewModels.Settings;
 using RemoteLogViewer.ViewModels.Settings.Highlight;
 

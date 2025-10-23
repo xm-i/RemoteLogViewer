@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+using RemoteLogViewer.Stores.Settings;
 using RemoteLogViewer.ViewModels.Settings.Highlight;
 
 namespace RemoteLogViewer.ViewModels.Settings;
@@ -22,10 +23,18 @@ public class SettingsWindowViewModel : ViewModelBase {
 		get;
 	}
 
-	public SettingsWindowViewModel(HighlightSettingsPageViewModel highlightSettings) {
+	public ReactiveCommand SaveCommand {
+		get;
+	} = new();
+
+	public SettingsWindowViewModel(SettingsStoreModel model, HighlightSettingsPageViewModel highlightSettings) {
 		this.HighlightSettings = highlightSettings;
 
 		this.Pages.AddRange([highlightSettings]);
 		this.SelectedSettingsPage.Value = this.Pages[0];
+
+		this.SaveCommand.Subscribe(_ => {
+			model.Save();
+		});
 	}
 }

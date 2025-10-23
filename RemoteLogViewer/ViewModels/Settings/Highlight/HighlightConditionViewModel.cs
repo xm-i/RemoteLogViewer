@@ -1,38 +1,47 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Microsoft.UI;
+using RemoteLogViewer.Stores.Settings.Model;
 
 using Windows.UI;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
 [AddScoped]
-public class HighlightConditionViewModel {
+public class HighlightConditionViewModel : ViewModelBase {
+	public HighlightConditionModel Model {
+		get;
+	}
+
 	public BindableReactiveProperty<string> Pattern {
 		get;
-	} = new("");
+	}
 
 	public BindableReactiveProperty<HighlightPatternType> PatternType {
 		get;
-	} = new(HighlightPatternType.Regex);
+	}
 
 	public BindableReactiveProperty<bool> IgnoreCase {
 		get;
-	} = new(true);
+	}
 
 	public BindableReactiveProperty<bool> HighlightOnlyMatch {
 		get;
-	} = new(false);
+	}
 
 	public BindableReactiveProperty<Color> ForeColor {
 		get;
-	} = new(Colors.Black);
+	}
 
 	public BindableReactiveProperty<Color> BackColor {
 		get;
-	} = new(Colors.Yellow);
+	}
+
+	public HighlightConditionViewModel(HighlightConditionModel model) {
+		this.Model = model;
+
+		this.Pattern = model.Pattern.ToBindableReactiveProperty(string.Empty).AddTo(this.CompositeDisposable);
+		this.PatternType = model.PatternType.ToBindableReactiveProperty(HighlightPatternType.Exact).AddTo(this.CompositeDisposable);
+		this.IgnoreCase = model.IgnoreCase.ToBindableReactiveProperty(false).AddTo(this.CompositeDisposable);
+		this.HighlightOnlyMatch = model.HighlightOnlyMatch.ToBindableReactiveProperty(true).AddTo(this.CompositeDisposable);
+		this.ForeColor = model.ForeColor.ToBindableReactiveProperty(Color.FromArgb(0, 0, 0, 0)).AddTo(this.CompositeDisposable);
+		this.BackColor = model.BackColor.ToBindableReactiveProperty(Color.FromArgb(255, 255, 255, 0)).AddTo(this.CompositeDisposable);
+	}
 }

@@ -13,4 +13,5 @@
 	<conv:BooleanNegationConverter x:Key="BooleanNegationConverter" />
 	<conv:SeverityToGlyphConverter x:Key="SeverityToGlyphConverter" />
 	<conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+	<conv:HighlightPatternTypeToStringConverter x:Key="HighlightPatternTypeToStringConverter" />
 </ResourceDictionary>

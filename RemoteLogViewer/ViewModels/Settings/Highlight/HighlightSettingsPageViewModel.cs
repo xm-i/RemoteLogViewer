@@ -1,47 +1,46 @@
-using System.Linq;
-
 using Microsoft.Extensions.DependencyInjection;
+
+using RemoteLogViewer.Stores.Settings.Model;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
-public enum HighlightPatternType {
-	Regex,
-	Exact
-}
-
 [AddSingleton]
 public class HighlightSettingsPageViewModel : SettingsPageViewModel {
-	private readonly ObservableList<HighlightSettingViewModel> _settings = [];
 	/// <summary>
-	/// UI バインド用の設定一覧 (コレクション変更通知対応ビュー)。
+	/// ルールリスト。
 	/// </summary>
-	public NotifyCollectionChangedSynchronizedViewList<HighlightSettingViewModel> Settings {
+	public NotifyCollectionChangedSynchronizedViewList<HighlightRuleViewModel> Rules {
 		get;
 	}
 
-	public BindableReactiveProperty<HighlightSettingViewModel?> SelectedSetting {
+	public BindableReactiveProperty<HighlightRuleViewModel?> SelectedRule {
 		get;
 	} = new();
 
-	public ReactiveCommand AddSettingCommand { get; } = new();
-	public ReactiveCommand RemoveSettingCommand { get; } = new();
+	public ReactiveCommand AddRuleCommand { get; } = new();
+	public ReactiveCommand<HighlightRuleViewModel> RemoveRuleCommand { get; } = new();
 
-	public HighlightSettingsPageViewModel() : base("Highlight") {
+	public HighlightPatternType[] PatternTypes {
+		get;
+	} = Enum.GetValues<HighlightPatternType>();
+
+	public HighlightSettingsPageViewModel(HighlightSettingModel model, IServiceProvider service) : base("Highlight") {
 		// View生成
-		var view = this._settings.CreateView(x => x).AddTo(this.CompositeDisposable);
-		this.Settings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		var view = model.Rules.CreateView(x => x.ScopedService.GetRequiredService<HighlightRuleViewModel>()).AddTo(this.CompositeDisposable);
+		this.Rules = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
-		this.AddSettingCommand.Subscribe(_ => {
-			var scope = Ioc.Default.CreateScope();
-			var setting = scope.ServiceProvider.GetRequiredService<HighlightSettingViewModel>();
-			this._settings.Add(setting);
-			this.SelectedSetting.Value = setting;
+		this.AddRuleCommand.Subscribe(_ => {
+			var rule = model.AddRule();
+			this.SelectedRule.Value = rule.ScopedService.GetRequiredService<HighlightRuleViewModel>();
 		}).AddTo(this.CompositeDisposable);
 
-		this.RemoveSettingCommand.Subscribe(_ => {
-			if (this.SelectedSetting.Value != null) {
-				this._settings.Remove(this.SelectedSetting.Value);
-				this.SelectedSetting.Value = this._settings.LastOrDefault();
+		this.RemoveRuleCommand.Subscribe(rule => {
+			if (rule == null) {
+				return;
+			}
+			model.removeRule(rule.Model);
+			if (this.SelectedRule.Value == rule) {
+				this.SelectedRule.Value = this.Rules.LastOrDefault();
 			}
 		}).AddTo(this.CompositeDisposable);
 	}

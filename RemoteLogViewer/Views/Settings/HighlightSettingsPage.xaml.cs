@@ -1,9 +1,7 @@
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
 using RemoteLogViewer.ViewModels.Settings.Highlight;
-using System;
 
 namespace RemoteLogViewer.Views.Settings;
 
@@ -12,10 +10,6 @@ public sealed partial class HighlightSettingsPage : Page {
 		get;
 		private set;
 	}
-
-	public HighlightPatternType[] PatternTypes {
-		get;
-	} = Enum.GetValues<HighlightPatternType>();
 
 	public HighlightSettingsPage() {
 		this.InitializeComponent();
@@ -31,6 +25,5 @@ public sealed partial class HighlightSettingsPage : Page {
 			throw new InvalidOperationException("ViewModel is not passed.");
 		}
 		base.OnNavigatedTo(e);
-		this.Bindings.Update();
 	}
 }
