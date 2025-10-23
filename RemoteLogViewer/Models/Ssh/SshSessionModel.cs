@@ -3,6 +3,7 @@ using System.Text;
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Stores.SshConnection;
 using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh;

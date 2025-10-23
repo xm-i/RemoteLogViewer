@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RemoteLogViewer.Models.Ssh;
+
 using System.Collections.Generic;
 
-namespace RemoteLogViewer.Models.Ssh;
+namespace RemoteLogViewer.Stores.SshConnection;
 
 /// <summary>
 ///     SSH 接続設定情報を表します。

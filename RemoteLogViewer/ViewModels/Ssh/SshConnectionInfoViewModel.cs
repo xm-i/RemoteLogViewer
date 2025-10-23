@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-using RemoteLogViewer.Models.Ssh;
+using RemoteLogViewer.Stores.SshConnection;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RemoteLogViewer.Services;
 
-namespace RemoteLogViewer.Models.Ssh;
+namespace RemoteLogViewer.Stores.SshConnection;
 
 /// <summary>
 ///     接続設定の保存と読み込みを行います。
