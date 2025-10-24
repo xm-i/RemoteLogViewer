@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
 
@@ -15,7 +15,9 @@ namespace RemoteLogViewer.Stores.Settings;
 [AddSingleton]
 public class SettingsStoreModel {
 	private readonly WorkspaceService _workspaceService;
-	private readonly IServiceProvider _service;
+	public IServiceProvider ScopedService {
+		get;
+	}
 	private string FilePath {
 		get {
 			return this._workspaceService.GetConfigFilePath("settings.json");
@@ -25,35 +27,36 @@ public class SettingsStoreModel {
 	/// <summary>
 	///     設定一覧を取得します。
 	/// </summary>
-	public ReactiveProperty<SettingsModel> SettingsModel {
+	public SettingsModel SettingsModel {
 		get;
-	} = new();
+		private set;
+	}
 
 	public SettingsStoreModel(WorkspaceService workspaceService, IServiceProvider service) {
 		this._workspaceService = workspaceService;
-		this._service = service;
+		this.ScopedService = service;
 		this.Load();
 	}
 
 	/// <summary>
 	///     保存済み設定を読み込みます。
 	/// </summary>
+	[MemberNotNull(nameof(SettingsModel))]
 	public void Load() {
-		var scope = this._service.CreateScope();
+		var scope = this.ScopedService.CreateScope();
 		try {
 			if (File.Exists(this.FilePath)) {
 				var json = File.ReadAllText(this.FilePath);
 				var loaded = JsonSerializer.Deserialize<SettingsModelForJson>(json);
 				if (loaded != null) {
-					this.SettingsModel.Value = SettingsModelForJson.CreateModel(loaded, scope.ServiceProvider);
-				} else {
-					this.SettingsModel.Value = scope.ServiceProvider.GetRequiredService<SettingsModel>();
+					this.SettingsModel = SettingsModelForJson.CreateModel(loaded, scope.ServiceProvider);
+					return;
 				}
-
 			}
 		} catch {
 			// TODO: 失敗通知
 		}
+		this.SettingsModel = scope.ServiceProvider.GetRequiredService<SettingsModel>();
 	}
 
 	/// <summary>
@@ -62,7 +65,7 @@ public class SettingsStoreModel {
 	public void Save() {
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
-			var json = JsonSerializer.Serialize(SettingsModelForJson.CreateJson(this.SettingsModel.Value), _jsonSerializerOptions);
+			var json = JsonSerializer.Serialize(SettingsModelForJson.CreateJson(this.SettingsModel), _jsonSerializerOptions);
 			File.WriteAllText(this.FilePath, json);
 		} catch {
 			// TODO: 失敗通知

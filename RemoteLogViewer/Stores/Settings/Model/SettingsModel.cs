@@ -5,27 +5,29 @@ namespace RemoteLogViewer.Stores.Settings.Model;
 /// <summary>
 /// アプリケーション設定全体モデル。カテゴリ毎の設定を保持します。
 /// </summary>
-[AddScoped]
-public class SettingsModel {
+[AddSingleton]
+public class SettingsModel(HighlightSettingsModel highlightSettingModel) {
 	/// <summary>ハイライト設定一覧。</summary>
-	public ReactiveProperty<HighlightSettingModel> HighlightSetting { get; } = new();
+	public HighlightSettingsModel HighlightSettings {
+		get;
+		set;
+	} = highlightSettingModel;
 }
 
 public class SettingsModelForJson {
-	public HighlightSettingModelForJson? HighlightSetting {
+	public HighlightSettingsModelForJson? HighlightSettings {
 		get; set;
 	}
 	public static SettingsModel CreateModel(SettingsModelForJson json, IServiceProvider service) {
-		var scope = service.CreateScope();
-		var model = scope.ServiceProvider.GetRequiredService<SettingsModel>();
-		if (json.HighlightSetting != null) {
-			model.HighlightSetting.Value = HighlightSettingModelForJson.CreateModel(json.HighlightSetting, scope.ServiceProvider);
+		var model = service.GetRequiredService<SettingsModel>();
+		if (json.HighlightSettings != null) {
+			model.HighlightSettings = HighlightSettingsModelForJson.CreateModel(json.HighlightSettings, service);
 		}
 		return model;
 	}
 	public static SettingsModelForJson CreateJson(SettingsModel model) {
 		return new SettingsModelForJson {
-			HighlightSetting = HighlightSettingModelForJson.CreateJson(model.HighlightSetting.Value)
+			HighlightSettings = HighlightSettingsModelForJson.CreateJson(model.HighlightSettings)
 		};
 	}
 }

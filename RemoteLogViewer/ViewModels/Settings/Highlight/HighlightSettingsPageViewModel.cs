@@ -24,7 +24,7 @@ public class HighlightSettingsPageViewModel : SettingsPageViewModel {
 		get;
 	} = Enum.GetValues<HighlightPatternType>();
 
-	public HighlightSettingsPageViewModel(HighlightSettingModel model, IServiceProvider service) : base("Highlight") {
+	public HighlightSettingsPageViewModel(HighlightSettingsModel model, IServiceProvider service) : base("Highlight") {
 		// View生成
 		var view = model.Rules.CreateView(x => x.ScopedService.GetRequiredService<HighlightRuleViewModel>()).AddTo(this.CompositeDisposable);
 		this.Rules = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);

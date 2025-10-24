@@ -33,7 +33,7 @@ public class HighlightRuleViewModel : ViewModelBase {
 	public HighlightRuleViewModel(HighlightRuleModel model, IServiceProvider service) {
 		this.Model = model;
 
-		this.Name = model.Name.ToBindableReactiveProperty("").AddTo(this.CompositeDisposable);
+		this.Name = model.Name.ToTwoWayBindableReactiveProperty("").AddTo(this.CompositeDisposable);
 		var view = model.Conditions.CreateView(x => x.ScopedService.GetRequiredService<HighlightConditionViewModel>()).AddTo(this.CompositeDisposable);
 		this.Conditions = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
