@@ -123,8 +123,8 @@ public class TextFileViewerViewModel : ViewModelBase {
 			this._grepCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
 
-		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeProgress.Throttle().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.IsRangeContentSaving = this._textFileViewerModel.IsRangeContentSaving.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeOperation.Progress.Throttle().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsRangeContentSaving = this._textFileViewerModel.SaveRangeOperation.IsRunning.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.SaveRangeContentCancelCommand =
 			this.IsRangeContentSaving
 			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())

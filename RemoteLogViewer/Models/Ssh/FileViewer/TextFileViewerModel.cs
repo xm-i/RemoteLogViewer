@@ -21,6 +21,7 @@ public class TextFileViewerModel : ModelBase {
 		this._sshService = sshService;
 		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines);
 		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize);
+		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex);
 
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
@@ -99,6 +100,10 @@ public class TextFileViewerModel : ModelBase {
 		get;
 	}
 
+	public SaveRangeContentOperation SaveRangeOperation {
+		get;
+	}
+
 	/// <summary>利用可能エンコーディング。</summary>
 	public ObservableList<string> AvailableEncodings { get; } = [];
 
@@ -131,17 +136,6 @@ public class TextFileViewerModel : ModelBase {
 	public ReactiveProperty<ulong> TotalBytes {
 		get;
 	} = new(0);
-
-	/// <summary>
-	/// ファイル保存進捗率(0-1)
-	/// </summary>
-	public ReactiveProperty<double> SaveRangeProgress {
-		get;
-	} = new(0);
-
-	public ReactiveProperty<bool> IsRangeContentSaving {
-		get;
-	} = new();
 
 	/// <summary>
 	///     ファイルを開き内容を取得します。
@@ -296,27 +290,7 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
 	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine, CancellationToken ct) {
-		using var op = this._operations.Register(ct);
-		try {
-			if (this.OpenedFilePath.Value == null) {
-				return;
-			}
-			if (startLine < 1 || endLine < startLine) {
-				return;
-			}
-			endLine = Math.Min(endLine, this.TotalLines.Value);
-			var byteOffset = this._byteOffsetIndex.Find(startLine);
-			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, op.Token);
-			this.IsRangeContentSaving.Value = true;
-			this.SaveRangeProgress.Value = 0;
-			await foreach (var line in lines) {
-				await streamWriter.WriteLineAsync(line.Content);
-				this.SaveRangeProgress.Value = (double)(line.LineNumber - startLine + 1) / (endLine - startLine + 1);
-			}
-			this.SaveRangeProgress.Value = 1;
-		} finally {
-			this.IsRangeContentSaving.Value = false;
-		}
+		await this.SaveRangeOperation.ExecuteAsync(this._sshService, this.OpenedFilePath.Value, streamWriter, startLine, endLine, this.FileEncoding.Value, ct);
 	}
 
 	/// <summary>
@@ -330,5 +304,6 @@ public class TextFileViewerModel : ModelBase {
 		this.LoadedLines.Clear();
 		this.Lines.Clear();
 		this._byteOffsetIndex.Reset();
+		this.SaveRangeOperation.Reset();
 	}
 }
