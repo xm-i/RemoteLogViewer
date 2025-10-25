@@ -43,10 +43,11 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
 		// Tail 実行状態
-		this.IsTailRunning = this._textFileViewerModel.IsTailRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsTailRunning = this._textFileViewerModel.TailOperation.IsRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.TailStartCommand =
 			this._textFileViewerModel
-				.IsTailRunning
+				.TailOperation
+				.IsRunning
 				.Select(x => !x)
 				.ToReactiveCommand().AddTo(this.CompositeDisposable);
 		this.TailStartCommand.SubscribeAwait(async (_, ct) => {
@@ -59,7 +60,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 			}
 		});
 
-		this.TailStopCommand = this._textFileViewerModel.IsTailRunning.ToReactiveCommand(_ => {
+		this.TailStopCommand = this._textFileViewerModel.TailOperation.IsRunning.ToReactiveCommand(_ => {
 			this._tailCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
 
