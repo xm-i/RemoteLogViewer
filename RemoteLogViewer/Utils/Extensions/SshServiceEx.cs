@@ -45,11 +45,11 @@ public static class SshServiceEx {
 			if (arrowIndex >= 0) {
 				fileName = nameWithMaybeLink[..arrowIndex];
 			}
-			if (fileName == "." || fileName == "..") {
+			if (fileName == ".") {
 				continue;
 			}
 
-			FileSystemObjectType fsoType = code switch {
+			var fsoType = code switch {
 				"2" => FileSystemObjectType.Directory,
 				"4" => FileSystemObjectType.SymlinkDirectory,
 				"3" => FileSystemObjectType.SymlinkFile,
