@@ -1,11 +1,9 @@
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 
-using Microsoft.UI.Xaml.Shapes;
-
+using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffset;
+using RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Services.Ssh;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
@@ -15,8 +13,8 @@ public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
 	private const double loadingBuffer = 5;
 	private readonly Lock _syncObj = new();
-	private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _cancellationTokenSources = [];
-	private readonly List<ByteOffset> _byteOffsetMap = [];
+	private readonly IOperationRegistry _operations = new OperationRegistry();
+	private readonly IByteOffsetIndex _byteOffsetIndex = new ByteOffsetIndex();
 	private const int ByteOffsetMapChunkSize = 10000;
 
 	public TextFileViewerModel(SshService sshService) {
@@ -159,21 +157,17 @@ public class TextFileViewerModel : ModelBase {
 		}
 		this.ResetStates();
 		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName, fso.FileSystemObjectType);
-		var escaped = fullPath.Replace("\"", "\\\"");
 
-		var guid = Guid.NewGuid();
-		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-		this._cancellationTokenSources.TryAdd(guid, linkedCts);
+		using var op = this._operations.Register(ct);
 		try {
 			this.OpenedFilePath.Value = fullPath;
 			this.FileEncoding.Value = encoding;
 			this.TotalBytes.Value = fso.FileSize;
-			// 非同期でバイトオフセットマップ作成
 			this.IsLoadingByteOffsetMap.Value = true;
-			this._byteOffsetMap.Clear();
+			this._byteOffsetIndex.Reset();
 			try {
-				await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, ByteOffsetMapChunkSize, linkedCts.Token)) {
-					this._byteOffsetMap.Add(entry);
+				await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, ByteOffsetMapChunkSize, op.Token)) {
+					this._byteOffsetIndex.Add(entry);
 					this.TotalLines.Value = entry.LineNumber;
 					this.LoadedBytes.Value = entry.Bytes;
 				}
@@ -182,7 +176,6 @@ public class TextFileViewerModel : ModelBase {
 			}
 		} finally {
 			this.IsLoadingByteOffsetMap.Value = false;
-			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
@@ -202,10 +195,7 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="visibleCount">表示可能行</param>
 	/// <param name="ct">キャンセルトークン</param>
 	private async Task PreLoadLinesAsync(long startLine, long visibleCount, CancellationToken ct) {
-		var guid = Guid.NewGuid();
-		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-		this._cancellationTokenSources.TryAdd(guid, linkedCts);
-
+		using var op = this._operations.Register(ct);
 		try {
 			if (this.OpenedFilePath.Value == null) {
 				throw new InvalidOperationException();
@@ -244,41 +234,34 @@ public class TextFileViewerModel : ModelBase {
 				return;
 			}
 
-			var byteOffset = this.FindOffset(loadStartLine);
-			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, byteOffset, linkedCts.Token);
-
+			var byteOffset = this._byteOffsetIndex.Find(loadStartLine);
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, byteOffset, op.Token);
 			await foreach (var line in lines) {
 				this.LoadedLines[line.LineNumber] = line;
 			}
-		} finally {
-			this._cancellationTokenSources.TryRemove(guid, out _);
-		}
+		} finally { }
 	}
 
 	/// <summary>
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
 	public async Task Grep(string? query, string? encoding, CancellationToken ct) {
-		var guid = Guid.NewGuid();
-		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-		this._cancellationTokenSources.TryAdd(guid, linkedCts);
+		using var op = this._operations.Register(ct);
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
 		if ((query?.Length ?? 0) == 0) {
 			return;
 		}
-
 		this.GrepResults.Clear();
 		try {
 			this.IsGrepRunning.Value = true;
-			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, linkedCts.Token);
+			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, op.Token);
 			await foreach (var line in lines) {
 				this.GrepResults.Add(line);
 			}
 		} finally {
 			this.IsGrepRunning.Value = false;
-			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
@@ -299,42 +282,37 @@ public class TextFileViewerModel : ModelBase {
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
-
 		if (this.IsLoadingByteOffsetMap.Value) {
 			// バイトオフセットマップ作成中は待機
 			await this.IsLoadingByteOffsetMap.Where(x => !x).FirstAsync(ct);
 		}
-
-		var guid = Guid.NewGuid();
-		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-		this._cancellationTokenSources.TryAdd(guid, linkedCts);
+		using var op = this._operations.Register(ct);
 		try {
 			this.IsTailRunning.Value = true;
 			var currentLastLine = this.TotalLines.Value;
-			var startOffset = this.FindOffset(currentLastLine);
-			var lines = this._sshService.TailFollowAsync(this.OpenedFilePath.Value, this.FileEncoding.Value, startOffset, currentLastLine, linkedCts.Token);
+			var startOffset = this._byteOffsetIndex.Find(currentLastLine);
+			var lines = this._sshService.TailFollowAsync(this.OpenedFilePath.Value, this.FileEncoding.Value, startOffset, currentLastLine, op.Token);
 			await foreach (var line in lines) {
 				this.LoadedLines[line.LineNumber] = line;
 				this.TotalLines.Value = line.LineNumber;
 				if (line.LineNumber % ByteOffsetMapChunkSize == 0) {
-					var prevOffset = this.FindOffset(line.LineNumber);
-					var newOffset = await this._sshService.CreateByteOffsetUntilLineAsync(this.OpenedFilePath.Value!, prevOffset, line.LineNumber, linkedCts.Token);
-					this._byteOffsetMap.Add(newOffset);
+					var prevOffset = this._byteOffsetIndex.Find(line.LineNumber);
+					var newOffset = await this._sshService.CreateByteOffsetUntilLineAsync(this.OpenedFilePath.Value!, prevOffset, line.LineNumber, op.Token);
+					this._byteOffsetIndex.Add(newOffset);
 					this.TotalBytes.Value = newOffset.Bytes;
 					this.LoadedBytes.Value = newOffset.Bytes;
 				}
-				if (linkedCts.IsCancellationRequested) {
+				if (op.CancellationTokenSource.IsCancellationRequested) {
 					break;
 				}
 			}
 		} finally {
-			var prevOffset = this.FindOffset(this.TotalLines.Value);
-			var finalOffset = await this._sshService.CreateByteOffsetUntilLineAsync(this.OpenedFilePath.Value!, prevOffset, this.TotalLines.Value, linkedCts.Token);
-			this._byteOffsetMap.Add(finalOffset);
+			var prevOffset = this._byteOffsetIndex.Find(this.TotalLines.Value);
+			var finalOffset = await this._sshService.CreateByteOffsetUntilLineAsync(this.OpenedFilePath.Value!, prevOffset, this.TotalLines.Value, ct);
+			this._byteOffsetIndex.Add(finalOffset);
 			this.TotalBytes.Value = finalOffset.Bytes;
 			this.LoadedBytes.Value = finalOffset.Bytes;
 			this.IsTailRunning.Value = false;
-			this._cancellationTokenSources.TryRemove(guid, out _);
 		}
 	}
 
@@ -346,9 +324,7 @@ public class TextFileViewerModel : ModelBase {
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
 	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine, CancellationToken ct) {
-		var guid = Guid.NewGuid();
-		var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-		this._cancellationTokenSources.TryAdd(guid, linkedCts);
+		using var op = this._operations.Register(ct);
 		try {
 			if (this.OpenedFilePath.Value == null) {
 				return;
@@ -357,9 +333,8 @@ public class TextFileViewerModel : ModelBase {
 				return;
 			}
 			endLine = Math.Min(endLine, this.TotalLines.Value);
-			var byteOffset = this.FindOffset(startLine);
-			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, linkedCts.Token);
-
+			var byteOffset = this._byteOffsetIndex.Find(startLine);
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, op.Token);
 			this.IsRangeContentSaving.Value = true;
 			this.SaveRangeProgress.Value = 0;
 			await foreach (var line in lines) {
@@ -368,7 +343,6 @@ public class TextFileViewerModel : ModelBase {
 			}
 			this.SaveRangeProgress.Value = 1;
 		} finally {
-			this._cancellationTokenSources.TryRemove(guid, out _);
 			this.IsRangeContentSaving.Value = false;
 		}
 	}
@@ -377,30 +351,12 @@ public class TextFileViewerModel : ModelBase {
 	/// リセット
 	/// </summary>
 	private void ResetStates() {
-		foreach (var cts in this._cancellationTokenSources.Values) {
-			try {
-				cts.Cancel();
-			} catch {
-				// ignore
-			}
-		}
+		this._operations.CancelAll();
 		this.TotalLines.Value = 0;
 		this.OpenedFilePath.Value = null;
 		this.GrepResults.Clear();
 		this.LoadedLines.Clear();
 		this.Lines.Clear();
-		this._byteOffsetMap.Clear();
-	}
-
-	private ByteOffset FindOffset(long targetLine) {
-		ByteOffset result = new(0, 0);
-		foreach (var bo in this._byteOffsetMap) {
-			if (bo.LineNumber < targetLine) {
-				result = bo;
-			} else {
-				break; // assuming map sorted ascending
-			}
-		}
-		return result;
+		this._byteOffsetIndex.Reset();
 	}
 }

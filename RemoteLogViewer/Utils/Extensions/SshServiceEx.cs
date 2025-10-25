@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
+using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffset;
 using RemoteLogViewer.Services.Ssh;
 
 namespace RemoteLogViewer.Utils.Extensions;
