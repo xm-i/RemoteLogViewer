@@ -210,7 +210,7 @@ public static class SshServiceEx {
 			throw new ArgumentException("interval must be >=1", nameof(interval));
 		}
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
-		var cmd = $"awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR, offset }} END {{ if (NR%{interval} != 0) print NR, offset }}' '{escapedPath}' 2>/dev/null";
+		var cmd = $"LC_ALL=C awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR, offset }} END {{ if (NR%{interval} != 0) print NR, offset }}' '{escapedPath}' 2>/dev/null";
 		var lines = sshService.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {
