@@ -19,6 +19,7 @@ public class TextFileViewerModel : ModelBase {
 
 	public TextFileViewerModel(SshService sshService) {
 		this._sshService = sshService;
+		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines);
 
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
@@ -89,10 +90,9 @@ public class TextFileViewerModel : ModelBase {
 		get;
 	} = new();
 
-	/// <summary>GREP 実行中か。</summary>
-	public ReactiveProperty<bool> IsGrepRunning {
+	public GrepOperation GrepOperation {
 		get;
-	} = new(false);
+	}
 
 	/// <summary>利用可能エンコーディング。</summary>
 	public ObservableList<string> AvailableEncodings { get; } = [];
@@ -246,22 +246,9 @@ public class TextFileViewerModel : ModelBase {
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
 	public async Task Grep(string? query, string? encoding, CancellationToken ct) {
-		using var op = this._operations.Register(ct);
-		if (this.OpenedFilePath.Value == null) {
-			return;
-		}
-		if ((query?.Length ?? 0) == 0) {
-			return;
-		}
 		this.GrepResults.Clear();
-		try {
-			this.IsGrepRunning.Value = true;
-			var lines = this._sshService.GrepAsync(this.OpenedFilePath.Value, query!, false, encoding, op.Token);
-			await foreach (var line in lines) {
-				this.GrepResults.Add(line);
-			}
-		} finally {
-			this.IsGrepRunning.Value = false;
+		await foreach (var line in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, ct)) {
+			this.GrepResults.Add(line);
 		}
 	}
 
