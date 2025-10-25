@@ -32,10 +32,7 @@ public class TextFileViewerModel : ModelBase {
 		// 表示行枠確保
 		lineNumbersChangedStream.Subscribe(x => {
 			Debug.WriteLine($"lineNumbersChanged start:{x.lineNumbers.FirstOrDefault()}");
-			lock (this._syncObj) {
-				this.Lines.Clear();
-				this.Lines.AddRange(x.lineNumbers.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val : new TextLine(num, "", false)));
-			}
+			this.Content.Value = string.Join('\n', x.lineNumbers.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content : string.Empty));
 			Debug.WriteLine("lineNumbersChanged end");
 		});
 
@@ -55,13 +52,8 @@ public class TextFileViewerModel : ModelBase {
 			.Where(x => x.Action == NotifyCollectionChangedAction.Add || x.Action == NotifyCollectionChangedAction.Replace)
 			.Subscribe(x => {
 				Debug.WriteLine($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
-				lock (this._syncObj) {
-					foreach (var (tl, i) in this.Lines.Select((tl, i) => (tl, i)).ToArray()) {
-						if (tl.LineNumber != x.NewItem.Value.LineNumber) {
-							continue;
-						}
-						this.Lines[i] = x.NewItem.Value;
-					}
+				if (this.LineNumbers.Value.Contains(x.NewItem.Value.LineNumber)) {
+					this.Content.Value = string.Join('\n', this.LineNumbers.Value.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content : string.Empty));
 				}
 				Debug.WriteLine($"loadedLines updated end");
 			});
@@ -84,7 +76,7 @@ public class TextFileViewerModel : ModelBase {
 	/// <summary>
 	/// 表示行。
 	/// </summary>
-	public ObservableList<TextLine> Lines {
+	public ReactiveProperty<string> Content {
 		get;
 	} = new();
 
@@ -283,7 +275,7 @@ public class TextFileViewerModel : ModelBase {
 		this.OpenedFilePath.Value = null;
 		this.GrepResults.Clear();
 		this.LoadedLines.Clear();
-		this.Lines.Clear();
+		this.Content.Value = string.Empty;
 		this._byteOffsetIndex.Reset();
 		this.SaveRangeOperation.Reset();
 		this.BuildByteOffsetMapOperation.Reset();

@@ -1,12 +1,19 @@
+using System.Collections.Concurrent;
+using System.IO;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
+using Microsoft.UI.Xaml.Media;
+
+using RemoteLogViewer.Services.Viewer;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer;
-using System.Threading;
-using System.IO;
+
+using Windows.Storage.Pickers;
+using Windows.UI;
+
+using WinRT.Interop;
 
 namespace RemoteLogViewer.Views.Ssh.FileViewer;
 
@@ -14,6 +21,18 @@ namespace RemoteLogViewer.Views.Ssh.FileViewer;
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
 /// </summary>
 public sealed partial class TextFileViewer {
+	private readonly HighlightService _highlightService;
+	private readonly SolidColorBrush _transparentColorBrush = new(Color.FromArgb(0, 0, 0, 0));
+	private readonly ConcurrentDictionary<Color, SolidColorBrush> _brushCache = [];
+	private SolidColorBrush GetBrush(Color c) {
+		if (this._brushCache.TryGetValue(c, out var b)) {
+			return b;
+		}
+		b = new SolidColorBrush(c);
+		this._brushCache[c] = b;
+		return b;
+	}
+
 	public TextFileViewerViewModel? ViewModel {
 		get;
 		set {
@@ -24,10 +43,26 @@ public sealed partial class TextFileViewer {
 			field.WindowStartLine.Subscribe(x => {
 				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
 			});
+			field.Content.AsObservable().Subscribe(content => {
+				var hss = this._highlightService.ComputeHighlightSpans(content);
+				var para = new Paragraph();
+				this.ContentRichTextBlock.TextHighlighters.Clear();
+				foreach (var hs in hss) {
+					var th = new TextHighlighter() {
+						Foreground = hs.Style.ForeColor.HasValue ? this.GetBrush(hs.Style.ForeColor.Value) : null,
+						Background = hs.Style.BackColor.HasValue ? this.GetBrush(hs.Style.BackColor.Value) : this._transparentColorBrush
+					};
+					foreach(var range in hs.Ranges) {
+						th.Ranges.Add(range);
+					}
+					this.ContentRichTextBlock.TextHighlighters.Add(th);
+				}
+			});
 		}
 	}
 	private const long LineHeight = 16;
 	public TextFileViewer() {
+		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this.InitializeComponent();
 	}
 
@@ -116,7 +151,7 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
-			this.ViewModel.SelectedTextLine.Value = this.ViewModel.Lines.FirstOrDefault(ln => ln.LineNumber == line);
+			// this.ViewModel.SelectedTextLine.Value = this.ViewModel.Content.CurrentValue.FirstOrDefault(ln => ln.LineNumber == line);
 			this.BottomTabView.SelectedItem = this.SelectedLineView;
 		}
 	}

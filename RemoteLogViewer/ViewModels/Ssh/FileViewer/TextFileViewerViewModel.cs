@@ -6,6 +6,7 @@ using System.Threading;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Services.Viewer;
 
 namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 
@@ -20,7 +21,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
 
-	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
+	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, HighlightService highlightService) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.ProcessedBytes
@@ -29,8 +30,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 			.ToReadOnlyBindableReactiveProperty(0)
 			.AddTo(this.CompositeDisposable);
 		this.TotalLines = this._textFileViewerModel.TotalLines.Throttle().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		var linesView = this._textFileViewerModel.Lines.CreateView(x => x).AddTo(this.CompositeDisposable);
-		this.Lines = linesView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.Content = this._textFileViewerModel.Content.ToReadOnlyBindableReactiveProperty(string.Empty).AddTo(this.CompositeDisposable);
 		this.LineNumbers = this._textFileViewerModel.LineNumbers.ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
 		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.ViewerHeight = this.VisibleLineCount.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
@@ -163,10 +163,11 @@ public class TextFileViewerViewModel : ViewModelBase {
 		get;
 	} = new(1);
 
-	/// <summary>表示行一覧。</summary>
-	public NotifyCollectionChangedSynchronizedViewList<TextLine> Lines {
+	/// <summary>表示内容。</summary>
+	public IReadOnlyBindableReactiveProperty<string> Content {
 		get;
 	}
+
 	/// <summary>行番号一覧。</summary>
 	public IReadOnlyBindableReactiveProperty<long[]> LineNumbers {
 		get;
@@ -226,7 +227,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// </summary>
 	public BindableReactiveProperty<double> LineNumberColumnWidth { get; } = new(60d);
 
-	public BindableReactiveProperty<TextLine?> SelectedTextLine {
+	public BindableReactiveProperty<HighlightedTextLine?> SelectedTextLine {
 		get;
 	} = new();
 

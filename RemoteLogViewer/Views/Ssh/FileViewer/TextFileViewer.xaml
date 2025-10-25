@@ -67,18 +67,16 @@
 				Padding="0,8"
 				SizeChanged="ContentViewer_SizeChanged"
 				PointerWheelChanged="ContentViewer_PointerWheelChanged">
-				<ItemsRepeater ItemsSource="{x:Bind ViewModel.Lines, Mode=OneWay}"
-					PointerWheelChanged="ContentViewer_PointerWheelChanged">
-					<ItemsRepeater.ItemTemplate>
-						<DataTemplate x:DataType="models:TextLine">
-							<Grid ColumnDefinitions="60, *" HorizontalAlignment="Stretch" Height="16">
-								<ProgressRing Width="14" Height="14" Margin="0,1,8,1" IsActive="True" VerticalAlignment="Center" Visibility="{x:Bind IsLoaded, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-								<TextBlock Grid.Column="1" Height="16" Text=" " HorizontalAlignment="Stretch"/>
-								<TextBlock Grid.ColumnSpan="2" Height="16" Text="{x:Bind Content}" Visibility="{x:Bind IsLoaded, Converter={StaticResource BooleanToVisibilityConverter}}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
-							</Grid>
-						</DataTemplate>
-					</ItemsRepeater.ItemTemplate>
-				</ItemsRepeater>
+				<RichTextBlock x:Name="ContentRichTextBlock"
+					FontFamily="Consolas"
+					IsTextSelectionEnabled="True"
+					TextWrapping="NoWrap"
+					LineHeight="16"
+					LineStackingStrategy="BlockLineHeight">
+					<Paragraph LineHeight="16">
+						<Run Text="{x:Bind ViewModel.Content.Value, Mode=OneWay}" />
+					</Paragraph>
+				</RichTextBlock>
 			</ScrollViewer>
 			<ScrollViewer x:Name="VirtualScrollViewer"
 				Height="{x:Bind ViewModel.ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
@@ -142,9 +140,8 @@
 						 VerticalAlignment="Stretch">
 						<Grid ColumnDefinitions="Auto,*" MinHeight="16" VerticalAlignment="Stretch">
 							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{x:Bind ViewModel.LineNumberColumnWidth.Value, Mode=OneWay}">
-								<TextBlock Text="{x:Bind ViewModel.SelectedTextLine.Value.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+								<TextBlock Text="{x:Bind ViewModel.SelectedTextLine.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
 							</Border>
-							<TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SelectedTextLine.Value.Value.Content,Mode=OneWay}" TextWrapping="WrapWholeWords" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
 						</Grid>
 					</ScrollViewer>
 				</Grid>
