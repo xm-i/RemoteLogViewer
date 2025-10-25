@@ -2,7 +2,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 
-using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffset;
+using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Services.Ssh;
 
@@ -22,6 +22,7 @@ public class TextFileViewerModel : ModelBase {
 		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines);
 		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize);
 		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex);
+		this.BuildByteOffsetMapOperation = new BuildByteOffsetMapOperation(this._operations);
 
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
@@ -103,6 +104,9 @@ public class TextFileViewerModel : ModelBase {
 	public SaveRangeContentOperation SaveRangeOperation {
 		get;
 	}
+	public BuildByteOffsetMapOperation BuildByteOffsetMapOperation {
+		get;
+	}
 
 	/// <summary>利用可能エンコーディング。</summary>
 	public ObservableList<string> AvailableEncodings { get; } = [];
@@ -119,18 +123,6 @@ public class TextFileViewerModel : ModelBase {
 		get;
 	} = [];
 
-	/// <summary>
-	/// バイトオフセット作成済みサイズ
-	/// </summary>
-	public ReactiveProperty<ulong> LoadedBytes {
-		get;
-	} = new(0);
-
-	public ReactiveProperty<bool> IsLoadingByteOffsetMap {
-		get;
-	} = new(false);
-
-	/// <summary>
 	/// ファイルサイズ
 	/// </summary>
 	public ReactiveProperty<ulong> TotalBytes {
@@ -150,25 +142,15 @@ public class TextFileViewerModel : ModelBase {
 		}
 		this.ResetStates();
 		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName, fso.FileSystemObjectType);
-
-		using var op = this._operations.Register(ct);
-		try {
-			this.OpenedFilePath.Value = fullPath;
-			this.FileEncoding.Value = encoding;
-			this.TotalBytes.Value = fso.FileSize;
-			this.IsLoadingByteOffsetMap.Value = true;
-			this._byteOffsetIndex.Reset();
-			try {
-				await foreach (var entry in this._sshService.CreateByteOffsetMap(fullPath, ByteOffsetMapChunkSize, op.Token)) {
-					this._byteOffsetIndex.Add(entry);
-					this.TotalLines.Value = entry.LineNumber;
-					this.LoadedBytes.Value = entry.Bytes;
-				}
-			} catch {
-				// TODO: エラー処理
-			}
-		} finally {
-			this.IsLoadingByteOffsetMap.Value = false;
+		this.OpenedFilePath.Value = fullPath;
+		this.FileEncoding.Value = encoding;
+		this.TotalBytes.Value = fso.FileSize;
+		this._byteOffsetIndex.Reset();
+		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, ByteOffsetMapChunkSize, this.TotalBytes.Value, ct);
+		await foreach (var entry in mapStream) {
+			var byteOffset = new ByteOffset(entry.LineNumber, entry.Bytes);
+			this._byteOffsetIndex.Add(byteOffset);
+			this.TotalLines.Value = byteOffset.LineNumber;
 		}
 	}
 
@@ -262,9 +244,9 @@ public class TextFileViewerModel : ModelBase {
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
-		if (this.IsLoadingByteOffsetMap.Value) {
+		if (this.BuildByteOffsetMapOperation.IsRunning.CurrentValue) {
 			// バイトオフセットマップ作成中は待機
-			await this.IsLoadingByteOffsetMap.Where(x => !x).FirstAsync(ct);
+			await this.BuildByteOffsetMapOperation.IsRunning.Where(x => !x).FirstAsync(ct);
 		}
 		var currentLastLine = this.TotalLines.Value;
 		var lines = this.TailOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this.FileEncoding.Value, currentLastLine, ct);
@@ -279,7 +261,6 @@ public class TextFileViewerModel : ModelBase {
 		var lastLine = this.TotalLines.Value;
 		var finalOffset = this._byteOffsetIndex.Find(lastLine);
 		this.TotalBytes.Value = finalOffset.Bytes;
-		this.LoadedBytes.Value = finalOffset.Bytes;
 	}
 
 	/// <summary>
@@ -305,5 +286,6 @@ public class TextFileViewerModel : ModelBase {
 		this.Lines.Clear();
 		this._byteOffsetIndex.Reset();
 		this.SaveRangeOperation.Reset();
+		this.BuildByteOffsetMapOperation.Reset();
 	}
 }

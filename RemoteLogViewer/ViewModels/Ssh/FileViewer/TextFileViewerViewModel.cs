@@ -23,7 +23,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.FileLoadProgress = this._textFileViewerModel.LoadedBytes
+		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.ProcessedBytes
 			.CombineLatest(this._textFileViewerModel.TotalBytes, (loaded, total) => total == 0 ? 0d : (double)loaded / total)
 			.Throttle()
 			.ToReadOnlyBindableReactiveProperty(0)

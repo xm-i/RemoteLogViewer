@@ -1,4 +1,4 @@
-namespace RemoteLogViewer.Models.Ssh.FileViewer.ByteOffset;
+namespace RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 public interface IByteOffsetIndex {
 	public void Reset();
