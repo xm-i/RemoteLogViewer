@@ -135,6 +135,9 @@ public class TextFileViewerViewModel : ViewModelBase {
 		}).AddTo(this.CompositeDisposable);
 
 		this.ChangeEncodingCommand.Subscribe(_ => {
+			if (this.SelectedEncoding.Value is null) {
+				return;
+			}
 			this._textFileViewerModel.ChangeEncoding(this.SelectedEncoding.Value);
 		}).AddTo(this.CompositeDisposable);
 	}
