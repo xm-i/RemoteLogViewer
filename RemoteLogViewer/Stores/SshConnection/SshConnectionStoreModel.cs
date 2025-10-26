@@ -73,7 +73,9 @@ public class SshConnectionStoreModel {
 
 	public void Add() {
 		var scope = Ioc.Default.CreateScope();
-		this.Items.Add(scope.ServiceProvider.GetRequiredService<SshConnectionInfoModel>());
+		var scim = scope.ServiceProvider.GetRequiredService<SshConnectionInfoModel>();
+		scim.Id.Value = Guid.NewGuid();
+		this.Items.Add(scim);
 		this.Save();
 	}
 }
