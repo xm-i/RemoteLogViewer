@@ -68,6 +68,7 @@
 				SizeChanged="ContentViewer_SizeChanged"
 				PointerWheelChanged="ContentViewer_PointerWheelChanged">
 				<RichTextBlock x:Name="ContentRichTextBlock"
+					KeyDown="ContentRichTextBlock_KeyDown"
 					FontFamily="Consolas"
 					IsTextSelectionEnabled="True"
 					TextWrapping="NoWrap"

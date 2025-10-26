@@ -171,4 +171,33 @@ public sealed partial class TextFileViewer {
 		this.ViewModel.ChangeEncodingCommand.Execute(Unit.Default);
 
 	}
+
+	private void ContentRichTextBlock_KeyDown(object sender, KeyRoutedEventArgs e) {
+		switch (e.Key) {
+			case Windows.System.VirtualKey.Down:
+				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + 1);
+				e.Handled = true;
+				break;
+			case Windows.System.VirtualKey.Up:
+				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value - 1);
+				e.Handled = true;
+				break;
+			case Windows.System.VirtualKey.PageDown:
+				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + this.ViewModel.VisibleLineCount.Value);
+				e.Handled = true;
+				break;
+			case Windows.System.VirtualKey.PageUp:
+				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value - this.ViewModel.VisibleLineCount.Value);
+				e.Handled = true;
+				break;
+			case Windows.System.VirtualKey.Home:
+				this.ViewModel?.JumpToLineCommand.Execute(1);
+				e.Handled = true;
+				break;
+			case Windows.System.VirtualKey.End:
+				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.TotalLines.Value - this.ViewModel.VisibleLineCount.Value + 1);
+				e.Handled = true;
+				break;
+		}
+	}
 }
