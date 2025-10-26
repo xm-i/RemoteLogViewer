@@ -75,4 +75,15 @@ public sealed partial class SshBrowserPage : Page {
 			this.ViewModel.OpenBookmarkCommand.Execute(bm);
 		}
 	}
+
+	private void CurrentDirectoryBookmarkedToggleButton_CheckedChange(object sender, RoutedEventArgs e) {
+		if(this.ViewModel == null) {
+			return;
+		}
+		if (this.CurrentDirectoryBookmarkedToggleButton.IsChecked  is not { } isChecked) {
+			return;
+		}
+		this.ViewModel.ToggleCurrentDirectoryBookmarkCommand.Execute(isChecked);
+
+	}
 }

@@ -1,3 +1,5 @@
+using System.IO;
+
 using RemoteLogViewer.Services.Ssh;
 
 namespace RemoteLogViewer.Utils;
@@ -8,5 +10,9 @@ public static class PathUtils {
 			return path2;
 		}
 		return path1.TrimEnd('/') + "/" + path2 + (fsoType == FileSystemObjectType.Directory || fsoType == FileSystemObjectType.SymlinkDirectory ? "/" : "");
+	}
+
+	public static string GetFileOrDirectoryName(string path) {
+		return Path.GetFileName(path.TrimEnd('/'));
 	}
 }

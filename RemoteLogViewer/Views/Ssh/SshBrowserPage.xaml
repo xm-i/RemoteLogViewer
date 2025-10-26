@@ -27,6 +27,14 @@
 			</StackPanel>
 			<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4">
 				<TextBox Width="240" Text="{x:Bind ViewModel.EntryFilterWord.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Filter" />
+				<ToggleButton x:Name="CurrentDirectoryBookmarkedToggleButton" Style="{StaticResource StarToggleButtonStyle}" Width="24" Height="24"
+					IsChecked="{x:Bind ViewModel.IsCurrentDirectoryBookmarked.Value, Mode=OneWay}"
+					Click="CurrentDirectoryBookmarkedToggleButton_CheckedChange">
+					<Grid>
+						<FontIcon Glyph="&#xE735;" Foreground="Gold" Visibility="{Binding IsChecked,ElementName=CurrentDirectoryBookmarkedToggleButton, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
+						<FontIcon Glyph="&#xE734;" Foreground="Gray" Visibility="{Binding IsChecked,ElementName=CurrentDirectoryBookmarkedToggleButton, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+					</Grid>
+				</ToggleButton>
 			</StackPanel>
 			<TextBlock Grid.Row="2"  Text="Entries" FontWeight="SemiBold" Margin="0,4,0,2" />
 			<ListView Grid.Row="3"  ItemsSource="{x:Bind ViewModel.Entries}"

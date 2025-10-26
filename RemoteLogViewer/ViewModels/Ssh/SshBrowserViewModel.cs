@@ -1,5 +1,3 @@
-using R3;
-
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer; // for SshEntry
@@ -31,6 +29,17 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 	public BindableReactiveProperty<string> CurrentPath {
 		get;
 	}
+
+	/// <summary>
+	/// 現在のパスがブックマークされているか。
+	/// </summary>
+	public IReadOnlyBindableReactiveProperty<bool> IsCurrentDirectoryBookmarked {
+		get;
+	}
+
+	public ReactiveCommand<bool> ToggleCurrentDirectoryBookmarkCommand {
+		get;
+	} = new();
 
 	/// <summary>
 	/// エントリフィルターワード。
@@ -77,6 +86,8 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 		this._model = model;
 		this.TextFileViewerViewModel = textFileViewerViewModel;
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!.AddTo(this.CompositeDisposable)!;
+		this.IsCurrentDirectoryBookmarked = this._model.IsCurrentDirectoryBookmarked.ToReadOnlyBindableReactiveProperty(false).AddTo(this.CompositeDisposable);
+
 		var view = this._model.Entries.CreateView(f => new FileSystemEntryViewModel(f, this._model)).AddTo(this.CompositeDisposable);
 		this.Entries = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this._model.SelectedSshConnectionInfo.Subscribe(x => {
@@ -114,12 +125,20 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 			this._model.NavigateTo(this.CurrentPath.Value);
 		}).AddTo(this.CompositeDisposable);
 		this.EntryFilterWord.ThrottleLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
-		var word = this.EntryFilterWord.Value;
-		if (string.IsNullOrWhiteSpace(word)) {
-			view.ResetFilter();
-		} else {
-			view.AttachFilter(vm => vm.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
-		}
-	}).AddTo(this.CompositeDisposable);
+			var word = this.EntryFilterWord.Value;
+			if (string.IsNullOrWhiteSpace(word)) {
+				view.ResetFilter();
+			} else {
+				view.AttachFilter(vm => vm.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
+			}
+		}).AddTo(this.CompositeDisposable);
+
+		this.ToggleCurrentDirectoryBookmarkCommand.Subscribe(x => {
+			if (x) {
+				this._model.AddBookmark(this.CurrentPath.Value, PathUtils.GetFileOrDirectoryName(this.CurrentPath.Value)!);
+			} else {
+				this._model.RemoveBookmark(this.CurrentPath.Value);
+			}
+		}).AddTo(this.CompositeDisposable);
 	}
 }

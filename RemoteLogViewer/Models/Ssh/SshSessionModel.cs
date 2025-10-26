@@ -30,6 +30,13 @@ public class SshSessionModel : ModelBase {
 		get;
 	} = new("/");
 
+	/// <summary>
+	/// 現在のパスがブックマークされているか。
+	/// </summary>
+	public ReadOnlyReactiveProperty<bool> IsCurrentDirectoryBookmarked {
+		get;
+	}
+
 	/// <summary>ルートエントリ一覧。</summary>
 	public ObservableList<FileSystemObject> Entries {
 		get;
@@ -54,6 +61,13 @@ public class SshSessionModel : ModelBase {
 		this._textFileViewerModel = textFileViewerModel;
 		this._notificationService = notificationService;
 		this.SavedConnections = store.Items;
+		this.IsCurrentDirectoryBookmarked = this.CurrentPath.Select(x => {
+			if (this.SelectedSshConnectionInfo.Value is not { } ci) {
+				return false;
+			}
+			return ci.Bookmarks.Any(b => b.Path.Value == x);
+		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
+
 		this._sshService.DisconnectedWithExceptionNotification.ObserveOnCurrentSynchronizationContext().Subscribe(x => {
 			this.DisconnectedWithException.Value = true;
 			this._notificationService.Publish("SSH", $"接続が切断されました：{x.Message}", NotificationSeverity.Error, x);
@@ -76,7 +90,7 @@ public class SshSessionModel : ModelBase {
 		try {
 			this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, ci.EncodingString.Value);
 		} catch (Exception ex) {
-			this._notificationService.Publish("SSH", $"接続に失敗しました: {ex.Message}", NotificationSeverity.Error, "再接続", () => this.Connect(isReconnect), "閉じる", () => {}, ex);
+			this._notificationService.Publish("SSH", $"接続に失敗しました: {ex.Message}", NotificationSeverity.Error, "再接続", () => this.Connect(isReconnect), "閉じる", () => { }, ex);
 			return;
 		}
 		this.IsConnected.Value = true;
@@ -167,18 +181,26 @@ public class SshSessionModel : ModelBase {
 	/// </summary>
 	/// <param name="fso">対象エントリ。</param>
 	public void AddBookmark(FileSystemObject fso) {
+		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName, fso.FileSystemObjectType);
+		this.AddBookmark(targetPath, fso.FileName);
+	}
+
+	/// <summary>
+	/// 指定エントリをブックマークへ追加します。
+	/// </summary>
+	/// <param name="absolutePath">絶対パス。</param>
+	/// <param name="name">表示名。</param>
+	public void AddBookmark(string absolutePath, string name) {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return;
 		}
-		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName, fso.FileSystemObjectType);
 
-		var isExists = ci.Bookmarks.Any(b => string.Equals(b.Path.Value, targetPath, StringComparison.Ordinal));
+		var isExists = ci.Bookmarks.Any(b => string.Equals(b.Path.Value, absolutePath, StringComparison.Ordinal));
 
 		if (isExists) {
 			return;
 		}
 
-		var name = fso.FileName;
 		var list = ci.Bookmarks;
 		int order;
 		if (list.Count == 0) {
@@ -188,23 +210,31 @@ public class SshSessionModel : ModelBase {
 		}
 		var bm = new SshBookmarkModel();
 		bm.Order.Value = order;
-		bm.Path.Value = targetPath;
+		bm.Path.Value = absolutePath;
 		bm.Name.Value = name;
 		list.Add(bm);
 		this._store.Save();
 	}
+
 
 	/// <summary>
 	/// ブックマークを削除します。
 	/// </summary>
 	/// <param name="fso">対象エントリ。</param>
 	public void RemoveBookmark(FileSystemObject fso) {
+		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName, fso.FileSystemObjectType);
+		this.RemoveBookmark(targetPath);
+	}
+	/// <summary>
+	/// ブックマークを削除します。
+	/// </summary>
+	/// <param name="absolutePath">絶対パス。</param>
+	public void RemoveBookmark(string absolutePath) {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return;
 		}
-		var targetPath = PathUtils.CombineUnixPath(this.CurrentPath.Value, fso.FileName, fso.FileSystemObjectType);
 
-		var existing = ci.Bookmarks.FirstOrDefault(b => string.Equals(b.Path.Value, targetPath, StringComparison.Ordinal));
+		var existing = ci.Bookmarks.FirstOrDefault(b => string.Equals(b.Path.Value, absolutePath, StringComparison.Ordinal));
 
 		if (existing == null) {
 			return;
