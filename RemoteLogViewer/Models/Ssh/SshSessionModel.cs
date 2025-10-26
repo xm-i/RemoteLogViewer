@@ -58,6 +58,12 @@ public class SshSessionModel : ModelBase {
 			this.DisconnectedWithException.Value = true;
 			this._notificationService.Publish("SSH", $"接続が切断されました：{x.Message}", NotificationSeverity.Error, x);
 		}).AddTo(this.CompositeDisposable);
+
+		this.SavedConnections.ObserveRemove().Subscribe(x => {
+			if (x.Value == this.SelectedSshConnectionInfo.Value) {
+				this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
+			}
+		});
 	}
 
 	/// <summary>

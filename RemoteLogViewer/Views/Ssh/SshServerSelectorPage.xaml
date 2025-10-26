@@ -24,7 +24,8 @@
                  DoubleTapped="SavedConnections_DoubleTapped"
                  SelectionChanged="SavedConnections_SelectionChanged"
                  ScrollViewer.VerticalScrollMode="Auto"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+				 SelectedItem="{x:Bind ViewModel.SelectedSshConnectionInfo.Value,Mode=OneWay}">
 			<ListBox.ItemTemplate>
 				<DataTemplate x:DataType="sshVm:SshConnectionInfoViewModel">
 					<TextBlock Text="{x:Bind DisplayName.Value,Mode=OneWay}" />
