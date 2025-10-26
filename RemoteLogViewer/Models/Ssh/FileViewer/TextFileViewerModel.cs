@@ -279,6 +279,14 @@ public class TextFileViewerModel : ModelBase {
 		return lines.FirstOrDefault();
 	}
 
+	public void ChangeEncoding(string encoding) {
+		this.FileEncoding.Value = encoding;
+		this._operations.CancelAll();
+		this.LoadedLines.Clear();
+		this.GrepResults.Clear();
+		this.LineNumbers.Value = [.. this.LineNumbers.Value];
+	}
+
 	/// <summary>
 	/// リセット
 	/// </summary>

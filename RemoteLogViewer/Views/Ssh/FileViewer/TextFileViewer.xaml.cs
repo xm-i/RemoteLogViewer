@@ -163,4 +163,12 @@ public sealed partial class TextFileViewer {
 			this.BottomTabView.SelectedItem = this.SelectedLineView;
 		}
 	}
+
+	private void AutoSuggestBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) {
+		if (this.ViewModel == null) {
+			return;
+		}
+		this.ViewModel.ChangeEncodingCommand.Execute(Unit.Default);
+
+	}
 }

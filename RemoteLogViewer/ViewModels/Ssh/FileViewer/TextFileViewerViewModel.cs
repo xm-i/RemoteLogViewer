@@ -132,7 +132,11 @@ public class TextFileViewerViewModel : ViewModelBase {
 
 		this.PickupTextLineCommand.SubscribeAwait(async (x,ct) => {
 			this.PickedupTextLine.Value = await this._textFileViewerModel.PickupTextLine(x, ct);
-		});
+		}).AddTo(this.CompositeDisposable);
+
+		this.ChangeEncodingCommand.Subscribe(_ => {
+			this._textFileViewerModel.ChangeEncoding(this.SelectedEncoding.Value);
+		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -272,6 +276,10 @@ public class TextFileViewerViewModel : ViewModelBase {
 	public ReactiveCommand TailStopCommand {
 		get;
 	}
+
+	public ReactiveCommand ChangeEncodingCommand {
+		get;
+	} = new();
 
 	/// <summary>
 	/// 指定範囲のテキストを保存します。
