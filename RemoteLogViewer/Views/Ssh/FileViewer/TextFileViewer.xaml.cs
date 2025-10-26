@@ -44,22 +44,30 @@ public sealed partial class TextFileViewer {
 				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
 			});
 			field.Content.AsObservable().Subscribe(content => {
-				var hss = this._highlightService.ComputeHighlightSpans(content);
-				var para = new Paragraph();
-				this.ContentRichTextBlock.TextHighlighters.Clear();
-				foreach (var hs in hss) {
-					var th = new TextHighlighter() {
-						Foreground = hs.Style.ForeColor.HasValue ? this.GetBrush(hs.Style.ForeColor.Value) : null,
-						Background = hs.Style.BackColor.HasValue ? this.GetBrush(hs.Style.BackColor.Value) : this._transparentColorBrush
-					};
-					foreach(var range in hs.Ranges) {
-						th.Ranges.Add(range);
-					}
-					this.ContentRichTextBlock.TextHighlighters.Add(th);
-				}
+				this.SetHilight(this.ContentRichTextBlock, content);
+			});
+			field.PickedupTextLine.AsObservable().Where(tl => tl != null).Subscribe(tl => {
+				this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
 			});
 		}
 	}
+	private void SetHilight(RichTextBlock richTextBlock, string content) {
+		richTextBlock.TextHighlighters.Clear();
+		var hss = this._highlightService.ComputeHighlightSpans(content);
+		var para = new Paragraph();
+		foreach (var hs in hss) {
+			var th = new TextHighlighter() {
+				Foreground = hs.Style.ForeColor.HasValue ? this.GetBrush(hs.Style.ForeColor.Value) : null,
+				Background = hs.Style.BackColor.HasValue ? this.GetBrush(hs.Style.BackColor.Value) : this._transparentColorBrush
+			};
+			foreach (var range in hs.Ranges) {
+				th.Ranges.Add(range);
+			}
+			richTextBlock.TextHighlighters.Add(th);
+		}
+	}
+
+
 	private const long LineHeight = 16;
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
@@ -151,7 +159,7 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
-			// this.ViewModel.SelectedTextLine.Value = this.ViewModel.Content.CurrentValue.FirstOrDefault(ln => ln.LineNumber == line);
+			this.ViewModel.PickupTextLineCommand.Execute(line);
 			this.BottomTabView.SelectedItem = this.SelectedLineView;
 		}
 	}

@@ -140,8 +140,20 @@
 						 VerticalAlignment="Stretch">
 						<Grid ColumnDefinitions="Auto,*" MinHeight="16" VerticalAlignment="Stretch">
 							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{x:Bind ViewModel.LineNumberColumnWidth.Value, Mode=OneWay}">
-								<TextBlock Text="{x:Bind ViewModel.SelectedTextLine.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+								<TextBlock Text="{x:Bind ViewModel.PickedupTextLine.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
 							</Border>
+							<RichTextBlock
+								Grid.Column="1"
+								x:Name="PickedupRichTextBlock"
+								FontFamily="Consolas"
+								IsTextSelectionEnabled="True"
+								TextWrapping="Wrap"
+								LineHeight="16"
+								LineStackingStrategy="BlockLineHeight">
+								<Paragraph LineHeight="16">
+									<Run Text="{x:Bind ViewModel.PickedupTextLine.Value.Content, Mode=OneWay}" />
+								</Paragraph>
+							</RichTextBlock>
 						</Grid>
 					</ScrollViewer>
 				</Grid>

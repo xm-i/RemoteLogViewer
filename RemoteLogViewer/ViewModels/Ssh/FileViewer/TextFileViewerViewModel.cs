@@ -130,6 +130,9 @@ public class TextFileViewerViewModel : ViewModelBase {
 			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())
 			.AddTo(this.CompositeDisposable);
 
+		this.PickupTextLineCommand.SubscribeAwait(async (x,ct) => {
+			this.PickedupTextLine.Value = await this._textFileViewerModel.PickupTextLine(x, ct);
+		});
 	}
 
 	/// <summary>開いているファイルのパス。</summary>
@@ -227,7 +230,12 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// </summary>
 	public BindableReactiveProperty<double> LineNumberColumnWidth { get; } = new(60d);
 
-	public BindableReactiveProperty<HighlightedTextLine?> SelectedTextLine {
+
+	public ReactiveCommand<long> PickupTextLineCommand {
+		get;
+	} = new();
+
+	public BindableReactiveProperty<TextLine?> PickedupTextLine {
 		get;
 	} = new();
 

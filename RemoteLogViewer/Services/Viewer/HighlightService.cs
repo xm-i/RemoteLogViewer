@@ -226,7 +226,7 @@ public class HighlightService {
 		}
 
 		public RangeStyle? GetRangeStyle(int index) {
-			return this.RangeStyles.SingleOrDefault(x => x.Range.StartIndex <= index && index <= x.Range.StartIndex + x.Range.Length - 1 ); // TODO あとでFirstに変更
+			return this.RangeStyles.FirstOrDefault(x => x.Range.StartIndex <= index && index <= x.Range.StartIndex + x.Range.Length - 1 );
 		}
 
 	}
@@ -239,18 +239,5 @@ public class HighlightService {
 		public TextStyle Style {
 			get;
 		} = new();
-	}
-
-	private record StyleType();
-
-	public class HighlightSpan() {
-		public TextStyle Style {
-			get;
-		} = new();
-
-		public IList<TextRange> Ranges {
-			get;
-			init;
-		}
 	}
 }

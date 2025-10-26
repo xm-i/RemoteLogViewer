@@ -266,6 +266,19 @@ public class TextFileViewerModel : ModelBase {
 		await this.SaveRangeOperation.ExecuteAsync(this._sshService, this.OpenedFilePath.Value, streamWriter, startLine, endLine, this.FileEncoding.Value, ct);
 	}
 
+	public async Task<TextLine?> PickupTextLine(long lineNumber, CancellationToken ct) {
+		if (this.OpenedFilePath.Value == null) {
+			return null;
+		}
+		if (this.LoadedLines.TryGetValue(lineNumber, out var line)) {
+			return line;
+		}
+		var byteOffset = this._byteOffsetIndex.Find(lineNumber);
+		var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, lineNumber, lineNumber, this.FileEncoding.Value, byteOffset, ct).ToArrayAsync();
+
+		return lines.FirstOrDefault();
+	}
+
 	/// <summary>
 	/// リセット
 	/// </summary>
