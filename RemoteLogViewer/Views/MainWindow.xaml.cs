@@ -6,9 +6,7 @@ using RemoteLogViewer.Views.Settings;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
-using RemoteLogViewer.ViewModels.Settings;
 using Microsoft.Extensions.DependencyInjection;
-using System.IO;
 
 namespace RemoteLogViewer.Views;
 
@@ -33,7 +31,20 @@ public sealed partial class MainWindow : Window {
 				Content = new ContentDialogContent(notification.Message, notification.Severity)
 			};
 			await dialog.ShowAsync();
-
+		});
+		this.ViewModel.NotificationWithActions.SubscribeAwait(async (notification, ct) => {
+			var dialog = new ContentDialog {
+				XamlRoot = this.Content.XamlRoot,
+				Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+				Title = "Message",
+				PrimaryButtonText = notification.PrimaryActionText,
+				PrimaryButtonCommand = new ReactiveCommand(_ => notification.PrimaryAction()),
+				SecondaryButtonText = notification.SecondaryActionText,
+				SecondaryButtonCommand = new ReactiveCommand(_ => notification.SecondaryAction()),
+				DefaultButton = ContentDialogButton.Primary,
+				Content = new ContentDialogContent(notification.Message, notification.Severity)
+			};
+			await dialog.ShowAsync();
 		});
 	}
 

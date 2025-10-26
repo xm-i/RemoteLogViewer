@@ -37,6 +37,12 @@ public class MainWindowViewModel: ViewModelBase {
 	public Observable<NotificationInfo> Notifications {
 		get;
 	}
+	/// <summary>
+	/// アクション付きユーザー通知ストリーム。
+	/// </summary>
+	public Observable<NotificationInfoWithAction> NotificationWithActions {
+		get;
+	}
 
 	/// <summary>
 	///     <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
@@ -44,9 +50,10 @@ public class MainWindowViewModel: ViewModelBase {
 	public MainWindowViewModel(NotificationService notificationService) {
 		this.Tabs = this._tabs.ToNotifyCollectionChanged();
 		this.AddTabCommand.Subscribe(_ => this.AddTab());
-		this.CloseTabCommand.Subscribe(vm => this.CloseTab(vm));
+		this.CloseTabCommand.Subscribe(this.CloseTab);
 		this.AddTab();
 		this.Notifications = notificationService.Notifications;
+		this.NotificationWithActions = notificationService.NotificationWithActions;
 	}
 
 	/// <summary>

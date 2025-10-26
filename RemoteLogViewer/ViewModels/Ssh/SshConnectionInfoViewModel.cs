@@ -1,12 +1,10 @@
-using System.Collections.Concurrent;
-
 using RemoteLogViewer.Stores.SshConnection;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 
 [AddScoped]
 public class SshConnectionInfoViewModel {
-	private Subject<Unit> _sshConnectionInfoUpdated = new();
+	private readonly Subject<Unit> _sshConnectionInfoUpdated = new();
 	/// <summary>
 	/// モデル
 	/// </summary>

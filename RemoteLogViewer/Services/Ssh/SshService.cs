@@ -31,10 +31,10 @@ public class SshService : IDisposable {
 		}
 	}
 
-	private readonly Subject<Unit> disconnectedSubject = new();
-	public Observable<Unit> DisconnectedNotification {
+	private readonly Subject<Exception> _disconnectedSubject = new();
+	public Observable<Exception> DisconnectedWithExceptionNotification {
 		get {
-			field ??= this.disconnectedSubject.AsObservable();
+			field ??= this._disconnectedSubject.AsObservable();
 			return field;
 		}
 	}
@@ -83,8 +83,7 @@ public class SshService : IDisposable {
 			this._client.KeepAliveInterval = TimeSpan.FromSeconds(1);
 			this._client.Connect();
 			this.CSharpEncoding = encoding;
-		} catch (Exception ex) {
-			this._notificationService.Publish("SSH", $"接続に失敗しました: {ex.Message}", NotificationSeverity.Error, ex);
+		} catch (Exception) {
 			throw;
 		}
 	}
@@ -92,19 +91,15 @@ public class SshService : IDisposable {
 	/// <summary>
 	///     接続を切断します。
 	/// </summary>
-	public void Disconnect() {
-		if (this._client is { IsConnected: true }) {
-			this._client.Disconnect();
-			this.disconnectedSubject.OnNext(Unit.Default);
-		}
+	public void Disconnect(Exception? cause = null) {
+		this._client?.Disconnect();
 		this._client?.ErrorOccurred -= this.SshClientErrorOccurred;
 		this._client?.Dispose();
 		this._client = null;
 	}
 
-	public void SshClientErrorOccurred(object? sender, ExceptionEventArgs exceptionEventArgs) {
-		this._notificationService.Publish("SSH", exceptionEventArgs.Exception.Message, NotificationSeverity.Error, exceptionEventArgs.Exception);
-		this.Disconnect();
+	private void SshClientErrorOccurred(object? sender, ExceptionEventArgs exceptionEventArgs) {
+		this._disconnectedSubject.OnNext(exceptionEventArgs.Exception);
 	}
 
 	/// <summary>

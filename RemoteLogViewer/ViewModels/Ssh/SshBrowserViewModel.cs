@@ -1,3 +1,5 @@
+using R3;
+
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer; // for SshEntry
@@ -42,6 +44,15 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 	/// </summary>
 	public ReactiveCommand DisconnectCommand { get; } = new();
 
+	public IReadOnlyBindableReactiveProperty<bool> DisconnectedWithException {
+		get;
+	}
+
+	/// <summary>
+	/// 再接続コマンド。
+	/// </summary>
+	public ReactiveCommand ReconnectCommand { get; }
+
 	/// <summary>
 	/// パスナビゲートコマンド。
 	/// </summary>
@@ -76,6 +87,10 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 			this.Bookmarks = bmView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		}).AddTo(this.CompositeDisposable);
 		this.DisconnectCommand.Subscribe(_ => this._model.Disconnect()).AddTo(this.CompositeDisposable);
+		this.DisconnectedWithException = this._model.DisconnectedWithException.ToReadOnlyBindableReactiveProperty(false).AddTo(this.CompositeDisposable);
+
+		this.ReconnectCommand = this.DisconnectedWithException.AsObservable().ToReactiveCommand(_ => { this._model.Reconnect(); }).AddTo(this.CompositeDisposable);
+
 		this.OpenCommand
 			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.File || vm?.FileSystemObjectType == FileSystemObjectType.SymlinkFile)
 			.SubscribeAwait(async (vm, ct) => {
@@ -99,12 +114,12 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 			this._model.NavigateTo(this.CurrentPath.Value);
 		}).AddTo(this.CompositeDisposable);
 		this.EntryFilterWord.ThrottleLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider).Subscribe(_ => {
-			var word = this.EntryFilterWord.Value;
-			if (string.IsNullOrWhiteSpace(word)) {
-				view.ResetFilter();
-			} else {
-				view.AttachFilter(vm => vm.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
-			}
-		}).AddTo(this.CompositeDisposable);
+		var word = this.EntryFilterWord.Value;
+		if (string.IsNullOrWhiteSpace(word)) {
+			view.ResetFilter();
+		} else {
+			view.AttachFilter(vm => vm.FileName.Contains(word!, StringComparison.CurrentCultureIgnoreCase));
+		}
+	}).AddTo(this.CompositeDisposable);
 	}
 }

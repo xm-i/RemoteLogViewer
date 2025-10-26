@@ -4,7 +4,6 @@ using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Stores.SshConnection;
-using RemoteLogViewer.Utils.Extensions;
 
 namespace RemoteLogViewer.Models.Ssh;
 
@@ -19,6 +18,10 @@ public class SshSessionModel : ModelBase {
 	private readonly NotificationService _notificationService;
 	/// <summary>接続済みか。</summary>
 	public ReactiveProperty<bool> IsConnected {
+		get;
+	} = new(false);
+
+	public ReactiveProperty<bool> DisconnectedWithException {
 		get;
 	} = new(false);
 
@@ -51,26 +54,35 @@ public class SshSessionModel : ModelBase {
 		this._textFileViewerModel = textFileViewerModel;
 		this._notificationService = notificationService;
 		this.SavedConnections = store.Items;
-		this._sshService.DisconnectedNotification.Subscribe(x => {
-			// TODO: エラー起因の場合エラー通知
-			this.IsConnected.Value = false;
-			this.Entries.Clear();
-			this.CurrentPath.Value = "/";
-			this._textFileViewerModel.CloseFile();
+		this._sshService.DisconnectedWithExceptionNotification.ObserveOnCurrentSynchronizationContext().Subscribe(x => {
+			this.DisconnectedWithException.Value = true;
+			this._notificationService.Publish("SSH", $"接続が切断されました：{x.Message}", NotificationSeverity.Error, x);
 		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>
 	///     恒久接続 (接続状態を維持) します。
 	/// </summary>
-	public void Connect() {
+	public void Connect(bool isReconnect = false) {
 		if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 			return; //TODO: エラー通知
 		}
-		this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, ci.EncodingString.Value);
-		this.NavigateTo("/");
+		try {
+			this._sshService.Connect(ci.Host.Value, ci.Port.Value, ci.User.Value, ci.Password.Value, ci.PrivateKeyPath.Value, ci.PrivateKeyPassphrase.Value, ci.EncodingString.Value);
+		} catch (Exception ex) {
+			this._notificationService.Publish("SSH", $"接続に失敗しました: {ex.Message}", NotificationSeverity.Error, "再接続", () => this.Connect(isReconnect), "閉じる", () => {}, ex);
+			return;
+		}
 		this.IsConnected.Value = true;
-		this._textFileViewerModel.LoadAvailableEncoding();
+		this.DisconnectedWithException.Value = false;
+		if (!isReconnect) {
+			this.NavigateTo("/");
+			this._textFileViewerModel.LoadAvailableEncoding();
+		}
+	}
+
+	public void Reconnect() {
+		this.Connect(true);
 	}
 
 	/// <summary>
