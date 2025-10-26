@@ -154,6 +154,8 @@ public class SshSessionModel : ModelBase {
 
 	public void Disconnect() {
 		this._sshService.Disconnect();
+		this.IsConnected.Value = false;
+		this.DisconnectedWithException.Value = false;
 	}
 
 	public void AddSavedConnection() {
