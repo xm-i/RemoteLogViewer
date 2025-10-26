@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Runtime.InteropServices;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -7,6 +8,7 @@ using Microsoft.UI.Xaml;
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Views;
 using System.IO;
+using WinRT.Interop;
 
 namespace RemoteLogViewer;
 
@@ -41,6 +43,7 @@ public partial class App : Application {
 			this.ShowWorkspaceSelectionWindow(workspaceService);
 		} else {
 			MainWindow.Activate();
+			SetWindowIcon();
 		}
 	}
 
@@ -52,8 +55,45 @@ public partial class App : Application {
 				workspaceService.SetWorkspace(path, persist);
 			}
 			MainWindow.Activate();
+			SetWindowIcon();
 		};
 		wsWindow.Activate();
+	}
+
+	// Win32 API constants & P/Invoke
+	private const int WM_SETICON =0x80;
+	private static readonly IntPtr ICON_SMALL = (IntPtr)0;
+	private static readonly IntPtr ICON_BIG = (IntPtr)1;
+	private const uint IMAGE_ICON =1;
+	private const uint LR_LOADFROMFILE =0x0010;
+	private const uint LR_DEFAULTSIZE =0x0040;
+
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+	private static extern IntPtr LoadImage(IntPtr hInst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
+
+	[DllImport("user32.dll")]
+	private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+	/// <summary>
+	/// ウィンドウのアイコンを設定 (タイトルバー / タスクバー / Alt+Tab)。
+	/// </summary>
+	private static void SetWindowIcon() {
+		try {
+			var hwnd = WindowNative.GetWindowHandle(MainWindow);
+			var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon256x256.ico");
+			if (!File.Exists(iconPath)) {
+				return;
+			}
+			// 大アイコン (既定サイズ) と小アイコン (16x16) を設定
+			var hBig = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON,0,0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+			var hSmall = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON,16,16, LR_LOADFROMFILE);
+			if (hBig != IntPtr.Zero) {
+				SendMessage(hwnd, WM_SETICON, ICON_BIG, hBig);
+			}
+			if (hSmall != IntPtr.Zero) {
+				SendMessage(hwnd, WM_SETICON, ICON_SMALL, hSmall);
+			}
+		} catch { /*失敗時は黙殺 */ }
 	}
 
 	/// <summary>DI コンテナ構築。</summary>

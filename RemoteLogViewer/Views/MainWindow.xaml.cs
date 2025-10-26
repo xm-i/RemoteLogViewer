@@ -8,6 +8,7 @@ using RemoteLogViewer.Views.Settings;
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 using RemoteLogViewer.ViewModels.Settings;
 using Microsoft.Extensions.DependencyInjection;
+using System.IO;
 
 namespace RemoteLogViewer.Views;
 
@@ -20,6 +21,7 @@ public sealed partial class MainWindow : Window {
 	public MainWindow(MainWindowViewModel mainWindowViewModel, IServiceProvider services) {
 		this._services = services;
 		this.InitializeComponent();
+		this.AppWindow.SetIcon("Assets/icon256x256.ico");
 		this.ViewModel = mainWindowViewModel;
 		this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
 			var dialog = new ContentDialog {

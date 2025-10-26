@@ -13,6 +13,11 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Remove="Assets\icon.ico" />
+    <Content Remove="Assets\icon128.ico" />
+    <Content Remove="Assets\icon256x256.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -22,6 +27,10 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\icon128.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,6 +57,10 @@
     <PackageReference Include="System.Linq.Async" Version="6.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Assets\icon256x256.ico" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
@@ -57,5 +70,6 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <ApplicationIcon>Assets\icon128.ico</ApplicationIcon>
   </PropertyGroup>
 </Project>
