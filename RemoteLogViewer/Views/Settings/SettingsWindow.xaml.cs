@@ -10,7 +10,7 @@ public sealed partial class SettingsWindow : Window {
 	public SettingsWindow(SettingsWindowViewModel vm) {
 		this.ViewModel = vm;
 		this.InitializeComponent();
-		this.AppWindow?.Resize(new Windows.Graphics.SizeInt32(1000, 650));
+		this.AppWindow?.Resize(new Windows.Graphics.SizeInt32(1200, 800));
 		this.ViewModel.SelectedSettingsPage.Subscribe(vm => {
 			if (vm is null) {
 				return;

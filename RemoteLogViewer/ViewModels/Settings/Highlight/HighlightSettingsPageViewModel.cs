@@ -28,7 +28,7 @@ public class HighlightSettingsPageViewModel : SettingsPageViewModel {
 		// View生成
 		var view = model.Rules.CreateView(x => x.ScopedService.GetRequiredService<HighlightRuleViewModel>()).AddTo(this.CompositeDisposable);
 		this.Rules = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
-
+		this.SelectedRule.Value = this.Rules.FirstOrDefault();
 		this.AddRuleCommand.Subscribe(_ => {
 			var rule = model.AddRule();
 			this.SelectedRule.Value = rule.ScopedService.GetRequiredService<HighlightRuleViewModel>();

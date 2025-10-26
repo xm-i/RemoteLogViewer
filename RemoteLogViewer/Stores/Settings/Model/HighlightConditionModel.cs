@@ -12,8 +12,8 @@ public class HighlightConditionModel(IServiceProvider service) {
 	public ReactiveProperty<HighlightPatternType> PatternType { get; } = new(HighlightPatternType.Regex);
 	public ReactiveProperty<bool> IgnoreCase { get; } = new(true);
 	public ReactiveProperty<bool> HighlightOnlyMatch { get; } = new(false);
-	public ReactiveProperty<Color> ForeColor { get; } = new(Color.FromArgb(0xFF, 0x00, 0x00, 0x00));
-	public ReactiveProperty<Color> BackColor { get; } = new(Color.FromArgb(0xFF, 0xFF, 0xFF, 0x00));
+	public ReactiveProperty<Color?> ForeColor { get; } = new(null);
+	public ReactiveProperty<Color?> BackColor { get; } = new(null);
 }
 
 public enum HighlightPatternType {
@@ -26,14 +26,20 @@ public class HighlightConditionModelForJson {
 	public HighlightPatternType PatternType { get; set; } = HighlightPatternType.Regex;
 	public bool IgnoreCase { get; set; } = true;
 	public bool HighlightOnlyMatch { get; set; } = false;
-	public string ForeColor { get; set; } = "#FF000000";
-	public string BackColor { get; set; } = "#FFFFFF00";
+	public string? ForeColor { get; set; } = null;
+	public string? BackColor { get; set; } = null;
 
-	private static string ColorToHex(Color c) {
+	private static string? ColorToHex(Color? color) {
+		if (color is not { } c) {
+			return null;
+		}
 		return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
 	}
 
-	private static Color HexToColor(string hex) {
+	private static Color? HexToColor(string? hex) {
+		if (hex == null) {
+			return null;
+		}
 		hex = hex.Trim();
 		if (hex.StartsWith('#')) {
 			hex = hex[1..];

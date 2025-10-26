@@ -71,9 +71,79 @@
 						</StackPanel>
 						<StackPanel Orientation="Horizontal" Spacing="8">
 							<TextBlock Text="Fore" Width="60" VerticalAlignment="Center" />
-							<ColorPicker Width="160" Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=TwoWay}" IsAlphaEnabled="False" />
+							<Button
+								Width="80">
+								<Button.Content>
+									<Grid RowDefinitions="Auto,8">
+										<TextBlock>Change</TextBlock>
+										<Rectangle
+											Grid.Row="1"
+											RadiusX="4"
+											RadiusY="4"
+											HorizontalAlignment="Stretch"
+											Visibility="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.IsForeColorSet.Value, Mode=OneWay,Converter={StaticResource BooleanToVisibilityConverter}}">
+											<Rectangle.Fill>
+												<SolidColorBrush Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=OneWay}" />
+											</Rectangle.Fill>
+										</Rectangle>
+										<Rectangle
+											Grid.Row="1"
+											Stroke="Black"
+											StrokeThickness="1"
+											StrokeDashArray="2,2"
+											RadiusX="4"
+											RadiusY="4"
+											Fill="Transparent"
+											HorizontalAlignment="Stretch"
+											Visibility="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.IsForeColorSet.Value, Mode=OneWay,Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+									</Grid>
+								</Button.Content>
+								<Button.Flyout>
+									<Flyout>
+										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=TwoWay}" IsAlphaEnabled="False" />
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+							<Button Command="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ClearForeColorCommand, Mode=OneWay}">
+								<FontIcon FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,2,0,0" Glyph="&#xE8E6;" />
+							</Button>
 							<TextBlock Text="Back" Width="60" VerticalAlignment="Center" />
-							<ColorPicker Width="160" Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=TwoWay}" IsAlphaEnabled="True" />
+							<Button
+								Width="80">
+								<Button.Content>
+									<Grid RowDefinitions="Auto,8">
+										<TextBlock>Change</TextBlock>
+										<Rectangle
+											Grid.Row="1"
+											RadiusX="4"
+											RadiusY="4"
+											HorizontalAlignment="Stretch"
+											Visibility="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.IsBackColorSet.Value, Mode=OneWay,Converter={StaticResource BooleanToVisibilityConverter}}">
+											<Rectangle.Fill>
+												<SolidColorBrush Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=OneWay}" />
+											</Rectangle.Fill>
+										</Rectangle>
+										<Rectangle
+											Grid.Row="1"
+											Stroke="Black"
+											StrokeThickness="1"
+											StrokeDashArray="2,2"
+											RadiusX="4"
+											RadiusY="4"
+											Fill="Transparent"
+											HorizontalAlignment="Stretch"
+											Visibility="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.IsBackColorSet.Value, Mode=OneWay,Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+									</Grid>
+								</Button.Content>
+								<Button.Flyout>
+									<Flyout>
+										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=TwoWay}" IsAlphaEnabled="True" />
+									</Flyout>
+								</Button.Flyout>
+							</Button>
+							<Button Command="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ClearBackColorCommand, Mode=OneWay}">
+								<FontIcon FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,2,0,0" Glyph="&#xE8E6;" />
+							</Button>
 						</StackPanel>
 					</StackPanel>
 				</Border>
