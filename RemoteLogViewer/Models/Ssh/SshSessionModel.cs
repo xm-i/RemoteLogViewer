@@ -61,6 +61,7 @@ public class SshSessionModel : ModelBase {
 		this._textFileViewerModel = textFileViewerModel;
 		this._notificationService = notificationService;
 		this.SavedConnections = store.Items;
+		this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
 		this.IsCurrentDirectoryBookmarked = this.CurrentPath.Select(x => {
 			if (this.SelectedSshConnectionInfo.Value is not { } ci) {
 				return false;
