@@ -9,6 +9,14 @@ namespace RemoteLogViewer.Services;
 public class WorkspaceService {
 	private readonly string _persistFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "WorkSpacePath.txt");
 
+	/// <summary>
+	/// ワークスペース設定を保存するか否かの設定
+	/// </summary>
+	public bool IsPersist {
+		get;
+		private set;
+	} = false;
+
 	/// <summary>選択済みワークスペースパス。未選択の場合は null。</summary>
 	public string? WorkspacePath {
 		get; private set;
@@ -34,6 +42,7 @@ public class WorkspaceService {
 	/// <param name="persist">次回以降確認を省略する (保存する) 場合 true。</param>
 	public void SetWorkspace(string path, bool persist) {
 		this.WorkspacePath = path;
+		this.IsPersist = persist;
 		if (persist) {
 			try {
 				Directory.CreateDirectory(Path.GetDirectoryName(this._persistFilePath)!);
@@ -41,6 +50,8 @@ public class WorkspaceService {
 			} catch {
 				// 失敗は通知未実装: TODO
 			}
+		} else {
+			File.Delete(this._persistFilePath);
 		}
 	}
 

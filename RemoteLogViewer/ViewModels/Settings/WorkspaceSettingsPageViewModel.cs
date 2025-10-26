@@ -1,12 +1,15 @@
 using System.IO;
 
-namespace RemoteLogViewer.ViewModels;
+using RemoteLogViewer.Services;
+
+namespace RemoteLogViewer.ViewModels.Settings;
 
 /// <summary>
-/// ワークスペース選択ウィンドウ用 ViewModel です。パス選択と確定操作を提供します。
+/// ワークスペース選択ページ用 ViewModel です。パス選択と確定操作を提供します。
 /// </summary>
 [AddTransient]
-public class WorkspaceSelectionWindowViewModel {
+public class WorkspaceSettingsPageViewModel: SettingsPageViewModel {
+	private readonly WorkspaceService _workspaceService;
 	/// <summary>選択中のワークスペースパス。</summary>
 	public BindableReactiveProperty<string> SelectedPath { get; } = new(string.Empty);
 	/// <summary>次回確認省略フラグ。</summary>
@@ -15,11 +18,13 @@ public class WorkspaceSelectionWindowViewModel {
 	public BindableReactiveProperty<string?> ErrorMessage { get; } = new(null);
 	/// <summary>確定コマンド。</summary>
 	public ReactiveCommand ConfirmCommand { get; } = new();
-	/// <summary>確定成功イベント。(path, skipPersist)</summary>
-	public event Action<string, bool>? Confirmed;
+	/// <summary>確定成功イベント。</summary>
+	public event Action? Confirmed;
 
 	/// <summary>コンストラクタ。</summary>
-	public WorkspaceSelectionWindowViewModel() {
+	public WorkspaceSettingsPageViewModel(WorkspaceService workspaceService): base("Workspace") {
+		this.SelectedPath.Value = workspaceService.WorkspacePath ?? string.Empty;
+		this._workspaceService = workspaceService;
 		this.ConfirmCommand.Subscribe(_ => this.OnConfirm());
 	}
 
@@ -31,6 +36,7 @@ public class WorkspaceSelectionWindowViewModel {
 			return;
 		}
 		this.ErrorMessage.Value = null;
-		this.Confirmed?.Invoke(path, this.SkipPersist.Value);
+		this._workspaceService.SetWorkspace(path, this.SkipPersist.Value);
+		this.Confirmed?.Invoke();
 	}
 }

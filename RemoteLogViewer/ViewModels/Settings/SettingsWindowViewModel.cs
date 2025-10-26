@@ -25,14 +25,19 @@ public class SettingsWindowViewModel : ViewModelBase {
 		get;
 	}
 
+	public WorkspaceSettingsPageViewModel WorkspaceSettings {
+		get;
+	}
+
 	public ReactiveCommand SaveCommand {
 		get;
 	} = new();
 
-	public SettingsWindowViewModel(SettingsStoreModel model) {
+	public SettingsWindowViewModel(SettingsStoreModel model, WorkspaceSettingsPageViewModel workspaceSettings) {
 		this.HighlightSettings = model.SettingsModel.HighlightSettings.ScopedService.GetRequiredService<HighlightSettingsPageViewModel>();
+		this.WorkspaceSettings = workspaceSettings;
 
-		this.Pages.AddRange([this.HighlightSettings]);
+		this.Pages.AddRange([this.HighlightSettings, this.WorkspaceSettings]);
 		this.SelectedSettingsPage.Value = this.Pages[0];
 
 		this.SaveCommand.Subscribe(_ => {

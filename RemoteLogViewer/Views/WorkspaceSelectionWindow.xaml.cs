@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
-using RemoteLogViewer.ViewModels;
+using RemoteLogViewer.ViewModels.Settings;
 
 namespace RemoteLogViewer.Views;
 
@@ -11,15 +11,12 @@ namespace RemoteLogViewer.Views;
 public sealed partial class WorkspaceSelectionWindow : Window {
 	/// <summary>選択イベント。(path, persist)</summary>
 	public event Action<string, bool>? WorkspaceSelected;
-	public WorkspaceSelectionWindowViewModel ViewModel { get; }
+	public WorkspaceSettingsPageViewModel ViewModel { get; }
 
-	public WorkspaceSelectionWindow(WorkspaceSelectionWindowViewModel vm) {
+	public WorkspaceSelectionWindow(WorkspaceSettingsPageViewModel vm) {
 		this.InitializeComponent();
 		this.ViewModel = vm;
-		this.ViewModel.Confirmed += (path, persist) => {
-			this.WorkspaceSelected?.Invoke(path, persist);
-			this.Close();
-		};
+		this.ViewModel.Confirmed += this.Close;
 		this.ViewModel.ErrorMessage.ObservePropertyChanged(x => x.Value).Subscribe(msg => {
 			if (!string.IsNullOrWhiteSpace(msg)) {
 				var dialog = new ContentDialog {

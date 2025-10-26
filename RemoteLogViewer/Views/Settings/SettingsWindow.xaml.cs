@@ -20,6 +20,9 @@ public sealed partial class SettingsWindow : Window {
 				case HighlightSettingsPageViewModel _:
 					view = typeof(HighlightSettingsPage);
 					break;
+				case WorkspaceSettingsPageViewModel _:
+					view = typeof(WorkspaceSettingsPage);
+					break;
 				default:
 					return;
 			}
