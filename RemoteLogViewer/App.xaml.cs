@@ -58,6 +58,7 @@ public partial class App : Application {
 			SetWindowIcon();
 		};
 		wsWindow.Activate();
+		wsWindow.AppWindow?.Resize(new(600, 250));
 	}
 
 	// Win32 API constants & P/Invoke
