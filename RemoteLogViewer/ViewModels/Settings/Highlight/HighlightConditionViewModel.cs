@@ -60,19 +60,20 @@ public class HighlightConditionViewModel : ViewModelBase {
 		this.IgnoreCase = model.IgnoreCase.ToTwoWayBindableReactiveProperty(false).AddTo(this.CompositeDisposable);
 		this.HighlightOnlyMatch = model.HighlightOnlyMatch.ToTwoWayBindableReactiveProperty(true).AddTo(this.CompositeDisposable);
 
-		var defaultColor = Color.FromArgb(0x0, 0x0, 0x0, 0x0);
-		this.ForeColor = model.ForeColor.Select(x => x.HasValue ? x.Value : defaultColor).ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.BackColor = model.BackColor.Select(x => x.HasValue ? x.Value : defaultColor).ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		var defaultForeColor = Color.FromArgb(0xff, 0xff, 0xff, 0xff);
+		var defaultBackColor = Color.FromArgb(0x0, 0x0, 0x0, 0x0);
+		this.ForeColor = model.ForeColor.Select(x => x.HasValue ? x.Value : defaultForeColor).ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.BackColor = model.BackColor.Select(x => x.HasValue ? x.Value : defaultBackColor).ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.IsForeColorSet = model.ForeColor.Select(x => x.HasValue).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.IsBackColorSet = model.BackColor.Select(x => x.HasValue).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.ForeColor.Subscribe(color => {
-			if (this.Model.ForeColor.Value == null && color == defaultColor) {
+			if (this.Model.ForeColor.Value == null && color == defaultForeColor) {
 				return;
 			}
 			this.Model.ForeColor.Value = color;
 		}).AddTo(this.CompositeDisposable);
 		this.BackColor.Subscribe(color => {
-			if (this.Model.BackColor.Value == null && color == defaultColor) {
+			if (this.Model.BackColor.Value == null && color == defaultBackColor) {
 				return;
 			}
 			this.Model.BackColor.Value = color;
