@@ -45,7 +45,7 @@ public sealed partial class WorkspaceSettingsPage : Page {
 	}
 
 	private async void Browse_Click(object sender, RoutedEventArgs e) {
-		if(this.ViewModel == null) {
+		if (this.ViewModel == null) {
 			return;
 		}
 		var picker = new FolderPicker();
@@ -59,9 +59,10 @@ public sealed partial class WorkspaceSettingsPage : Page {
 	}
 
 	private void Ok_Click(object sender, RoutedEventArgs e) {
-		if(this.ViewModel == null) {
+		if (this.ViewModel == null) {
 			return;
 		}
 		this.ViewModel.ConfirmCommand.Execute(Unit.Default);
+		Application.Current.Exit();
 	}
 }

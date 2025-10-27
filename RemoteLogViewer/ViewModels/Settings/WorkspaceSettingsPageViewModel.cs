@@ -24,6 +24,7 @@ public class WorkspaceSettingsPageViewModel: SettingsPageViewModel {
 	/// <summary>コンストラクタ。</summary>
 	public WorkspaceSettingsPageViewModel(WorkspaceService workspaceService): base("Workspace") {
 		this.SelectedPath.Value = workspaceService.WorkspacePath ?? string.Empty;
+		this.SkipPersist.Value = workspaceService.IsPersist;
 		this._workspaceService = workspaceService;
 		this.ConfirmCommand.Subscribe(_ => this.OnConfirm());
 	}

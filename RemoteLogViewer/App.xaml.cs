@@ -50,24 +50,21 @@ public partial class App : Application {
 	/// <summary>ワークスペース選択ウィンドウ表示。</summary>
 	private void ShowWorkspaceSelectionWindow(WorkspaceService workspaceService) {
 		var wsWindow = Ioc.Default.GetRequiredService<WorkspaceSelectionWindow>();
-		wsWindow.WorkspaceSelected += (path, persist) => {
-			if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path)) {
-				workspaceService.SetWorkspace(path, persist);
-			}
+		wsWindow.AppWindow?.Resize(new(600, 250));
+		wsWindow.Activate();
+		wsWindow.WorkspaceSelected += () => {
 			MainWindow.Activate();
 			SetWindowIcon();
 		};
-		wsWindow.Activate();
-		wsWindow.AppWindow?.Resize(new(600, 250));
 	}
 
 	// Win32 API constants & P/Invoke
-	private const int WM_SETICON =0x80;
-	private static readonly IntPtr ICON_SMALL = (IntPtr)0;
-	private static readonly IntPtr ICON_BIG = (IntPtr)1;
-	private const uint IMAGE_ICON =1;
-	private const uint LR_LOADFROMFILE =0x0010;
-	private const uint LR_DEFAULTSIZE =0x0040;
+	private const int WM_SETICON = 0x80;
+	private static readonly IntPtr ICON_SMALL = 0;
+	private static readonly IntPtr ICON_BIG = 1;
+	private const uint IMAGE_ICON = 1;
+	private const uint LR_LOADFROMFILE = 0x0010;
+	private const uint LR_DEFAULTSIZE = 0x0040;
 
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
 	private static extern IntPtr LoadImage(IntPtr hInst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
@@ -86,8 +83,8 @@ public partial class App : Application {
 				return;
 			}
 			// 大アイコン (既定サイズ) と小アイコン (16x16) を設定
-			var hBig = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON,0,0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
-			var hSmall = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON,16,16, LR_LOADFROMFILE);
+			var hBig = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+			var hSmall = LoadImage(IntPtr.Zero, iconPath, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
 			if (hBig != IntPtr.Zero) {
 				SendMessage(hwnd, WM_SETICON, ICON_BIG, hBig);
 			}

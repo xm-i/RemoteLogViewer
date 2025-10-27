@@ -10,13 +10,18 @@ namespace RemoteLogViewer.Views;
 [AddTransient]
 public sealed partial class WorkspaceSelectionWindow : Window {
 	/// <summary>選択イベント。(path, persist)</summary>
-	public event Action<string, bool>? WorkspaceSelected;
-	public WorkspaceSettingsPageViewModel ViewModel { get; }
+	public event Action? WorkspaceSelected;
+	public WorkspaceSettingsPageViewModel ViewModel {
+		get;
+	}
 
 	public WorkspaceSelectionWindow(WorkspaceSettingsPageViewModel vm) {
 		this.InitializeComponent();
 		this.ViewModel = vm;
-		this.ViewModel.Confirmed += this.Close;
+		this.ViewModel.Confirmed += () => {
+			this.WorkspaceSelected?.Invoke();
+			this.Close();
+		};
 		this.ViewModel.ErrorMessage.ObservePropertyChanged(x => x.Value).Subscribe(msg => {
 			if (!string.IsNullOrWhiteSpace(msg)) {
 				var dialog = new ContentDialog {

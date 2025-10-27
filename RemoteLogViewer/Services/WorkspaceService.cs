@@ -28,6 +28,7 @@ public class WorkspaceService {
 				var path = File.ReadAllText(this._persistFilePath).Trim();
 				if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path)) {
 					this.WorkspacePath = path;
+					this.IsPersist = true;
 				}
 			}
 		} catch {
@@ -51,7 +52,11 @@ public class WorkspaceService {
 				// 失敗は通知未実装: TODO
 			}
 		} else {
-			File.Delete(this._persistFilePath);
+			if (File.Exists(this._persistFilePath)) {
+				try {
+					File.Delete(this._persistFilePath);
+				} catch { }
+			}
 		}
 	}
 
