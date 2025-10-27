@@ -29,26 +29,29 @@ public sealed class TailFollowOperation {
 		}
 		using var op = this._operations.Register(ct);
 		this._isRunning.Value = true;
-		var startOffset = this._byteOffsetIndex.Find(currentLastLine);
-		var lines = sshService.TailFollowAsync(filePath, encoding, startOffset, currentLastLine, op.Token);
-		var lastLineNumber = currentLastLine;
-		await foreach (var line in lines.WithCancellation(op.Token)) {
-			if (line.LineNumber % this._chunkSize == 0) {
-				var prevOffset = this._byteOffsetIndex.Find(line.LineNumber);
-				var newOffset = await sshService.CreateByteOffsetUntilLineAsync(filePath!, prevOffset, line.LineNumber, op.Token);
-				this._byteOffsetIndex.Add(newOffset);
+		try {
+			var startOffset = this._byteOffsetIndex.Find(currentLastLine);
+			var lines = sshService.TailFollowAsync(filePath, encoding, startOffset, currentLastLine, op.Token);
+			var lastLineNumber = currentLastLine;
+			await foreach (var line in lines.WithCancellation(op.Token)) {
+				if (line.LineNumber % this._chunkSize == 0) {
+					var prevOffset = this._byteOffsetIndex.Find(line.LineNumber);
+					var newOffset = await sshService.CreateByteOffsetUntilLineAsync(filePath!, prevOffset, line.LineNumber, op.Token);
+					this._byteOffsetIndex.Add(newOffset);
+				}
+				lastLineNumber = line.LineNumber;
+				yield return line;
+				if (ct.IsCancellationRequested) {
+					break;
+				}
 			}
-			lastLineNumber = line.LineNumber;
-			yield return line;
-			if (ct.IsCancellationRequested) {
-				break;
+			if (!ct.IsCancellationRequested) {
+				var prevOffset2 = this._byteOffsetIndex.Find(lastLineNumber);
+				var finalOffset = await sshService.CreateByteOffsetUntilLineAsync(filePath!, prevOffset2, lastLineNumber, CancellationToken.None);
+				this._byteOffsetIndex.Add(finalOffset);
 			}
+		} finally {
+			this._isRunning.Value = false;
 		}
-		if (!ct.IsCancellationRequested) {
-			var prevOffset2 = this._byteOffsetIndex.Find(lastLineNumber);
-			var finalOffset = await sshService.CreateByteOffsetUntilLineAsync(filePath!, prevOffset2, lastLineNumber, CancellationToken.None);
-			this._byteOffsetIndex.Add(finalOffset);
-		}
-		this._isRunning.Value = false;
 	}
 }

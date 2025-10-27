@@ -54,14 +54,17 @@ public sealed class GrepOperation {
 		using var op = this._operationRegistry.Register(ct);
 
 		this._isRunning.Value = true;
-		var lines = sshService.GrepAsync(filePath, query, false, encoding, op.Token);
-		await foreach (var line in lines.WithCancellation(op.Token)) {
-			this._receivedLineCount.Value = line.LineNumber;
-			yield return line;
-			if (ct.IsCancellationRequested) {
-				break;
+		try {
+			var lines = sshService.GrepAsync(filePath, query, false, encoding, op.Token);
+			await foreach (var line in lines.WithCancellation(op.Token)) {
+				this._receivedLineCount.Value = line.LineNumber;
+				yield return line;
+				if (ct.IsCancellationRequested) {
+					break;
+				}
 			}
+		} finally {
+			this._isRunning.Value = false;
 		}
-		this._isRunning.Value = false;
 	}
 }
