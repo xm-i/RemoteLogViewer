@@ -5,7 +5,7 @@ using RemoteLogViewer.ViewModels.Settings.Highlight;
 
 namespace RemoteLogViewer.Views.Settings;
 
-[AddSingleton]
+[AddTransient]
 public sealed partial class SettingsWindow : Window {
 	public SettingsWindow(SettingsWindowViewModel vm) {
 		this.ViewModel = vm;
