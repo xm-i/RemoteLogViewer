@@ -68,13 +68,15 @@
 				SizeChanged="ContentViewer_SizeChanged"
 				PointerWheelChanged="ContentViewer_PointerWheelChanged">
 				<RichTextBlock x:Name="ContentRichTextBlock"
+					ManipulationMode="TranslateRailsY"
 					KeyDown="ContentRichTextBlock_KeyDown"
 					FontFamily="Consolas"
 					IsTextSelectionEnabled="True"
 					TextWrapping="NoWrap"
 					LineHeight="16"
 					LineStackingStrategy="BlockLineHeight"
-					PointerWheelChanged="ContentViewer_PointerWheelChanged">
+					PointerWheelChanged="ContentViewer_PointerWheelChanged"
+					ManipulationDelta="ContentRichTextBlock_ManipulationDelta">
 					<Paragraph LineHeight="16">
 						<Run Text="{x:Bind ViewModel.Content.Value, Mode=OneWay}" />
 					</Paragraph>

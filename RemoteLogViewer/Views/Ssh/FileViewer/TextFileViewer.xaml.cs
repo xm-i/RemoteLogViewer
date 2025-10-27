@@ -96,23 +96,30 @@ public sealed partial class TextFileViewer {
 	}
 
 	private void ContentViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
-		if (this.ViewModel == null) {
-			return;
-		}
 		var properties = e.GetCurrentPoint(this.ContentViewer).Properties;
 		if (properties.IsHorizontalMouseWheel) {
 			return;
 		}
 		Debug.WriteLine($"ContentViewer_PointerWheelChanged: {properties.MouseWheelDelta}");
-		// ホイール delta
-		var delta = properties.MouseWheelDelta;
+		this.ScrollContent(properties.MouseWheelDelta);
+
+		e.Handled = true;
+	}
+	private void ContentRichTextBlock_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
+		Debug.WriteLine($"ContentRichTextBlock_ManipulationDelta: {e.Delta.Translation.Y}");
+		this.ScrollContent((int)Math.Floor(e.Delta.Translation.Y));
+		e.Handled = true;
+	}
+
+	private void ScrollContent(int delta) {
+		if (this.ViewModel == null) {
+			return;
+		}
 
 		var offsetChange = -delta / 40;
 
 		this.ViewModel.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + offsetChange);
 
-		// ContentViewer 自体は縦スクロールしない
-		e.Handled = true;
 	}
 
 	private void GrepResultLineButton_Click(object sender, RoutedEventArgs e) {
@@ -200,4 +207,5 @@ public sealed partial class TextFileViewer {
 				break;
 		}
 	}
+
 }
