@@ -284,7 +284,7 @@ public static class SshServiceEx {
 			yield break;
 		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
+		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | while read L ; do echo $L | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE ; done" : string.Empty;
 		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
 		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null" + convertPipe;
 		var nextLine = startOffset.LineNumber + 1;
