@@ -23,7 +23,7 @@ public class HighlightService {
 			return rx;
 		}
 		try {
-			rx = new Regex(pattern, (ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None) | RegexOptions.Compiled);
+			rx = new Regex(pattern, (ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None) | RegexOptions.Compiled | RegexOptions.Multiline);
 			this._regexCache[key] = rx;
 			return rx;
 		} catch {
@@ -226,7 +226,7 @@ public class HighlightService {
 		}
 
 		public RangeStyle? GetRangeStyle(int index) {
-			return this.RangeStyles.FirstOrDefault(x => x.Range.StartIndex <= index && index <= x.Range.StartIndex + x.Range.Length - 1 );
+			return this.RangeStyles.FirstOrDefault(x => x.Range.StartIndex <= index && index <= x.Range.StartIndex + x.Range.Length - 1);
 		}
 
 	}
