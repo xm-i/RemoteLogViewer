@@ -12,7 +12,6 @@ namespace RemoteLogViewer.Models.Ssh.FileViewer;
 public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
 	private const double loadingBuffer = 5;
-	private readonly Lock _syncObj = new();
 	private readonly IOperationRegistry _operations = new OperationRegistry();
 	private readonly IByteOffsetIndex _byteOffsetIndex = new ByteOffsetIndex();
 	private const int ByteOffsetMapChunkSize = 10000;
@@ -50,11 +49,11 @@ public class TextFileViewerModel : ModelBase {
 		this.LoadedLines
 			.ObserveChanged()
 			.Where(x => x.Action == NotifyCollectionChangedAction.Add || x.Action == NotifyCollectionChangedAction.Replace)
+			.Where(x => this.LineNumbers.Value.Contains(x.NewItem.Value.LineNumber))
+			.ThrottleLast(TimeSpan.FromMilliseconds(100))
 			.Subscribe(x => {
 				Debug.WriteLine($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
-				if (this.LineNumbers.Value.Contains(x.NewItem.Value.LineNumber)) {
-					this.Content.Value = string.Join('\n', this.LineNumbers.Value.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content : string.Empty));
-				}
+				this.Content.Value = string.Join('\n', this.LineNumbers.Value.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content : string.Empty));
 				Debug.WriteLine($"loadedLines updated end");
 			});
 	}
