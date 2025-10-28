@@ -30,7 +30,11 @@
 		</ListBox>
 
 		<!-- Right form -->
-		<ScrollViewer Grid.Column="1" Grid.RowSpan="2" Margin="8,0,0,0">
+		<ScrollViewer
+			Grid.Column="1"
+			Grid.RowSpan="2"
+			Margin="8,0,0,0"
+			VerticalScrollBarVisibility="Auto">
 			<StackPanel Spacing="16"
               Visibility="{x:Bind ViewModel.SelectedSshConnectionInfo.Value, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
 				<TextBlock Text="Connection Settings" FontWeight="SemiBold" Margin="0,0,0,4"/>
