@@ -51,10 +51,10 @@ public sealed partial class TextFileViewer {
 			});
 		}
 	}
+
 	private void SetHilight(RichTextBlock richTextBlock, string content) {
 		richTextBlock.TextHighlighters.Clear();
 		var hss = this._highlightService.ComputeHighlightSpans(content);
-		var para = new Paragraph();
 		foreach (var hs in hss) {
 			var th = new TextHighlighter() {
 				Foreground = hs.Style.ForeColor.HasValue ? this.GetBrush(hs.Style.ForeColor.Value) : null,

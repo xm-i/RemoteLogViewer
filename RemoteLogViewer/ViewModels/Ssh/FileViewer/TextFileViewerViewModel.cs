@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
-using RemoteLogViewer.Services.Viewer;
+using RemoteLogViewer.Stores.Settings;
 
 namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 
@@ -21,7 +20,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
 
-	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, HighlightService highlightService) {
+	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.ProcessedBytes
@@ -30,7 +29,35 @@ public class TextFileViewerViewModel : ViewModelBase {
 			.ToReadOnlyBindableReactiveProperty(0)
 			.AddTo(this.CompositeDisposable);
 		this.TotalLines = this._textFileViewerModel.TotalLines.Throttle().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.Content = this._textFileViewerModel.Content.ToReadOnlyBindableReactiveProperty(string.Empty).AddTo(this.CompositeDisposable);
+		this.Content = this._textFileViewerModel.Content.CombineLatest(Observable.Return(false).Merge(this.IsShowingTruncatedText.Where(x => x)), (x, y) => x).Select(lines => {
+			//削減無し
+			if (this.IsShowingTruncatedText.Value) {
+				return string.Join('\n', lines);
+			}
+			var tvs = settingsStoreModel.SettingsModel.TextViewerSettings;
+			// 行単位削減
+			var decrementedLines = lines.Select(x => x[0..Math.Max(0, Math.Min(x.Length, tvs.MaxPreviewOneLineCharacters.Value))]).ToArray();
+			var totalLength = decrementedLines.Sum(x => x!.Length);
+			var overLength = totalLength - tvs.MaxPreviewCharacters.Value;
+			if (overLength <= 0) {
+				return string.Join('\n', decrementedLines);
+			}
+
+			// 全体削減
+			var calcedDecrement = CalcDecrement(decrementedLines, overLength);
+			return string.Join('\n', decrementedLines.Select((x, i) => calcedDecrement.TryGetValue(i, out var dec) ? x[0..Math.Max(0, x.Length - dec)] : x));
+		}).ToReadOnlyBindableReactiveProperty(string.Empty).AddTo(this.CompositeDisposable);
+
+		this.TruncatedCharacterCount = this.Content.ObservePropertyChanged(x => x.Value).Select(vmContent => {
+			var vmLength = vmContent.Split('\n').Sum(x => x.Length);
+			var mLength = this._textFileViewerModel.Content.Value.Sum(x => x.Length);
+			var truncatedLength = mLength - vmLength;
+			return truncatedLength;
+		}).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsTruncated = this.TruncatedCharacterCount.ObservePropertyChanged(x => x.Value).Select(x => x != 0).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.ShowMoreCommand = this.IsTruncated.ObservePropertyChanged(x => x.Value).ToReactiveCommand(_ => {
+			this.IsShowingTruncatedText.Value = true;
+		}).AddTo(this.CompositeDisposable);
 		this.LineNumbers = this._textFileViewerModel.LineNumbers.ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
 		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.ViewerHeight = this.VisibleLineCount.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
@@ -91,6 +118,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 		this.JumpToLineCommand.Where(x => x != this.WindowStartLine.Value).Subscribe(line => {
 			Debug.WriteLine($"Jump to Line Command start: {line}");
 			this.WindowStartLine.Value = Math.Max(1, Math.Min(this.TotalLines.Value - this.VisibleLineCount.Value + 1, line));
+			this.IsShowingTruncatedText.Value = false;
 			Debug.WriteLine("Jump to Line Command end");
 		}).AddTo(this.CompositeDisposable);
 
@@ -137,7 +165,7 @@ public class TextFileViewerViewModel : ViewModelBase {
 			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())
 			.AddTo(this.CompositeDisposable);
 
-		this.PickupTextLineCommand.SubscribeAwait(async (x,ct) => {
+		this.PickupTextLineCommand.SubscribeAwait(async (x, ct) => {
 			this.PickedupTextLine.Value = await this._textFileViewerModel.PickupTextLine(x, ct);
 		}).AddTo(this.CompositeDisposable);
 
@@ -189,6 +217,28 @@ public class TextFileViewerViewModel : ViewModelBase {
 	public IReadOnlyBindableReactiveProperty<long[]> LineNumbers {
 		get;
 	}
+
+	/// <summary>
+	/// 省略文字数
+	/// </summary>
+	public IReadOnlyBindableReactiveProperty<int> TruncatedCharacterCount {
+		get;
+	}
+
+	/// <summary>
+	/// 省略されているかどうか
+	/// </summary>
+	public IReadOnlyBindableReactiveProperty<bool> IsTruncated {
+		get;
+	}
+
+	public ReactiveCommand ShowMoreCommand {
+		get;
+	}
+
+	public ReactiveProperty<bool> IsShowingTruncatedText {
+		get;
+	} = new(false);
 
 	/// <summary>
 	/// 画面上表示可能な行数
@@ -309,5 +359,52 @@ public class TextFileViewerViewModel : ViewModelBase {
 	/// </summary>
 	public async Task OpenFileAsync(string path, FileSystemObject fso, CancellationToken ct) {
 		await this._textFileViewerModel.OpenFileAsync(path, fso, this.SelectedEncoding.Value, ct);
+	}
+
+	/// <summary>
+	/// 表示削減量算出
+	/// </summary>
+	/// <param name="contents">コンテンツ</param>
+	/// <param name="totalDecrement">合計削減量</param>
+	/// <returns></returns>
+	private static Dictionary<int, int> CalcDecrement(IEnumerable<string> contents, int totalDecrement) {
+		var n = contents.Count();
+		// 元の値とインデックスをペアで保持
+		var indexedNums = contents
+			.Select((x, Index) => new { x.Length, Index })
+			.OrderByDescending(x => x.Length)
+			.ToList();
+
+		var reduce = new int[n]; // ソート後の減らす量
+		var remain = totalDecrement;
+
+		for (var i = 0; i < n && remain > 0; i++) {
+			var nextLength = (i < n - 1) ? indexedNums[i + 1].Length : 0;
+			var diff = indexedNums[i].Length - nextLength;
+			var canReduce = diff * (i + 1);
+
+			var use = Math.Min(remain, canReduce);
+			var lengthPerIndex = use / (i + 1);
+			var extra = use % (i + 1);
+
+			for (var j = 0; j <= i; j++) {
+				reduce[j] += lengthPerIndex;
+				if (extra > 0) {
+					reduce[j]++;
+					extra--;
+				}
+			}
+			remain -= use;
+		}
+
+		// 結果を元のINDEXに戻す
+		var result = new Dictionary<int, int>();
+		for (var i = 0; i < n; i++) {
+			var originalIndex = indexedNums[i].Index;
+			if (reduce[i] > 0) {
+				result[originalIndex] = reduce[i];
+			}
+		}
+		return result;
 	}
 }

@@ -23,6 +23,9 @@ public sealed partial class SettingsWindow : Window {
 				case WorkspaceSettingsPageViewModel _:
 					view = typeof(WorkspaceSettingsPage);
 					break;
+				case TextViewerSettingsPageViewModel _:
+					view = typeof(TextViewerSettingsPage);
+					break;
 				default:
 					return;
 			}

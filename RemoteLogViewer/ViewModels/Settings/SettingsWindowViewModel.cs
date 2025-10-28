@@ -28,20 +28,25 @@ public class SettingsWindowViewModel : ViewModelBase {
 	public WorkspaceSettingsPageViewModel WorkspaceSettings {
 		get;
 	}
+	public TextViewerSettingsPageViewModel TextViewerSettings {
+		get;
+	}
 
 	public ReactiveCommand SaveCommand {
 		get;
 	} = new();
 
-	public SettingsWindowViewModel(SettingsStoreModel model, WorkspaceSettingsPageViewModel workspaceSettings) {
+	public SettingsWindowViewModel(SettingsStoreModel model, WorkspaceSettingsPageViewModel workspaceSettings, TextViewerSettingsPageViewModel textViewerSettings) {
 		this.HighlightSettings = model.SettingsModel.HighlightSettings.ScopedService.GetRequiredService<HighlightSettingsPageViewModel>();
 		this.WorkspaceSettings = workspaceSettings;
+		this.TextViewerSettings = textViewerSettings;
 
-		this.Pages.AddRange([this.HighlightSettings, this.WorkspaceSettings]);
+		this.Pages.AddRange([this.HighlightSettings, this.WorkspaceSettings, this.TextViewerSettings]);
 		this.SelectedSettingsPage.Value = this.Pages[0];
 
 		this.SaveCommand.Subscribe(_ => {
 			model.Save();
 		});
+		this.TextViewerSettings = textViewerSettings;
 	}
 }

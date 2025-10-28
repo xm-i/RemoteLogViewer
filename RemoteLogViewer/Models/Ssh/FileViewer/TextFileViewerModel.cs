@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
@@ -31,18 +32,20 @@ public class TextFileViewerModel : ModelBase {
 		// 表示行枠確保
 		lineNumbersChangedStream.Subscribe(x => {
 			Debug.WriteLine($"lineNumbersChanged start:{x.lineNumbers.FirstOrDefault()}");
-			this.Content.Value = string.Join('\n', x.lineNumbers.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content : string.Empty));
-			Debug.WriteLine("lineNumbersChanged end");
+			var sw = Stopwatch.StartNew();
+			this.UpdateContent();
+			Debug.WriteLine($"lineNumbersChanged end [{sw.ElapsedMilliseconds}ms]");
 		});
 
 		// 表示行データ取得
 		lineNumbersChangedStream
 			.Where(x => x.lineNumbers.Length > 0)
-			.ThrottleFirstLast(TimeSpan.FromMilliseconds(100), ObservableSystem.DefaultTimeProvider)
+			.ThrottleLast(TimeSpan.FromMilliseconds(500))
 			.SubscribeAwait(async (x, ct) => {
 				Debug.WriteLine($"PreLoadLines start:{x.lineNumbers.Min()},{x.lineNumbers.Length}");
+				var sw = Stopwatch.StartNew();
 				await this.PreLoadLinesAsync(x.lineNumbers.Min(), x.lineNumbers.Length, ct);
-				Debug.WriteLine($"PreLoadLines end");
+				Debug.WriteLine($"PreLoadLines end [{sw.ElapsedMilliseconds}ms]");
 			}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		// 表示行内容更新
@@ -53,8 +56,9 @@ public class TextFileViewerModel : ModelBase {
 			.ThrottleLast(TimeSpan.FromMilliseconds(100))
 			.Subscribe(x => {
 				Debug.WriteLine($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
-				this.Content.Value = string.Join('\n', this.LineNumbers.Value.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content : string.Empty));
-				Debug.WriteLine($"loadedLines updated end");
+				var sw = Stopwatch.StartNew();
+				this.UpdateContent();
+				Debug.WriteLine($"loadedLines updated end [{sw.ElapsedMilliseconds}ms]");
 			});
 	}
 
@@ -75,9 +79,9 @@ public class TextFileViewerModel : ModelBase {
 	/// <summary>
 	/// 表示行。
 	/// </summary>
-	public ReactiveProperty<string> Content {
+	public ReactiveProperty<IEnumerable<string>> Content {
 		get;
-	} = new();
+	} = new([]);
 
 	/// <summary>GREP 結果行。</summary>
 	public ObservableList<TextLine> GrepResults {
@@ -208,6 +212,10 @@ public class TextFileViewerModel : ModelBase {
 		} finally { }
 	}
 
+	private void UpdateContent() {
+		this.Content.Value = this.LineNumbers.Value.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content! : string.Empty);
+	}
+
 	/// <summary>
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
@@ -295,7 +303,7 @@ public class TextFileViewerModel : ModelBase {
 		this.OpenedFilePath.Value = null;
 		this.GrepResults.Clear();
 		this.LoadedLines.Clear();
-		this.Content.Value = string.Empty;
+		this.Content.Value = [];
 		this._byteOffsetIndex.Reset();
 		this.SaveRangeOperation.Reset();
 		this.BuildByteOffsetMapOperation.Reset();

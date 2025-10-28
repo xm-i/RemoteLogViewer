@@ -41,7 +41,7 @@
 			</StackPanel>
 		</StackPanel>
 
-		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto">
+		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto,Auto">
 			<ScrollViewer x:Name="LineViewer"
 				VerticalScrollBarVisibility="Hidden"
 				HorizontalScrollBarVisibility="Hidden"
@@ -73,6 +73,7 @@
 					FontFamily="Consolas"
 					IsTextSelectionEnabled="True"
 					TextWrapping="NoWrap"
+					FlowDirection="LeftToRight"
 					LineHeight="16"
 					LineStackingStrategy="BlockLineHeight"
 					PointerWheelChanged="ContentViewer_PointerWheelChanged"
@@ -82,9 +83,24 @@
 					</Paragraph>
 				</RichTextBlock>
 			</ScrollViewer>
+			<Button
+				Grid.Column="2"
+				Visibility="{x:Bind ViewModel.IsTruncated.Value,Mode=OneWay}"
+				VerticalAlignment="Stretch"
+				Background="LightPink"
+				Command="{x:Bind ViewModel.ShowMoreCommand}">
+				<ToolTipService.ToolTip>
+					<TextBlock TextWrapping="Wrap">
+						<Run Text="Show more ("/>
+							<Run Text="{x:Bind ViewModel.TruncatedCharacterCount.Value,Mode=OneWay}"/>
+						<Run Text=" letters)"/>
+					</TextBlock>
+				</ToolTipService.ToolTip>
+				<TextBlock Text=">"/>
+			</Button>
 			<ScrollViewer x:Name="VirtualScrollViewer"
 				Height="{x:Bind ViewModel.ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
-				Grid.Column="2"
+				Grid.Column="3"
 				VerticalScrollBarVisibility="Visible"
 				HorizontalScrollBarVisibility="Disabled"
 				Background="Transparent"
