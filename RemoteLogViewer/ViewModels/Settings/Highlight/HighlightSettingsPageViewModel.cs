@@ -39,7 +39,7 @@ public class HighlightSettingsPageViewModel : SettingsPageViewModel {
 				return;
 			}
 			model.removeRule(rule.Model);
-			if (this.SelectedRule.Value == rule) {
+			if (this.SelectedRule.Value == null) {
 				this.SelectedRule.Value = this.Rules.LastOrDefault();
 			}
 		}).AddTo(this.CompositeDisposable);

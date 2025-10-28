@@ -47,7 +47,7 @@ public class HighlightRuleViewModel : ViewModelBase {
 				return;
 			}
 			model.RemoveCondition(condition.Model);
-			if (this.SelectedCondition.Value == condition) {
+			if (this.SelectedCondition.Value == null) {
 				this.SelectedCondition.Value = this.Conditions.LastOrDefault();
 			}
 		}).AddTo(this.CompositeDisposable);

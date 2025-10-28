@@ -22,7 +22,7 @@
 		</Grid.RowDefinitions>
 		<MenuBar>
 			<MenuBarItem Title="Tools">
-				<MenuFlyoutItem Text="Highlight Settings" Click="OpenHighlightSettings_Click"/>
+				<MenuFlyoutItem Text="Settings" Click="OpenSettings_Click"/>
 			</MenuBarItem>
 		</MenuBar>
 		<TabView Grid.Row="1"

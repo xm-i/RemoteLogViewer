@@ -58,7 +58,7 @@ public sealed partial class MainWindow : Window {
 		}
 	}
 
-	private void OpenHighlightSettings_Click(object sender, RoutedEventArgs e) {
+	private void OpenSettings_Click(object sender, RoutedEventArgs e) {
 		var window = this._services.GetRequiredService<SettingsWindow>();
 		window.Activate();
 	}
