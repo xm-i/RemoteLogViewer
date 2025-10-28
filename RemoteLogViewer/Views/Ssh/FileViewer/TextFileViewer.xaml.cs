@@ -106,6 +106,9 @@ public sealed partial class TextFileViewer {
 		e.Handled = true;
 	}
 	private void ContentRichTextBlock_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
+		if (e.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) {
+			return;
+		}
 		Debug.WriteLine($"ContentRichTextBlock_ManipulationDelta: {e.Delta.Translation.Y}");
 		this.ScrollContent((int)Math.Floor(e.Delta.Translation.Y));
 		e.Handled = true;
