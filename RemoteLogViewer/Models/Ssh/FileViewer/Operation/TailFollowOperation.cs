@@ -23,7 +23,7 @@ public sealed class TailFollowOperation {
 		this._chunkSize = chunkSize;
 	}
 
-	public async IAsyncEnumerable<TextLine> RunAsync(SshService sshService, string? filePath, string? encoding, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<long> RunAsync(SshService sshService, string? filePath, string? encoding, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;
 		}
@@ -31,16 +31,16 @@ public sealed class TailFollowOperation {
 		this._isRunning.Value = true;
 		try {
 			var startOffset = this._byteOffsetIndex.Find(currentLastLine);
-			var lines = sshService.TailFollowAsync(filePath, encoding, startOffset, currentLastLine, op.Token);
+			var lines = sshService.TailFollowAsyncOnlyLineNumber(filePath, startOffset, currentLastLine, op.Token);
 			var lastLineNumber = currentLastLine;
-			await foreach (var line in lines.WithCancellation(op.Token)) {
-				if (line.LineNumber % this._chunkSize == 0) {
-					var prevOffset = this._byteOffsetIndex.Find(line.LineNumber);
-					var newOffset = await sshService.CreateByteOffsetUntilLineAsync(filePath!, prevOffset, line.LineNumber, op.Token);
+			await foreach (var lineNumber in lines.WithCancellation(op.Token)) {
+				if (lineNumber % this._chunkSize == 0) {
+					var prevOffset = this._byteOffsetIndex.Find(lineNumber);
+					var newOffset = await sshService.CreateByteOffsetUntilLineAsync(filePath!, prevOffset, lineNumber, op.Token);
 					this._byteOffsetIndex.Add(newOffset);
 				}
-				lastLineNumber = line.LineNumber;
-				yield return line;
+				lastLineNumber = lineNumber;
+				yield return lineNumber;
 				if (ct.IsCancellationRequested) {
 					break;
 				}

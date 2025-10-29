@@ -234,7 +234,7 @@ public class TextFileViewerModel : ModelBase {
 	}
 
 	/// <summary>
-	/// tail -f によりファイル末尾の追記を監視し、新規行を LoadedLines / TotalLines に反映します。
+	/// tail -f によりファイル末尾の追記を監視し、新規行番号を TotalLines に反映します。
 	///監視開始時点の末尾行の次の行から取得します。
 	/// </summary>
 	/// <param name="ct">キャンセルトークン。</param>
@@ -249,8 +249,7 @@ public class TextFileViewerModel : ModelBase {
 		var currentLastLine = this.TotalLines.Value;
 		var lines = this.TailOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this.FileEncoding.Value, currentLastLine, ct);
 		await foreach (var line in lines) {
-			this.LoadedLines[line.LineNumber] = line;
-			this.TotalLines.Value = line.LineNumber;
+			this.TotalLines.Value = line;
 			if (ct.IsCancellationRequested) {
 				break;
 			}

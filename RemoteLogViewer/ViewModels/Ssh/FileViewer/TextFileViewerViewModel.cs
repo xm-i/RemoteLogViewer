@@ -91,13 +91,6 @@ public class TextFileViewerViewModel : ViewModelBase {
 			this._tailCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
 
-		// Tail追従
-		this._textFileViewerModel.TotalLines.Pairwise().Subscribe(x => {
-			if (x.Previous == this.WindowStartLine.Value + this.VisibleLineCount.Value + 1) {
-				this.JumpToLineCommand.Execute(x.Current - this.VisibleLineCount.Value - 1);
-			}
-		}).AddTo(this.CompositeDisposable);
-
 		// 行番号列幅: 桁数に応じて更新
 		this.TotalLines.ObservePropertyChanged(x => x.Value).Subscribe(total => {
 			var digits = total <= 0 ? 1 : (int)Math.Floor(Math.Log10(total)) + 1;

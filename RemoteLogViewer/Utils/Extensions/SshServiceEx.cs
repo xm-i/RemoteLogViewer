@@ -293,10 +293,35 @@ public static class SshServiceEx {
 				yield break;
 			}
 			var ln = nextLine++;
-			if (ln <= currentLastLine) {
-				continue;
-			} //既存行はスキップ
 			yield return new TextLine(ln, line, true);
+		}
+	}
+
+	/// <summary>
+	/// ファイル末尾の新規追記行を取得し、行数のみを返却します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
+	/// </summary>
+	/// <param name="sshService">SSH サービス。</param>
+	/// <param name="remoteFilePath">対象ファイル。</param>
+	/// <param name="fileEncoding">ファイルエンコーディング。</param>
+	/// <param name="startOffset">開始オフセット。</param>
+	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
+	/// <param name="ct">キャンセルトークン。</param>
+	public static async IAsyncEnumerable<long> TailFollowAsyncOnlyLineNumber(this SshService sshService, string remoteFilePath, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
+		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
+			yield break;
+		}
+		var escaped = EscapeSingleQuotes(remoteFilePath);
+		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
+		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null | awk '{{print NR}}'";
+		var nextLine = startOffset.LineNumber + 1;
+		await foreach (var line in sshService.RunAsync(cmd, ct)) {
+			if (ct.IsCancellationRequested) {
+				yield break;
+			}
+			if (!long.TryParse(line, out var ln)) {
+				yield break;
+			}
+			yield return ln;
 		}
 	}
 
