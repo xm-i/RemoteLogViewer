@@ -142,10 +142,9 @@ public class TextFileViewerModel : ModelBase {
 		this.TotalBytes.Value = fso.FileSize;
 		this._byteOffsetIndex.Reset();
 		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, ByteOffsetMapChunkSize, this.TotalBytes.Value, ct);
-		await foreach (var entry in mapStream) {
-			var byteOffset = new ByteOffset(entry.LineNumber, entry.Bytes);
-			this._byteOffsetIndex.Add(byteOffset);
-			this.TotalLines.Value = byteOffset.LineNumber;
+		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
+			this._byteOffsetIndex.AddRange(entry);
+			this.TotalLines.Value = entry.Max(x => x.LineNumber);
 		}
 	}
 
@@ -221,8 +220,8 @@ public class TextFileViewerModel : ModelBase {
 	/// </summary>
 	public async Task Grep(string? query, string? encoding, CancellationToken ct) {
 		this.GrepResults.Clear();
-		await foreach (var line in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, ct)) {
-			this.GrepResults.Add(line);
+		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
+			this.GrepResults.AddRange(lines);
 		}
 	}
 

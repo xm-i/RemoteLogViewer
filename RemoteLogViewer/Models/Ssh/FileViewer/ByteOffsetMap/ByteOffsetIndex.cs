@@ -17,6 +17,10 @@ public class ByteOffsetIndex : IByteOffsetIndex {
 		this._entries.Add(offset);
 	}
 
+	public void AddRange(IEnumerable<ByteOffset> offsets) {
+		this._entries.AddRange(offsets);
+	}
+
 	public ByteOffset Find(long targetLine) {
 		ByteOffset result = new(0, 0);
 		foreach (var bo in this._entries) {
