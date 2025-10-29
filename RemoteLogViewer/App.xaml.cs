@@ -35,7 +35,7 @@ public partial class App : Application {
 	/// <param name="args">起動引数。</param>
 	protected override void OnLaunched(LaunchActivatedEventArgs args) {
 		Build();
-		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => Trace.WriteLine(ex.ToString()));
+		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => Debug.WriteLine(ex.ToString()));
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 		var workspaceService = Ioc.Default.GetRequiredService<WorkspaceService>();
