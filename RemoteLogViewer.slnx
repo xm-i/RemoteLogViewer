@@ -1,5 +1,9 @@
 <Solution>
   <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Debug-Unpackaged" />
+    <BuildType Name="Release" />
+    <BuildType Name="Release-Unpackaged" />
     <Platform Name="ARM64" />
     <Platform Name="x64" />
     <Platform Name="x86" />
@@ -15,11 +19,14 @@
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x86" />
-    <Deploy />
+    <Deploy Solution="Debug|*" />
+    <Deploy Solution="Release|*" />
   </Project>
   <Project Path="RemoteLogViewer/RemoteLogViewerForExePublish.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x86" />
+    <Deploy Solution="Debug-Unpackaged|*" />
+    <Deploy Solution="Release-Unpackaged|*" />
   </Project>
 </Solution>
