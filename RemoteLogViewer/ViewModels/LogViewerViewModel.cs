@@ -16,7 +16,7 @@ public class LogViewerViewModel : ViewModelBase {
 	/// </summary>
 	public BindableReactiveProperty<string> Title {
 		get;
-	} = new();
+	} = new("New Log Tab");
 
 	/// <summary>
 	///     セッションマネージャ ViewModel への参照。

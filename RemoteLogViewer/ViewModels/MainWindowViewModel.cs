@@ -61,7 +61,6 @@ public class MainWindowViewModel: ViewModelBase {
 	/// </summary>
 	private void AddTab() {
 		var vm = Ioc.Default.CreateScope().ServiceProvider.GetRequiredService<LogViewerViewModel>();
-		vm.Title.Value = $"New Log Tab";
 		this._tabs.Add(vm);
 		this.SelectedTab.Value = vm;
 	}
