@@ -22,11 +22,4 @@
     <Deploy Solution="Debug|*" />
     <Deploy Solution="Release|*" />
   </Project>
-  <Project Path="RemoteLogViewer/RemoteLogViewerForExePublish.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-    <Deploy Solution="Debug-Unpackaged|*" />
-    <Deploy Solution="Release-Unpackaged|*" />
-  </Project>
 </Solution>
