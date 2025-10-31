@@ -31,4 +31,8 @@ public class OperationRegistry : IOperationRegistry {
 			} catch { }
 		}
 	}
+
+	public void Dispose() {
+		this.CancelAll();
+	}
 }

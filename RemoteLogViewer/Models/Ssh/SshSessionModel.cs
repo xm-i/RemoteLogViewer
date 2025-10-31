@@ -56,9 +56,9 @@ public class SshSessionModel : ModelBase {
 	} = Encoding.GetEncodings().Where(x => Constants.EncodingPairs.Any(ep => ep.CSharp == x.Name)).ToArray();
 
 	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService) {
-		this._sshService = sshService;
+		this._sshService = sshService.AddTo(this.CompositeDisposable);
 		this._store = store;
-		this._textFileViewerModel = textFileViewerModel;
+		this._textFileViewerModel = textFileViewerModel.AddTo(this.CompositeDisposable);
 		this._notificationService = notificationService;
 		this.SavedConnections = store.Items;
 		this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
@@ -78,7 +78,7 @@ public class SshSessionModel : ModelBase {
 			if (x.Value == this.SelectedSshConnectionInfo.Value) {
 				this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
 			}
-		});
+		}).AddTo(this.CompositeDisposable);
 	}
 
 	/// <summary>

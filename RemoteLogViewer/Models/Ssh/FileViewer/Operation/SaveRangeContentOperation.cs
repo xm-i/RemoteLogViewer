@@ -1,12 +1,11 @@
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class SaveRangeContentOperation {
+public sealed class SaveRangeContentOperation: ModelBase {
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;
 	private readonly ReactiveProperty<bool> _isRunning = new(false);
@@ -42,7 +41,7 @@ public sealed class SaveRangeContentOperation {
 				return 0d;
 			}
 			return (double)saved / total;
-		}).ToReadOnlyReactiveProperty();
+		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 
 	public async Task ExecuteAsync(SshService sshService, string? filePath, StreamWriter writer, long startLine, long endLine, string? encoding, CancellationToken ct) {

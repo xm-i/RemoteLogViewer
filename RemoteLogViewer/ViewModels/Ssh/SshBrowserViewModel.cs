@@ -83,8 +83,8 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 	}
 
 	public SshBrowserViewModel(SshSessionModel model, TextFileViewerViewModel textFileViewerViewModel) {
-		this._model = model;
-		this.TextFileViewerViewModel = textFileViewerViewModel;
+		this._model = model.AddTo(this.CompositeDisposable);
+		this.TextFileViewerViewModel = textFileViewerViewModel.AddTo(this.CompositeDisposable);
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!.AddTo(this.CompositeDisposable)!;
 		this.IsCurrentDirectoryBookmarked = this._model.IsCurrentDirectoryBookmarked.ToReadOnlyBindableReactiveProperty(false).AddTo(this.CompositeDisposable);
 

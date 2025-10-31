@@ -10,7 +10,7 @@ namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 /// <summary>
 /// 初期バイトオフセットマップを構築する操作。IAsyncEnumerableで進捗を逐次返却します。
 /// </summary>
-public sealed class BuildByteOffsetMapOperation {
+public sealed class BuildByteOffsetMapOperation: ModelBase {
 	private readonly IOperationRegistry _operations;
 	private readonly ReactiveProperty<ulong> _totalBytes = new(0);
 
@@ -39,7 +39,7 @@ public sealed class BuildByteOffsetMapOperation {
 				return 0;
 			}
 			return (double)processed / total;
-		}).ToReadOnlyReactiveProperty();
+		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 
 	public async IAsyncEnumerable<ByteOffset> RunAsync(SshService sshService, string? filePath, int chunkSize, ulong totalBytes, [EnumeratorCancellation] CancellationToken ct) {

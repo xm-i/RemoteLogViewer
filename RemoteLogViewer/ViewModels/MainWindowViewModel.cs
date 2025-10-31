@@ -78,5 +78,6 @@ public class MainWindowViewModel: ViewModelBase {
 		if (this.SelectedTab.Value == vm) {
 			this.SelectedTab.Value = this._tabs.LastOrDefault();
 		}
+		vm.Dispose();
 	}
 }

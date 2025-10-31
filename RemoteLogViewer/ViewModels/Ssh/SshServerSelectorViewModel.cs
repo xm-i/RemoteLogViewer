@@ -62,7 +62,7 @@ public class SshServerSelectorViewModel : BaseSshPageViewModel {
 	} = new();
 
 	public SshServerSelectorViewModel(SshSessionModel model) {
-		this._model = model;
+		this._model = model.AddTo(this.CompositeDisposable);
 		this.IsConnected = this._model.IsConnected.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var savedConnectionsView = this._model.SavedConnections.CreateView(x => x.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>()).AddTo(this.CompositeDisposable);
 		this.SavedConnections = savedConnectionsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);

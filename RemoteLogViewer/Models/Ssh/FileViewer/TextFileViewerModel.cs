@@ -19,10 +19,11 @@ public class TextFileViewerModel : ModelBase {
 
 	public TextFileViewerModel(SshService sshService) {
 		this._sshService = sshService;
-		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines);
-		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize);
-		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex);
-		this.BuildByteOffsetMapOperation = new BuildByteOffsetMapOperation(this._operations);
+		this._operations.AddTo(this.CompositeDisposable);
+		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines).AddTo(this.CompositeDisposable);
+		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize).AddTo(this.CompositeDisposable);
+		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex).AddTo(this.CompositeDisposable);
+		this.BuildByteOffsetMapOperation = new BuildByteOffsetMapOperation(this._operations).AddTo(this.CompositeDisposable);
 
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
@@ -35,7 +36,7 @@ public class TextFileViewerModel : ModelBase {
 			var sw = Stopwatch.StartNew();
 			this.UpdateContent();
 			Debug.WriteLine($"lineNumbersChanged end [{sw.ElapsedMilliseconds}ms]");
-		});
+		}).AddTo(this.CompositeDisposable);
 
 		// 表示行データ取得
 		lineNumbersChangedStream
@@ -59,7 +60,7 @@ public class TextFileViewerModel : ModelBase {
 				var sw = Stopwatch.StartNew();
 				this.UpdateContent();
 				Debug.WriteLine($"loadedLines updated end [{sw.ElapsedMilliseconds}ms]");
-			});
+			}).AddTo(this.CompositeDisposable);
 	}
 
 	public ReactiveProperty<long[]> LineNumbers {

@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class TailFollowOperation {
+public sealed class TailFollowOperation: ModelBase {
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;
 	private readonly int _chunkSize;

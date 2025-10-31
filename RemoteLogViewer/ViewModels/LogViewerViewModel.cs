@@ -43,8 +43,8 @@ public class LogViewerViewModel : ViewModelBase {
 	///     DI 用コンストラクタ。
 	/// </summary>
 	public LogViewerViewModel(SshServerSelectorViewModel sshServerSelectorViewModel, SshBrowserViewModel sshBrowserViewModel, SshSessionModel sshSessionModel) {
-		this.SshServerSelectorViewModel = sshServerSelectorViewModel;
-		this.SshBrowserViewModel = sshBrowserViewModel;
+		this.SshServerSelectorViewModel = sshServerSelectorViewModel.AddTo(this.CompositeDisposable);
+		this.SshBrowserViewModel = sshBrowserViewModel.AddTo(this.CompositeDisposable);
 		this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;
 		this._sshSessionModel = sshSessionModel;
 

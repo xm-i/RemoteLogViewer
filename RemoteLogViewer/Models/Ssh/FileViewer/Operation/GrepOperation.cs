@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
+
 using RemoteLogViewer.Services.Ssh;
-using RemoteLogViewer.Models.Ssh.FileViewer;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class GrepOperation {
+public sealed class GrepOperation: ModelBase {
 	public GrepOperation(IOperationRegistry operationRegistry, ReadOnlyReactiveProperty<long> totalLineCountProperty) {
 		this._operationRegistry = operationRegistry;
 		this.TotalLineCount = totalLineCountProperty;
@@ -16,7 +15,7 @@ public sealed class GrepOperation {
 				return 0;
 			}
 			return (double)received / total;
-		}).ToReadOnlyReactiveProperty();
+		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 	private readonly IOperationRegistry _operationRegistry;
 
