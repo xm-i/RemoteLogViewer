@@ -143,9 +143,11 @@ public static class SshServiceEx {
 	/// <param name="ignoreCase">大文字小文字無視。</param>
 	/// <param name="fileEncoding">ファイルエンコーディング。</param>
 	/// <param name="maxResults">取得件数上限。</param>
+	/// <param name="byteOffset">検索開始に利用するバイトオフセット。</param>
+	/// <param name="startLine">検索開始時点の行番号</param>
 	/// <param name="ct">キャンセルトークン。</param>
 	/// <returns>一致行。</returns>
-	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
+	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -156,6 +158,10 @@ public static class SshServiceEx {
 		pattern = pattern.Trim();
 		if (pattern.Length == 0) {
 			yield break;
+		}
+
+		if (byteOffset.LineNumber > startLine) {
+			throw new ArgumentException("byteOffset.LineNumber is less than startLine", nameof(byteOffset));
 		}
 
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
@@ -174,7 +180,13 @@ public static class SshServiceEx {
 		}
 
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
-		var cmd = $"LC_ALL=C grep -n -h{ic} -m {maxResults} -F --binary-files=text --color=never --line-buffered -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
+
+		// 入力を開始バイトから取得
+		var relativeStart = startLine - byteOffset.LineNumber;
+		var inputCmd = $"tail -c +{byteOffset.Bytes} '{escapedPath}' 2>/dev/null | tail +'{relativeStart}' 2>/dev/null";
+
+		// 実行コマンド: tail/cat の出力を grep にパイプし、必要なら出力を iconv変換する
+		var cmd = $"LC_ALL=C {inputCmd} | grep -n -h{ic} -m {maxResults} -F --binary-files=text --color=never --line-buffered -- {patternExpr}{convertPipe} 2>/dev/null || true";
 		var lines = sshService.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {
@@ -185,11 +197,12 @@ public static class SshServiceEx {
 			if (idx <= 0) {
 				continue;
 			}
-			if (!long.TryParse(line[..idx], out var ln)) {
+			if (!long.TryParse(line[..idx], out var relLn)) {
 				continue;
 			}
-			var content = line[(idx + 1)..];
-			yield return new TextLine(ln, content);
+			var content = line[(idx +1)..];
+			var actualLn = relLn + (startLine -1);
+			yield return new TextLine(actualLn, content);
 		}
 	}
 

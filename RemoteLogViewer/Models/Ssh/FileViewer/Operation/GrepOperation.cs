@@ -3,10 +3,11 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class GrepOperation: ModelBase {
+public sealed class GrepOperation : ModelBase {
 	public GrepOperation(IOperationRegistry operationRegistry, ReadOnlyReactiveProperty<long> totalLineCountProperty) {
 		this._operationRegistry = operationRegistry;
 		this.TotalLineCount = totalLineCountProperty;
@@ -17,6 +18,7 @@ public sealed class GrepOperation: ModelBase {
 			return (double)received / total;
 		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
+
 	private readonly IOperationRegistry _operationRegistry;
 
 	private readonly ReactiveProperty<bool> _isRunning = new(false);
@@ -41,7 +43,7 @@ public sealed class GrepOperation: ModelBase {
 		get;
 	}
 
-	public async IAsyncEnumerable<TextLine> RunAsync(SshService sshService, string? filePath, string? query, string? encoding, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> RunAsync(SshService sshService, string? filePath, string? query, string? encoding, ByteOffset startOffset, long startLine, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
 		this._receivedLineCount.Value = 0;
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;
@@ -54,7 +56,7 @@ public sealed class GrepOperation: ModelBase {
 
 		this._isRunning.Value = true;
 		try {
-			var lines = sshService.GrepAsync(filePath, query, false, encoding, maxResults, op.Token);
+			var lines = sshService.GrepAsync(filePath, query, false, encoding, maxResults, startOffset, startLine, op.Token);
 			await foreach (var line in lines.WithCancellation(op.Token)) {
 				this._receivedLineCount.Value = line.LineNumber;
 				yield return line;

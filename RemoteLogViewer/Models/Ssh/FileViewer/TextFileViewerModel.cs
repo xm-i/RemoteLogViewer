@@ -222,10 +222,11 @@ public class TextFileViewerModel : ModelBase {
 	/// <summary>
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
-	public async Task Grep(string? query, string? encoding, CancellationToken ct) {
+	public async Task Grep(string? query, string? encoding, long startLine, CancellationToken ct) {
 		this.GrepResults.Clear();
 		var max = this._settingsStore.SettingsModel.TextViewerSettings.GrepMaxResults.Value;
-		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, max, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
+		var startOffset = this._byteOffsetIndex.Find(startLine);
+		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, startOffset, startLine, max, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
 			this.GrepResults.AddRange(lines);
 		}
 	}

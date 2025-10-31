@@ -126,6 +126,7 @@
 				<Grid RowDefinitions="Auto,*" Padding="0,8" CornerRadius="4">
 					<StackPanel Orientation="Horizontal" Spacing="8">
 						<TextBox Width="260" PlaceholderText="grep pattern" Text="{x:Bind ViewModel.GrepQuery.Value, Mode=TwoWay}"/>
+						<TextBox Width="80" PlaceholderText="Start Line" Text="{x:Bind ViewModel.GrepStartLine.Value, Mode=TwoWay}"/>
 						<Button Content="Search" Command="{x:Bind ViewModel.GrepCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 						<Button Content="Cancel" Command="{x:Bind ViewModel.GrepCancelCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 						<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.GrepProgress.Value, Mode=OneWay}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
