@@ -8,10 +8,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-	<Grid Padding="16" RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto">
+	<Grid Padding="16" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
 		<TextBlock Text="1行あたり表示可能文字数"/>
 		<NumberBox Grid.Column="1" Text="{x:Bind ViewModel.MaxPreviewOneLineCharacters.Value,Mode=TwoWay}"/>
 		<TextBlock Grid.Row="1" Text="全体で表示可能文字数"/>
 		<NumberBox Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.MaxPreviewCharacters.Value,Mode=TwoWay}"/>
+		<TextBlock Grid.Row="2" Text="Grep 最大件数"/>
+		<NumberBox Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.GrepMaxResults.Value,Mode=TwoWay}"/>
 	</Grid>
 </Page>

@@ -6,19 +6,22 @@ using System.Threading;
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Stores.Settings;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
 [AddScoped]
 public class TextFileViewerModel : ModelBase {
 	private readonly SshService _sshService;
+	private readonly SettingsStoreModel _settingsStore;
 	private const double loadingBuffer = 5;
 	private readonly IOperationRegistry _operations = new OperationRegistry();
 	private readonly IByteOffsetIndex _byteOffsetIndex = new ByteOffsetIndex();
 	private const int ByteOffsetMapChunkSize = 10000;
 
-	public TextFileViewerModel(SshService sshService) {
+	public TextFileViewerModel(SshService sshService, SettingsStoreModel settingsStore) {
 		this._sshService = sshService;
+		this._settingsStore = settingsStore;
 		this._operations.AddTo(this.CompositeDisposable);
 		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines).AddTo(this.CompositeDisposable);
 		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize).AddTo(this.CompositeDisposable);
@@ -221,7 +224,8 @@ public class TextFileViewerModel : ModelBase {
 	/// </summary>
 	public async Task Grep(string? query, string? encoding, CancellationToken ct) {
 		this.GrepResults.Clear();
-		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
+		var max = this._settingsStore.SettingsModel.TextViewerSettings.GrepMaxResults.Value;
+		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, max, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
 			this.GrepResults.AddRange(lines);
 		}
 	}

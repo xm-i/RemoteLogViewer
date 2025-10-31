@@ -21,9 +21,17 @@ public class TextViewerSettingsPageViewModel : SettingsPageViewModel {
 		get;
 	}
 
+	/// <summary>
+	/// Grep の最大件数
+	/// </summary>
+	public BindableReactiveProperty<int> GrepMaxResults {
+		get;
+	}
+
 	/// <summary>コンストラクタ。</summary>
 	public TextViewerSettingsPageViewModel(SettingsStoreModel settingsStoreModel) : base("TextViewer") {
 		this.MaxPreviewOneLineCharacters = settingsStoreModel.SettingsModel.TextViewerSettings.MaxPreviewOneLineCharacters.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.MaxPreviewCharacters = settingsStoreModel.SettingsModel.TextViewerSettings.MaxPreviewCharacters.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.GrepMaxResults = settingsStoreModel.SettingsModel.TextViewerSettings.GrepMaxResults.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 }

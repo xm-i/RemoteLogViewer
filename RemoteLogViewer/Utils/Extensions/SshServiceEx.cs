@@ -142,9 +142,10 @@ public static class SshServiceEx {
 	/// <param name="pattern">パターン。</param>
 	/// <param name="ignoreCase">大文字小文字無視。</param>
 	/// <param name="fileEncoding">ファイルエンコーディング。</param>
-	/// <param name="fileEncoding">ソースエンコーディング。</param>
+	/// <param name="maxResults">取得件数上限。</param>
+	/// <param name="ct">キャンセルトークン。</param>
 	/// <returns>一致行。</returns>
-	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, [EnumeratorCancellation] CancellationToken ct) {
+	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -173,7 +174,7 @@ public static class SshServiceEx {
 		}
 
 		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
-		var cmd = $"LC_ALL=C grep -n -h {ic} -F --binary-files=text --color=never --line-buffered -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
+		var cmd = $"LC_ALL=C grep -n -h{ic} -m {maxResults} -F --binary-files=text --color=never --line-buffered -- {patternExpr} -- '{escapedPath}' 2>/dev/null{convertPipe} || true";
 		var lines = sshService.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {

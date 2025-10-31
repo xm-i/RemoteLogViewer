@@ -1,7 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 
-using System.Collections.Generic;
-
 namespace RemoteLogViewer.Stores.Settings.Model;
 
 /// <summary>TextViewer設定。</summary>
@@ -21,6 +19,13 @@ public class TextViewerSettingsModel(IServiceProvider service) {
 	public ReactiveProperty<int> MaxPreviewCharacters {
 		get;
 	} = new(30000);
+
+	/// <summary>
+	/// Grep の最大件数
+	/// </summary>
+	public ReactiveProperty<int> GrepMaxResults {
+		get;
+	} = new(1000);
 }
 
 public class TextViewerSettingsModelForJson {
@@ -32,16 +37,22 @@ public class TextViewerSettingsModelForJson {
 		get; set;
 	}
 
+	public required int GrepMaxResults {
+		get; set;
+	}
+
 	public static TextViewerSettingsModel CreateModel(TextViewerSettingsModelForJson json, IServiceProvider service) {
 		var model = service.GetRequiredService<TextViewerSettingsModel>();
 		model.MaxPreviewOneLineCharacters.Value = json.MaxPreviewOneLineCharacters;
 		model.MaxPreviewCharacters.Value = json.MaxPreviewCharacters;
+		model.GrepMaxResults.Value = json.GrepMaxResults;
 		return model;
 	}
 	public static TextViewerSettingsModelForJson CreateJson(TextViewerSettingsModel model) {
 		return new TextViewerSettingsModelForJson {
 			MaxPreviewOneLineCharacters = model.MaxPreviewOneLineCharacters.Value,
-			MaxPreviewCharacters = model.MaxPreviewCharacters.Value
+			MaxPreviewCharacters = model.MaxPreviewCharacters.Value,
+			GrepMaxResults = model.GrepMaxResults.Value
 		};
 	}
 }
