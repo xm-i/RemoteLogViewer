@@ -16,15 +16,11 @@
     <Configurations>Debug;Release;Debug-Unpackaged;Release-Unpackaged</Configurations>
     <Packaged>true</Packaged>
     <Packaged Condition="'$(Configuration)' == 'Debug-Unpackaged' Or '$(Configuration)' == 'Release-Unpackaged'">false</Packaged>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Packaged)' != 'true'">
-    <EnableMsixTooling>false</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Packaged)' == 'true'">
-    <EnableMsixTooling>true</EnableMsixTooling>
   </PropertyGroup>
 
   <ItemGroup>
@@ -91,5 +87,9 @@
     <PublishReadyToRun Condition="'$(Configuration)' == 'Release'">True</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Release-Unpackaged'">True</PublishReadyToRun>
     <ApplicationIcon>Assets\icon128.ico</ApplicationIcon>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <SatelliteResourceLanguages>en-US;ja-JP</SatelliteResourceLanguages>
   </PropertyGroup>
 </Project>
