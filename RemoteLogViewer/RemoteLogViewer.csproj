@@ -11,6 +11,7 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
+    <PublishTrimmed>False</PublishTrimmed>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;Debug-Unpackaged;Release-Unpackaged</Configurations>
     <Packaged>true</Packaged>
@@ -85,11 +86,9 @@
 
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)'=='Debug-Unpackaged'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)'=='Debug-Unpackaged'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug-Unpackaged'">False</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Release'">True</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Release-Unpackaged'">True</PublishReadyToRun>
     <ApplicationIcon>Assets\icon128.ico</ApplicationIcon>
   </PropertyGroup>
 </Project>
