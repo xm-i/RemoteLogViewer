@@ -63,8 +63,8 @@
 					</Grid.ColumnDefinitions>
 					<TextBox Grid.Column="0" Header="User" Margin="0,0,12,0"
                Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.User.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-					<TextBox Grid.Column="1" Header="Password"
-               Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.Password.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+					<PasswordBox Grid.Column="1" Header="Password" x:Name="PasswordBox"
+               />
 				</Grid>
 
 				<!-- Private Key Path + Browse -->
@@ -80,8 +80,8 @@
               Click="BrowsePrivateKeyButton_Click"/>
 				</Grid>
 
-				<TextBox Header="Private Key Passphrase"
-             Text="{x:Bind ViewModel.SelectedSshConnectionInfo.Value.PrivateKeyPassphrase.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+				<PasswordBox Header="Private Key Passphrase" x:Name="PrivateKeyPassphraseBox"
+             />
 
 				<!-- Encoding -->
 				<Grid>

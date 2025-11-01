@@ -14,6 +14,8 @@ namespace RemoteLogViewer.Views.SshSession;
 /// SSH サーバー選択ページです。接続設定の選択および編集を行います。
 /// </summary>
 public sealed partial class SshServerSelectorPage : Page {
+	private IDisposable? _subscription;
+
 	private ILogger<SshServerSelectorPage> logger {
 		get {
 			return field ??= App.LoggerFactory.CreateLogger<SshServerSelectorPage>();
@@ -32,6 +34,20 @@ public sealed partial class SshServerSelectorPage : Page {
 	/// </summary>
 	public SshServerSelectorPage() {
 		this.InitializeComponent();
+		this.PasswordBox.PasswordChanged += this.PasswordBox_PasswordChanged;
+		this.PrivateKeyPassphraseBox.PasswordChanged += this.PrivateKeyPassphraseBox_PasswordChanged;
+	}
+
+	private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e) {
+		if (this.ViewModel?.SelectedSshConnectionInfo.Value is { } vm) {
+			vm.Password.Value = this.PasswordBox.Password;
+		}
+	}
+
+	private void PrivateKeyPassphraseBox_PasswordChanged(object sender, RoutedEventArgs e) {
+		if (this.ViewModel?.SelectedSshConnectionInfo.Value is { } vm) {
+			vm.PrivateKeyPassphrase.Value = this.PrivateKeyPassphraseBox.Password;
+		}
 	}
 
 	/// <summary>
@@ -40,10 +56,27 @@ public sealed partial class SshServerSelectorPage : Page {
 	protected override void OnNavigatedTo(NavigationEventArgs e) {
 		if (e.Parameter is SshServerSelectorViewModel vm) {
 			this.ViewModel = vm;
+			this._subscription = this.ViewModel.SelectedSshConnectionInfo.ObservePropertyChanged(x => x.Value).Subscribe(this.OnSelectedConnectionChanged);
 		} else {
 			throw new InvalidOperationException("ViewModel is not passed.");
 		}
 		base.OnNavigatedTo(e);
+	}
+
+	protected override void OnNavigatedFrom(NavigationEventArgs e) {
+		this._subscription?.Dispose();
+		this._subscription = null;
+		base.OnNavigatedFrom(e);
+	}
+
+	private void OnSelectedConnectionChanged(SshConnectionInfoViewModel? vm) {
+		if (vm == null) {
+			this.PasswordBox.Password = string.Empty;
+			this.PrivateKeyPassphraseBox.Password = string.Empty;
+		} else {
+			this.PasswordBox.Password = vm.Password.Value ?? string.Empty;
+			this.PrivateKeyPassphraseBox.Password = vm.PrivateKeyPassphrase.Value ?? string.Empty;
+		}
 	}
 
 	/// <summary>
