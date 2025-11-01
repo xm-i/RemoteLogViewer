@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -13,6 +14,11 @@ namespace RemoteLogViewer.Views.SshSession;
 /// SSH サーバー選択ページです。接続設定の選択および編集を行います。
 /// </summary>
 public sealed partial class SshServerSelectorPage : Page {
+	private ILogger<SshServerSelectorPage> logger {
+		get {
+			return field ??= App.LoggerFactory.CreateLogger<SshServerSelectorPage>();
+		}
+	}
 	/// <summary>
 	/// ビューモデルを取得します。
 	/// </summary>
@@ -90,7 +96,7 @@ public sealed partial class SshServerSelectorPage : Page {
 				vm.PrivateKeyPath.Value = file.Path;
 			}
 		} catch (Exception ex) {
-			Debug.WriteLine($"[BrowsePrivateKey] Error: {ex}");
+			this.logger.LogError(ex, "Exception");
 		}
 	}
 }

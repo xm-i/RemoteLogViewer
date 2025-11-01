@@ -1,5 +1,7 @@
 using System.Text;
 
+using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Services.Ssh;
@@ -11,7 +13,7 @@ namespace RemoteLogViewer.Models.Ssh;
 ///     SSH セッションのドメインモデル。接続状態と接続操作を担います。
 /// </summary>
 [AddScoped]
-public class SshSessionModel : ModelBase {
+public class SshSessionModel : ModelBase<SshSessionModel> {
 	private readonly SshService _sshService;
 	private readonly SshConnectionStoreModel _store;
 	private readonly TextFileViewerModel _textFileViewerModel;
@@ -55,7 +57,7 @@ public class SshSessionModel : ModelBase {
 		get;
 	} = Encoding.GetEncodings().Where(x => Constants.EncodingPairs.Any(ep => ep.CSharp == x.Name)).ToArray();
 
-	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService) {
+	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger) : base(logger) {
 		this._sshService = sshService.AddTo(this.CompositeDisposable);
 		this._store = store;
 		this._textFileViewerModel = textFileViewerModel.AddTo(this.CompositeDisposable);

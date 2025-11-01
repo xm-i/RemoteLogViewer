@@ -1,6 +1,7 @@
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer; // for SshEntry
+using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 
@@ -8,7 +9,7 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 ///     SSH 接続設定と接続後の状態管理を行います。
 /// </summary>
 [AddScoped]
-public class SshBrowserViewModel : BaseSshPageViewModel {
+public class SshBrowserViewModel : BaseSshPageViewModel<SshBrowserViewModel> {
 	private readonly SshSessionModel _model;
 	/// <summary>
 	///     ディレクトリエントリ一覧 (ViewModel)。
@@ -82,7 +83,7 @@ public class SshBrowserViewModel : BaseSshPageViewModel {
 		get;
 	}
 
-	public SshBrowserViewModel(SshSessionModel model, TextFileViewerViewModel textFileViewerViewModel) {
+	public SshBrowserViewModel(SshSessionModel model, TextFileViewerViewModel textFileViewerViewModel, ILogger<SshBrowserViewModel> logger) : base(logger) {
 		this._model = model.AddTo(this.CompositeDisposable);
 		this.TextFileViewerViewModel = textFileViewerViewModel.AddTo(this.CompositeDisposable);
 		this.CurrentPath = this._model.CurrentPath!.ToBindableReactiveProperty()!.AddTo(this.CompositeDisposable)!;

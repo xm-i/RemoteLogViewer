@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Models.Ssh;
 
@@ -8,7 +9,7 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 ///     SSH 接続設定と接続後の状態管理を行います。
 /// </summary>
 [AddScoped]
-public class SshServerSelectorViewModel : BaseSshPageViewModel {
+public class SshServerSelectorViewModel : BaseSshPageViewModel<SshServerSelectorViewModel> {
 	private readonly SshSessionModel _model;
 
 	/// <summary>
@@ -61,7 +62,7 @@ public class SshServerSelectorViewModel : BaseSshPageViewModel {
 		get;
 	} = new();
 
-	public SshServerSelectorViewModel(SshSessionModel model) {
+	public SshServerSelectorViewModel(SshSessionModel model, ILogger<SshServerSelectorViewModel> logger) : base(logger) {
 		this._model = model.AddTo(this.CompositeDisposable);
 		this.IsConnected = this._model.IsConnected.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var savedConnectionsView = this._model.SavedConnections.CreateView(x => x.ServiceProvider.GetRequiredService<SshConnectionInfoViewModel>()).AddTo(this.CompositeDisposable);

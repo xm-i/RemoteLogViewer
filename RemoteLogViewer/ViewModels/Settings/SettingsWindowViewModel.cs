@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Stores.Settings;
 using RemoteLogViewer.ViewModels.Settings.Highlight;
@@ -8,16 +9,16 @@ using RemoteLogViewer.ViewModels.Settings.Highlight;
 namespace RemoteLogViewer.ViewModels.Settings;
 
 [AddSingleton]
-public class SettingsWindowViewModel : ViewModelBase {
+public class SettingsWindowViewModel : ViewModelBase<SettingsWindowViewModel> {
 	public ObservableList<string> Categories {
 		get;
 	} = [];
 
-	public BindableReactiveProperty<SettingsPageViewModel> SelectedSettingsPage {
+	public BindableReactiveProperty<ISettingsPageViewModel> SelectedSettingsPage {
 		get;
 	} = new();
 
-	public List<SettingsPageViewModel> Pages {
+	public List<ISettingsPageViewModel> Pages {
 		get;
 	} = [];
 
@@ -36,7 +37,7 @@ public class SettingsWindowViewModel : ViewModelBase {
 		get;
 	} = new();
 
-	public SettingsWindowViewModel(SettingsStoreModel model, WorkspaceSettingsPageViewModel workspaceSettings, TextViewerSettingsPageViewModel textViewerSettings) {
+	public SettingsWindowViewModel(SettingsStoreModel model, WorkspaceSettingsPageViewModel workspaceSettings, TextViewerSettingsPageViewModel textViewerSettings, ILogger<SettingsWindowViewModel> logger) : base(logger) {
 		this.HighlightSettings = model.SettingsModel.HighlightSettings.ScopedService.GetRequiredService<HighlightSettingsPageViewModel>();
 		this.WorkspaceSettings = workspaceSettings;
 		this.TextViewerSettings = textViewerSettings;

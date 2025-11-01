@@ -3,6 +3,8 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 
+using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Services.Ssh;
@@ -11,7 +13,7 @@ using RemoteLogViewer.Stores.Settings;
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
 [AddScoped]
-public class TextFileViewerModel : ModelBase {
+public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	private readonly SshService _sshService;
 	private readonly SettingsStoreModel _settingsStore;
 	private const double loadingBuffer = 5;
@@ -19,14 +21,14 @@ public class TextFileViewerModel : ModelBase {
 	private readonly IByteOffsetIndex _byteOffsetIndex = new ByteOffsetIndex();
 	private const int ByteOffsetMapChunkSize = 10000;
 
-	public TextFileViewerModel(SshService sshService, SettingsStoreModel settingsStore) {
+	public TextFileViewerModel(SshService sshService, SettingsStoreModel settingsStore, ILogger<TextFileViewerModel> logger) : base(logger) {
 		this._sshService = sshService;
 		this._settingsStore = settingsStore;
 		this._operations.AddTo(this.CompositeDisposable);
-		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines).AddTo(this.CompositeDisposable);
-		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize).AddTo(this.CompositeDisposable);
-		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex).AddTo(this.CompositeDisposable);
-		this.BuildByteOffsetMapOperation = new BuildByteOffsetMapOperation(this._operations).AddTo(this.CompositeDisposable);
+		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines, Ioc.Default.GetRequiredService<ILogger<GrepOperation>>()).AddTo(this.CompositeDisposable);
+		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize, Ioc.Default.GetRequiredService<ILogger<TailFollowOperation>>()).AddTo(this.CompositeDisposable);
+		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex, Ioc.Default.GetRequiredService<ILogger<SaveRangeContentOperation>>()).AddTo(this.CompositeDisposable);
+		this.BuildByteOffsetMapOperation = new BuildByteOffsetMapOperation(this._operations, Ioc.Default.GetRequiredService<ILogger<BuildByteOffsetMapOperation>>()).AddTo(this.CompositeDisposable);
 
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
@@ -35,10 +37,10 @@ public class TextFileViewerModel : ModelBase {
 
 		// 表示行枠確保
 		lineNumbersChangedStream.Subscribe(x => {
-			Debug.WriteLine($"lineNumbersChanged start:{x.lineNumbers.FirstOrDefault()}");
+			logger.LogTrace($"lineNumbersChanged start:{x.lineNumbers.FirstOrDefault()}");
 			var sw = Stopwatch.StartNew();
 			this.UpdateContent();
-			Debug.WriteLine($"lineNumbersChanged end [{sw.ElapsedMilliseconds}ms]");
+			logger.LogTrace($"lineNumbersChanged end [{sw.ElapsedMilliseconds}ms]");
 		}).AddTo(this.CompositeDisposable);
 
 		// 表示行データ取得
@@ -46,10 +48,10 @@ public class TextFileViewerModel : ModelBase {
 			.Where(x => x.lineNumbers.Length > 0)
 			.ThrottleLast(TimeSpan.FromMilliseconds(500))
 			.SubscribeAwait(async (x, ct) => {
-				Debug.WriteLine($"PreLoadLines start:{x.lineNumbers.Min()},{x.lineNumbers.Length}");
+				logger.LogTrace($"PreLoadLines start:{x.lineNumbers.Min()},{x.lineNumbers.Length}");
 				var sw = Stopwatch.StartNew();
 				await this.PreLoadLinesAsync(x.lineNumbers.Min(), x.lineNumbers.Length, ct);
-				Debug.WriteLine($"PreLoadLines end [{sw.ElapsedMilliseconds}ms]");
+				logger.LogTrace($"PreLoadLines end [{sw.ElapsedMilliseconds}ms]");
 			}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		// 表示行内容更新
@@ -59,10 +61,10 @@ public class TextFileViewerModel : ModelBase {
 			.Where(x => this.LineNumbers.Value.Contains(x.NewItem.Value.LineNumber))
 			.ThrottleLast(TimeSpan.FromMilliseconds(100))
 			.Subscribe(x => {
-				Debug.WriteLine($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
+				logger.LogTrace($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
 				var sw = Stopwatch.StartNew();
 				this.UpdateContent();
-				Debug.WriteLine($"loadedLines updated end [{sw.ElapsedMilliseconds}ms]");
+				logger.LogTrace($"loadedLines updated end [{sw.ElapsedMilliseconds}ms]");
 			}).AddTo(this.CompositeDisposable);
 	}
 

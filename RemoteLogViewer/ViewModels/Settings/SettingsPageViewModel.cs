@@ -1,11 +1,17 @@
+using Microsoft.Extensions.Logging;
+
 namespace RemoteLogViewer.ViewModels.Settings;
 
-public abstract class SettingsPageViewModel : ViewModelBase {
+public interface ISettingsPageViewModel {
+	string PageName { get; }
+}
+
+public abstract class SettingsPageViewModel<T> : ViewModelBase<T>, ISettingsPageViewModel where T : SettingsPageViewModel<T> {
 	public string PageName {
 		get;
 	}
 
-	public SettingsPageViewModel(string pageName) {
+	protected SettingsPageViewModel(string pageName, ILogger<T> logger) : base(logger) {
 		this.PageName = pageName;
 	}
 }

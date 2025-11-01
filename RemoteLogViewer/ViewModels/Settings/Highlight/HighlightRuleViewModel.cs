@@ -1,11 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Stores.Settings.Model;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
 [AddScoped]
-public class HighlightRuleViewModel : ViewModelBase {
+public class HighlightRuleViewModel : ViewModelBase<HighlightRuleViewModel> {
 	public HighlightRuleModel Model {
 		get;
 	}
@@ -30,7 +31,7 @@ public class HighlightRuleViewModel : ViewModelBase {
 		get;
 	} = new();
 
-	public HighlightRuleViewModel(HighlightRuleModel model, IServiceProvider service) {
+	public HighlightRuleViewModel(HighlightRuleModel model, IServiceProvider service, ILogger<HighlightRuleViewModel> logger) : base(logger) {
 		this.Model = model;
 
 		this.Name = model.Name.ToTwoWayBindableReactiveProperty("").AddTo(this.CompositeDisposable);

@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
+using Microsoft.Extensions.Logging;
+
 using Renci.SshNet;
 using Renci.SshNet.Common;
 
@@ -14,6 +16,11 @@ namespace RemoteLogViewer.Services.Ssh;
 /// </summary>
 [AddScoped]
 public class SshService : IDisposable {
+	private ILogger<SshService> logger {
+		get {
+			return field ??= App.LoggerFactory.CreateLogger<SshService>();
+		}
+	}
 	private readonly NotificationService _notificationService;
 	private SshClient? _client;
 	public string? CSharpEncoding {
@@ -112,7 +119,7 @@ public class SshService : IDisposable {
 			throw new InvalidOperationException("SSH not connected.");
 		}
 		using var cmd = this._client.CreateCommand(command);
-		Debug.WriteLine($"Run: {command}");
+		this.logger.LogInformation($"Run: {command}");
 		try {
 			return cmd.Execute();
 		} catch (Exception ex) {
@@ -133,7 +140,7 @@ public class SshService : IDisposable {
 		}
 		using var cmd = this._client.CreateCommand(command);
 		var task = cmd.ExecuteAsync(ct);
-		Debug.WriteLine($"RunAsync: {command}");
+		this.logger.LogInformation($"RunAsync: {command}");
 
 		using var sr = new StreamReader(cmd.OutputStream);
 		while (true) {

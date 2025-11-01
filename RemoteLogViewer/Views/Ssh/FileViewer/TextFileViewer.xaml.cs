@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -21,6 +22,11 @@ namespace RemoteLogViewer.Views.Ssh.FileViewer;
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
 /// </summary>
 public sealed partial class TextFileViewer {
+	private ILogger<TextFileViewer> logger {
+		get {
+			return field ??= App.LoggerFactory.CreateLogger<TextFileViewer>();
+		}
+	}
 	private readonly HighlightService _highlightService;
 	private readonly SolidColorBrush _transparentColorBrush = new(Color.FromArgb(0, 0, 0, 0));
 	private readonly ConcurrentDictionary<Color, SolidColorBrush> _brushCache = [];
@@ -78,7 +84,7 @@ public sealed partial class TextFileViewer {
 		if (this.ViewModel == null) {
 			return;
 		}
-		Debug.WriteLine($"ContentViewer_SizeChanged: {e.NewSize.Height}");
+		this.logger.LogTrace($"ContentViewer_SizeChanged: {e.NewSize.Height}");
 		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / LineHeight) - 1);
 		this.ViewModel.VisibleLineCount.Value = visibleLines;
 	}
@@ -91,7 +97,7 @@ public sealed partial class TextFileViewer {
 			// スクロール中は無視
 			return;
 		}
-		Debug.WriteLine($"VirtualScrollViewer_ViewChanged: {this.VirtualScrollViewer.VerticalOffset}");
+		this.logger.LogTrace($"VirtualScrollViewer_ViewChanged: {this.VirtualScrollViewer.VerticalOffset}");
 		this.ViewModel.JumpToLineCommand.Execute((long)this.VirtualScrollViewer.VerticalOffset / LineHeight);
 	}
 
@@ -100,7 +106,7 @@ public sealed partial class TextFileViewer {
 		if (properties.IsHorizontalMouseWheel) {
 			return;
 		}
-		Debug.WriteLine($"ContentViewer_PointerWheelChanged: {properties.MouseWheelDelta}");
+		this.logger.LogTrace($"ContentViewer_PointerWheelChanged: {properties.MouseWheelDelta}");
 		this.ScrollContent(properties.MouseWheelDelta);
 
 		e.Handled = true;
@@ -109,7 +115,7 @@ public sealed partial class TextFileViewer {
 		if (e.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) {
 			return;
 		}
-		Debug.WriteLine($"ContentRichTextBlock_ManipulationDelta: {e.Delta.Translation.Y}");
+		this.logger.LogTrace($"ContentRichTextBlock_ManipulationDelta: {e.Delta.Translation.Y}");
 		this.ScrollContent((int)Math.Floor(e.Delta.Translation.Y));
 		e.Handled = true;
 	}

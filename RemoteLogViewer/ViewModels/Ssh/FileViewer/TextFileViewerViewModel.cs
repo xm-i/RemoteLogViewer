@@ -3,6 +3,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 
+using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Stores.Settings;
@@ -13,14 +15,14 @@ namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 ///     テキストファイル閲覧 ViewModel。スクロール位置に応じて部分読み込み + GREP 検索を提供します。
 /// </summary>
 [AddScoped]
-public class TextFileViewerViewModel : ViewModelBase {
+public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private const long LineHeight = 16;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
 
-	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel) {
+	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.ProcessedBytes
@@ -109,10 +111,10 @@ public class TextFileViewerViewModel : ViewModelBase {
 		}).AddTo(this.CompositeDisposable);
 
 		this.JumpToLineCommand.Where(x => x != this.WindowStartLine.Value).Subscribe(line => {
-			Debug.WriteLine($"Jump to Line Command start: {line}");
+			logger.LogTrace($"Jump to Line Command start: {line}");
 			this.WindowStartLine.Value = Math.Max(1, Math.Min(this.TotalLines.Value - this.VisibleLineCount.Value + 1, line));
 			this.IsShowingTruncatedText.Value = false;
-			Debug.WriteLine("Jump to Line Command end");
+			logger.LogTrace("Jump to Line Command end");
 		}).AddTo(this.CompositeDisposable);
 
 		this.WindowStartLine
@@ -128,18 +130,18 @@ public class TextFileViewerViewModel : ViewModelBase {
 					}),
 				(x, total) => (x.start, count: (int)Math.Min(x.count, total)))
 			.Subscribe(val => {
-				Debug.WriteLine("Set LineNumbers start: " + val.start + " - " + (val.start + val.count - 1));
+				logger.LogTrace("Set LineNumbers start: " + val.start + " - " + (val.start + val.count - 1));
 				this._textFileViewerModel.LineNumbers.Value = Enumerable.Range(0, val.count).Select(x => val.start + x).ToArray();
-				Debug.WriteLine("Set LineNumbers end: " + val.start + " - " + (val.start + val.count - 1));
+				logger.LogTrace("Set LineNumbers end: " + val.start + " - " + (val.start + val.count - 1));
 			});
 
 		// GREP 実行: 既存タスクをキャンセルして新規開始
 		this.GrepCommand.SubscribeAwait(async (_, ct) => {
 			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			try {
-				Debug.WriteLine($"Grep start: {this.GrepQuery.Value}");
+				logger.LogTrace($"Grep start: {this.GrepQuery.Value}");
 				await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this.GrepStartLine.Value, this._grepCts.Token);
-				Debug.WriteLine("Grep end");
+				logger.LogTrace("Grep end");
 			} finally {
 				this._grepCts?.Dispose();
 				this._grepCts = null;

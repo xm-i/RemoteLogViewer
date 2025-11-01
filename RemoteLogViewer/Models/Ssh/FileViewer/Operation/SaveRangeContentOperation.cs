@@ -1,11 +1,15 @@
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
+
+using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class SaveRangeContentOperation: ModelBase {
+public sealed class SaveRangeContentOperation : ModelBase<SaveRangeContentOperation> {
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;
 	private readonly ReactiveProperty<bool> _isRunning = new(false);
@@ -33,7 +37,7 @@ public sealed class SaveRangeContentOperation: ModelBase {
 		get;
 	}
 
-	public SaveRangeContentOperation(IOperationRegistry operations, IByteOffsetIndex byteOffsetIndex) {
+	public SaveRangeContentOperation(IOperationRegistry operations, IByteOffsetIndex byteOffsetIndex, ILogger<SaveRangeContentOperation> logger) : base(logger) {
 		this._operations = operations;
 		this._byteOffsetIndex = byteOffsetIndex;
 		this.Progress = this.SavedLines.CombineLatest(this.TotalLines, (saved, total) => {

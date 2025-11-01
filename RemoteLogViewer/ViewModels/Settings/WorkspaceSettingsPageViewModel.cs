@@ -1,5 +1,6 @@
 using System.IO;
 
+using Microsoft.Extensions.Logging;
 using RemoteLogViewer.Services;
 
 namespace RemoteLogViewer.ViewModels.Settings;
@@ -8,7 +9,7 @@ namespace RemoteLogViewer.ViewModels.Settings;
 /// ワークスペース選択ページ用 ViewModel です。パス選択と確定操作を提供します。
 /// </summary>
 [AddTransient]
-public class WorkspaceSettingsPageViewModel: SettingsPageViewModel {
+public class WorkspaceSettingsPageViewModel: SettingsPageViewModel<WorkspaceSettingsPageViewModel> {
 	private readonly WorkspaceService _workspaceService;
 	/// <summary>選択中のワークスペースパス。</summary>
 	public BindableReactiveProperty<string> SelectedPath { get; } = new(string.Empty);
@@ -22,7 +23,7 @@ public class WorkspaceSettingsPageViewModel: SettingsPageViewModel {
 	public event Action? Confirmed;
 
 	/// <summary>コンストラクタ。</summary>
-	public WorkspaceSettingsPageViewModel(WorkspaceService workspaceService): base("Workspace") {
+	public WorkspaceSettingsPageViewModel(WorkspaceService workspaceService, ILogger<WorkspaceSettingsPageViewModel> logger): base("Workspace", logger) {
 		this.SelectedPath.Value = workspaceService.WorkspacePath ?? string.Empty;
 		this.SkipPersist.Value = workspaceService.IsPersist;
 		this._workspaceService = workspaceService;

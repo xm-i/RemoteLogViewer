@@ -22,7 +22,7 @@ public sealed partial class LogViewerControl : UserControl {
 		this.InitializeComponent();
 	}
 
-	private void Navigate(BaseSshPageViewModel? vm) {
+	private void Navigate(IBaseSshPageViewModel? vm) {
 		if (vm is SshServerSelectorViewModel selector) {
 			this.SshFrame.Navigate(typeof(SshServerSelectorPage), selector);
 		} else if (vm is SshBrowserViewModel browser) {

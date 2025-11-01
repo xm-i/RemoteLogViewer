@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 using R3;
 
 using RemoteLogViewer.Stores.Settings.Model;
@@ -7,7 +9,7 @@ using Windows.UI;
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
 [AddScoped]
-public class HighlightConditionViewModel : ViewModelBase {
+public class HighlightConditionViewModel : ViewModelBase<HighlightConditionViewModel> {
 	public HighlightConditionModel Model {
 		get;
 	}
@@ -52,7 +54,7 @@ public class HighlightConditionViewModel : ViewModelBase {
 		get;
 	} = new();
 
-	public HighlightConditionViewModel(HighlightConditionModel model) {
+	public HighlightConditionViewModel(HighlightConditionModel model, ILogger<HighlightConditionViewModel> logger) : base(logger) {
 		this.Model = model;
 
 		this.Pattern = model.Pattern.ToTwoWayBindableReactiveProperty(string.Empty).AddTo(this.CompositeDisposable);

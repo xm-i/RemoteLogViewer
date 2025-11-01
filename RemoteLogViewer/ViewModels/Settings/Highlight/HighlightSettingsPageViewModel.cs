@@ -1,11 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Stores.Settings.Model;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
 [AddSingleton]
-public class HighlightSettingsPageViewModel : SettingsPageViewModel {
+public class HighlightSettingsPageViewModel : SettingsPageViewModel<HighlightSettingsPageViewModel> {
 	/// <summary>
 	/// ルールリスト。
 	/// </summary>
@@ -24,7 +25,7 @@ public class HighlightSettingsPageViewModel : SettingsPageViewModel {
 		get;
 	} = Enum.GetValues<HighlightPatternType>();
 
-	public HighlightSettingsPageViewModel(HighlightSettingsModel model, IServiceProvider service) : base("Highlight") {
+	public HighlightSettingsPageViewModel(HighlightSettingsModel model, IServiceProvider service, ILogger<HighlightSettingsPageViewModel> logger) : base("Highlight", logger) {
 		// View生成
 		var view = model.Rules.CreateView(x => x.ScopedService.GetRequiredService<HighlightRuleViewModel>()).AddTo(this.CompositeDisposable);
 		this.Rules = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);

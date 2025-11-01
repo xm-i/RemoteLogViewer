@@ -1,5 +1,7 @@
 using System.IO;
 
+using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.ViewModels.Ssh;
 
@@ -9,7 +11,7 @@ namespace RemoteLogViewer.ViewModels;
 ///     ログ表示用の ViewModel です。タブタイトルなどの表示情報を提供します。
 /// </summary>
 [AddScoped]
-public class LogViewerViewModel : ViewModelBase {
+public class LogViewerViewModel : ViewModelBase<LogViewerViewModel> {
 	private readonly SshSessionModel _sshSessionModel;
 	/// <summary>
 	///     タブタイトルを取得します。
@@ -35,14 +37,14 @@ public class LogViewerViewModel : ViewModelBase {
 	/// <summary>
 	/// 現在表示中の Page 用 ViewModel。
 	/// </summary>
-	public BindableReactiveProperty<BaseSshPageViewModel> CurrentPageViewModel {
+	public BindableReactiveProperty<IBaseSshPageViewModel> CurrentPageViewModel {
 		get;
 	} = new();
 
 	/// <summary>
 	///     DI 用コンストラクタ。
 	/// </summary>
-	public LogViewerViewModel(SshServerSelectorViewModel sshServerSelectorViewModel, SshBrowserViewModel sshBrowserViewModel, SshSessionModel sshSessionModel) {
+	public LogViewerViewModel(SshServerSelectorViewModel sshServerSelectorViewModel, SshBrowserViewModel sshBrowserViewModel, SshSessionModel sshSessionModel, ILogger<LogViewerViewModel> logger): base(logger) {
 		this.SshServerSelectorViewModel = sshServerSelectorViewModel.AddTo(this.CompositeDisposable);
 		this.SshBrowserViewModel = sshBrowserViewModel.AddTo(this.CompositeDisposable);
 		this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;

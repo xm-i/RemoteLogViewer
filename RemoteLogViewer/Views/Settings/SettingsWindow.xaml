@@ -12,7 +12,7 @@
 			<TextBlock Text="Categories" FontWeight="SemiBold"/>
 			<ListView x:Name="CategoryList" ItemsSource="{x:Bind ViewModel.Pages}" SelectedItem="{x:Bind ViewModel.SelectedSettingsPage.Value, Mode=TwoWay}">
 				<ListView.ItemTemplate>
-					<DataTemplate x:DataType="settings:SettingsPageViewModel">
+					<DataTemplate x:DataType="settings:ISettingsPageViewModel">
 						<TextBlock Text="{Binding PageName}"/>
 					</DataTemplate>
 				</ListView.ItemTemplate>

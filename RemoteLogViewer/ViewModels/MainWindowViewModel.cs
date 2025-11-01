@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Services;
 
@@ -8,7 +9,7 @@ namespace RemoteLogViewer.ViewModels;
 ///     メインウィンドウ用の ViewModel です。タブ一覧およびタブ追加コマンドを公開します。
 /// </summary>
 [AddSingleton]
-public class MainWindowViewModel: ViewModelBase {
+public class MainWindowViewModel: ViewModelBase<MainWindowViewModel> {
 	private readonly ObservableList<LogViewerViewModel> _tabs = [];
 	/// <summary>
 	///     ログビュータブの一覧を保持します (UI 自動更新用)。
@@ -47,7 +48,7 @@ public class MainWindowViewModel: ViewModelBase {
 	/// <summary>
 	///     <see cref="MainWindowViewModel"/> の新しいインスタンスを初期化します。
 	/// </summary>
-	public MainWindowViewModel(NotificationService notificationService) {
+	public MainWindowViewModel(NotificationService notificationService, ILogger<MainWindowViewModel> logger): base(logger) {
 		this.Tabs = this._tabs.ToNotifyCollectionChanged();
 		this.AddTabCommand.Subscribe(_ => this.AddTab());
 		this.CloseTabCommand.Subscribe(this.CloseTab);

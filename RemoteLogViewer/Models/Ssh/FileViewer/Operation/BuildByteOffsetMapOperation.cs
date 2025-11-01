@@ -2,15 +2,13 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
+using Microsoft.Extensions.Logging;
 using RemoteLogViewer.Services.Ssh;
+using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-/// <summary>
-/// 初期バイトオフセットマップを構築する操作。IAsyncEnumerableで進捗を逐次返却します。
-/// </summary>
-public sealed class BuildByteOffsetMapOperation: ModelBase {
+public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOperation> {
 	private readonly IOperationRegistry _operations;
 	private readonly ReactiveProperty<ulong> _totalBytes = new(0);
 
@@ -32,7 +30,7 @@ public sealed class BuildByteOffsetMapOperation: ModelBase {
 		get;
 	}
 
-	public BuildByteOffsetMapOperation(IOperationRegistry operations) {
+	public BuildByteOffsetMapOperation(IOperationRegistry operations, ILogger<BuildByteOffsetMapOperation> logger) : base(logger) {
 		this._operations = operations;
 		this.Progress = this.ProcessedBytes.CombineLatest(this._totalBytes, (processed, total) => {
 			if (total <= 0) {

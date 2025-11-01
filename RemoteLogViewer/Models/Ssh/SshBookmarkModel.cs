@@ -3,7 +3,7 @@ namespace RemoteLogViewer.Models.Ssh;
 /// <summary>
 /// SSH 接続設定に紐づくブックマークを表します。
 /// </summary>
-public class SshBookmarkModel : ModelBase {
+public class SshBookmarkModel {
 	public SshBookmarkModel() {
 	}
 	public SshBookmarkModel(int order, string path, string name) {

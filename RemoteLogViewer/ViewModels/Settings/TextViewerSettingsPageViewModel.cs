@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Stores.Settings;
 
 namespace RemoteLogViewer.ViewModels.Settings;
@@ -6,7 +8,7 @@ namespace RemoteLogViewer.ViewModels.Settings;
 /// TextViewer設定ページ用 ViewModel です。
 /// </summary>
 [AddTransient]
-public class TextViewerSettingsPageViewModel : SettingsPageViewModel {
+public class TextViewerSettingsPageViewModel : SettingsPageViewModel<TextViewerSettingsPageViewModel> {
 	/// <summary>
 	/// 1行に表示する最大文字数
 	/// </summary>
@@ -29,7 +31,7 @@ public class TextViewerSettingsPageViewModel : SettingsPageViewModel {
 	}
 
 	/// <summary>コンストラクタ。</summary>
-	public TextViewerSettingsPageViewModel(SettingsStoreModel settingsStoreModel) : base("TextViewer") {
+	public TextViewerSettingsPageViewModel(SettingsStoreModel settingsStoreModel, ILogger<TextViewerSettingsPageViewModel> logger) : base("TextViewer", logger) {
 		this.MaxPreviewOneLineCharacters = settingsStoreModel.SettingsModel.TextViewerSettings.MaxPreviewOneLineCharacters.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.MaxPreviewCharacters = settingsStoreModel.SettingsModel.TextViewerSettings.MaxPreviewCharacters.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.GrepMaxResults = settingsStoreModel.SettingsModel.TextViewerSettings.GrepMaxResults.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);

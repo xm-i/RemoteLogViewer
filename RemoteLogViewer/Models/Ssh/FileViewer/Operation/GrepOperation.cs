@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+using Microsoft.Extensions.Logging;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class GrepOperation : ModelBase {
-	public GrepOperation(IOperationRegistry operationRegistry, ReadOnlyReactiveProperty<long> totalLineCountProperty) {
+public sealed class GrepOperation : ModelBase<GrepOperation> {
+	public GrepOperation(IOperationRegistry operationRegistry, ReadOnlyReactiveProperty<long> totalLineCountProperty, ILogger<GrepOperation> logger) : base(logger) {
 		this._operationRegistry = operationRegistry;
 		this.TotalLineCount = totalLineCountProperty;
 		this.Progress = this.ReceivedLineCount.CombineLatest(this.TotalLineCount, (received, total) => {

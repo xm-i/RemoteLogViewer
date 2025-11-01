@@ -9,6 +9,8 @@ using RemoteLogViewer.Services;
 using RemoteLogViewer.Views;
 using System.IO;
 using WinRT.Interop;
+using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer;
 
@@ -19,6 +21,15 @@ public partial class App : Application {
 	public static Window MainWindow {
 		get {
 			return field ??= Ioc.Default.GetRequiredService<MainWindow>();
+		}
+	}
+
+	/// <summary>
+	///     ILoggerFactory for DI外クラスでのログ使用。
+	/// </summary>
+	public static ILoggerFactory LoggerFactory {
+		get {
+			return field ??= Ioc.Default.GetRequiredService<ILoggerFactory>();
 		}
 	}
 
@@ -35,7 +46,8 @@ public partial class App : Application {
 	/// <param name="args">起動引数。</param>
 	protected override void OnLaunched(LaunchActivatedEventArgs args) {
 		Build();
-		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => Debug.WriteLine(ex.ToString()));
+		var logger = LoggerFactory.CreateLogger<App>();
+		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => logger.LogWarning(ex, "Exception"));
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 		var workspaceService = Ioc.Default.GetRequiredService<WorkspaceService>();
@@ -96,7 +108,23 @@ public partial class App : Application {
 
 	/// <summary>DI コンテナ構築。</summary>
 	private static void Build() {
+		// Serilog設定
+		Log.Logger = new LoggerConfiguration()
+#if DEBUG_UNPACKAGED
+			.MinimumLevel.Verbose()
+			.WriteTo.Debug()
+#else
+			.MinimumLevel.Information()
+#endif
+			.WriteTo.File(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "log", ".log"),rollingInterval:RollingInterval.Month)
+			.CreateLogger();
+
 		var serviceCollection = new ServiceCollection();
+		serviceCollection.AddLogging(loggingBuilder =>
+		{
+			loggingBuilder.AddSerilog(dispose: true);
+		});
+
 		var targetTypes = Assembly
 			.GetExecutingAssembly()
 			.GetTypes()
