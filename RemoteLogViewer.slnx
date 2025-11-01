@@ -11,6 +11,7 @@
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
+    <File Path=".github/workflows/release.yml" />
     <File Path=".gitignore" />
     <File Path="AGENTS.md" />
     <File Path="Directory.Build.props" />

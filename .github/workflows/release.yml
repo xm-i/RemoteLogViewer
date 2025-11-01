@@ -1,0 +1,74 @@
+name: Release-Unpackaged
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - runtime: win-x86
+            platform: x86
+          - runtime: win-x64
+            platform: x64
+          - runtime: win-arm64
+            platform: ARM64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore RemoteLogViewer/RemoteLogViewer.csproj -r ${{ matrix.runtime }}
+
+      - name: Publish (Untrimmed, Unpackaged)
+        run: dotnet msbuild RemoteLogViewer/RemoteLogViewer.csproj /t:Publish /p:Configuration=Release-Unpackaged /p:Platform=${{ matrix.platform }} /p:RuntimeIdentifier=${{ matrix.runtime }} /p:PublishSingleFile=false /p:PublishTrimmed=false /p:IncludeNativeLibrariesForSelfExtract=true /p:SelfContained=false /p:PublishReadyToRun=false /p:PublishDir="publish/"
+
+      - name: ZIP
+        run: Compress-Archive -Path RemoteLogViewer\publish\* -DestinationPath RemoteLogViewer-${{ github.ref_name }}-${{ matrix.runtime }}.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RemoteLogViewer-${{ matrix.runtime }}
+          path: RemoteLogViewer-${{ github.ref_name }}-${{ matrix.runtime }}.zip
+
+  release:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: RemoteLogViewer-win-x86
+          path: ./artifacts
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: RemoteLogViewer-win-x64
+          path: ./artifacts
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: RemoteLogViewer-win-arm64
+          path: ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: ./artifacts
