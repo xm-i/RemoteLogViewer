@@ -141,8 +141,10 @@
 						<Button Content="Search" Command="{x:Bind ViewModel.GrepCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 						<Button Content="Cancel" Command="{x:Bind ViewModel.GrepCancelCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 						<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.GrepProgress.Value, Mode=OneWay}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-						<TextBlock Text="結果:"/>
-						<TextBlock Text="{x:Bind ViewModel.GrepResults.Count, Mode=OneWay}"/>
+						<TextBlock VerticalAlignment="Center">
+							<Run Text="結果:"/>
+							<Run Text="{x:Bind ViewModel.GrepResults.Count, Mode=OneWay}"/>
+						</TextBlock>
 					</StackPanel>
 					<ScrollViewer
 						Grid.Row="1"
