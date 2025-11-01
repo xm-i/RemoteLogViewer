@@ -1,3 +1,5 @@
+<div align="center"><img src="docs/icon.png" width="128px" /></div>
+
 # RemoteLogViewer
 
 ![スクリーンショット](docs/ScreenShot.png)
