@@ -19,6 +19,9 @@ public sealed partial class MainWindow : Window {
 	public MainWindow(MainWindowViewModel mainWindowViewModel, IServiceProvider services) {
 		this._services = services;
 		this.InitializeComponent();
+		this.ExtendsContentIntoTitleBar = true;
+		this.AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
+		this.SetTitleBar(this.titleBar);
 		this.AppWindow.SetIcon("Assets/icon256x256.ico");
 		this.ViewModel = mainWindowViewModel;
 		this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
@@ -61,5 +64,9 @@ public sealed partial class MainWindow : Window {
 	private void OpenSettings_Click(object sender, RoutedEventArgs e) {
 		var window = this._services.GetRequiredService<SettingsWindow>();
 		window.Activate();
+	}
+
+	private void Button_Click(object sender, RoutedEventArgs e) {
+
 	}
 }

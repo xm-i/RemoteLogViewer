@@ -17,28 +17,39 @@
 			<RowDefinition Height="*" MinHeight="100"/>
 		</Grid.RowDefinitions>
 		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4" VerticalAlignment="Center">
-			<TextBlock Text="ファイル:"/>
-			<TextBlock Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
-			<TextBlock Text=" 行数:"/>
-			<TextBlock Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
-			<TextBlock Text=" 表示開始行:"/>
-			<TextBlock Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
-			<TextBlock Text=" 表示可能行数:"/>
-			<TextBlock Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
-			<TextBlock Text=" Encoding:"/>
-			<AutoSuggestBox Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
-			<TextBlock Text=" 読込:"/>
-			<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
+			<TextBlock FontSize="14" Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" Width="180" MaxHeight="50" TextWrapping="Wrap" />
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Grid RowDefinitions="Auto,Auto">
+				<TextBlock FontSize="12" Text=" Encoding"/>
+				<AutoSuggestBox Grid.Row="1" Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
+			</Grid>
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
 			<Button Content="Tail Start" Command="{x:Bind ViewModel.TailStartCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 			<Button Content="Tail Stop" Command="{x:Bind ViewModel.TailStopCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-			<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-				<TextBlock Text="|" Opacity="0.4"/>
-				<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
-				<TextBox x:Name="EndLineBox" Width="80" PlaceholderText="End"/>
-				<Button Content="Save Range" Click="SaveRangeButton_Click" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-				<Button Content="Cancel" Command="{x:Bind ViewModel.SaveRangeContentCancelCommand}" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-				<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.SaveRangeProgress.Value, Mode=OneWay}"/>
-			</StackPanel>
+
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Grid RowDefinitions="*,Auto,Auto">
+				<TextBlock FontSize="12" Text="Download Selected Range"/>
+				<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+					<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
+					<TextBox x:Name="EndLineBox" Width="80" PlaceholderText="End"/>
+					<Button Content="Save" Click="SaveRangeButton_Click" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+					<Button Content="Cancel" Command="{x:Bind ViewModel.SaveRangeContentCancelCommand}" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+				</StackPanel>
+				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.SaveRangeProgress.Value, Mode=OneWay}"/>
+			</Grid>
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Grid RowDefinitions="*,Auto,Auto" Width="150">
+				<TextBlock FontSize="12" Text="File Information"/>
+				<TextBlock Grid.Row="1" FontSize="14">
+					<Run Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
+					<Run Text=" - ("/>
+					<Run Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
+					<Run Text=") / "/>
+					<Run Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
+				</TextBlock>
+				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
+			</Grid>
 		</StackPanel>
 
 		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto,Auto">

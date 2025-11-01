@@ -2,7 +2,8 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:conv="using:RemoteLogViewer.Views.Converters">
+    xmlns:conv="using:RemoteLogViewer.Views.Converters"
+    xmlns:winUiConverters="using:CommunityToolkit.WinUI.Converters">
 	<!-- 共通コンバーター定義 -->
 	<conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 	<conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
@@ -15,4 +16,5 @@
 	<conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
 	<conv:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter" />
 	<conv:HighlightPatternTypeToStringConverter x:Key="HighlightPatternTypeToStringConverter" />
+	<winUiConverters:FileSizeToFriendlyStringConverter x:Key="FileSizeToFriendlyStringConverter"/>
 </ResourceDictionary>

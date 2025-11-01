@@ -14,17 +14,19 @@
 	<Window.SystemBackdrop>
 		<MicaBackdrop />
 	</Window.SystemBackdrop>
-
-	<Grid Padding="4" RowSpacing="4">
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto" />
-			<RowDefinition Height="*" />
-		</Grid.RowDefinitions>
-		<MenuBar>
-			<MenuBarItem Title="Tools">
-				<MenuFlyoutItem Text="Settings" Click="OpenSettings_Click"/>
-			</MenuBarItem>
-		</MenuBar>
+	<Grid RowDefinitions="Auto,*">
+		<TitleBar
+			Grid.Row="0"
+			x:Name="titleBar"
+			Title="RemoteLogViewer"
+			IsBackButtonVisible="False"
+			IsPaneToggleButtonVisible="False">
+			<TitleBar.RightHeader>
+				<Button Click="OpenSettings_Click" BorderThickness="0" Padding="2">
+					<FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE713;"/>
+				</Button>
+			</TitleBar.RightHeader>
+		</TitleBar>
 		<TabView Grid.Row="1"
 				VerticalAlignment="Stretch"
 				TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
