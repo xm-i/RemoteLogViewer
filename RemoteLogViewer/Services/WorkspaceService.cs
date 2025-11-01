@@ -1,4 +1,5 @@
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer.Services;
 
@@ -7,6 +8,7 @@ namespace RemoteLogViewer.Services;
 /// </summary>
 [AddSingleton]
 public class WorkspaceService {
+	private readonly ILogger<WorkspaceService> _logger;
 	private readonly string _persistFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "WorkSpacePath.txt");
 
 	/// <summary>
@@ -22,7 +24,8 @@ public class WorkspaceService {
 		get; private set;
 	}
 
-	public WorkspaceService() {
+	public WorkspaceService(ILogger<WorkspaceService> logger) {
+		this._logger = logger;
 		try {
 			if (File.Exists(this._persistFilePath)) {
 				var path = File.ReadAllText(this._persistFilePath).Trim();
@@ -31,8 +34,8 @@ public class WorkspaceService {
 					this.IsPersist = true;
 				}
 			}
-		} catch {
-			// 読み込み失敗時は無視
+		} catch (Exception ex) {
+			this._logger.LogWarning(ex, "Failed to load workspace settings");
 		}
 	}
 
@@ -48,14 +51,16 @@ public class WorkspaceService {
 			try {
 				Directory.CreateDirectory(Path.GetDirectoryName(this._persistFilePath)!);
 				File.WriteAllText(this._persistFilePath, path);
-			} catch {
-				// 失敗は通知未実装: TODO
+			} catch (Exception ex) {
+				this._logger.LogWarning(ex, "Failed to save workspace settings");
 			}
 		} else {
 			if (File.Exists(this._persistFilePath)) {
 				try {
 					File.Delete(this._persistFilePath);
-				} catch { }
+				} catch (Exception ex) {
+					this._logger.LogWarning(ex, "Failed to delete workspace settings file");
+				}
 			}
 		}
 	}

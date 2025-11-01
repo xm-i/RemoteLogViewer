@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Services;
 
@@ -13,6 +14,7 @@ namespace RemoteLogViewer.Stores.SshConnection;
 /// </summary>
 [AddSingleton]
 public class SshConnectionStoreModel {
+	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;
 	private string FilePath {
 		get {
@@ -27,7 +29,8 @@ public class SshConnectionStoreModel {
 		get;
 	} = [];
 
-	public SshConnectionStoreModel(WorkspaceService workspaceService) {
+	public SshConnectionStoreModel(WorkspaceService workspaceService, ILogger<SshConnectionStoreModel> logger) {
+		this._logger = logger;
 		this._workspaceService = workspaceService;
 		this.Load();
 	}
@@ -45,8 +48,9 @@ public class SshConnectionStoreModel {
 					this.Items.Add(SshConnectionInfoModelForJson.CreateSshConnectionInfoModel(c));
 				}
 			}
-		} catch {
+		} catch(Exception ex) {
 			// TODO: 失敗通知
+			this._logger.LogWarning(ex, "Failed to load connections settings from {FilePath}", this.FilePath);
 		}
 	}
 
@@ -58,8 +62,9 @@ public class SshConnectionStoreModel {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
 			var json = JsonSerializer.Serialize(this.Items.Select(SshConnectionInfoModelForJson.CreateSshConnectionInfoModelForJson), _jsonSerializerOptions);
 			File.WriteAllText(this.FilePath, json);
-		} catch {
+		} catch (Exception ex) {
 			// TODO: 失敗通知
+			this._logger.LogWarning(ex, "Failed to save connections settings to {FilePath}", this.FilePath);
 		}
 	}
 

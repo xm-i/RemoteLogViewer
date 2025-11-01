@@ -103,7 +103,10 @@ public partial class App : Application {
 			if (hSmall != IntPtr.Zero) {
 				SendMessage(hwnd, WM_SETICON, ICON_SMALL, hSmall);
 			}
-		} catch { /*失敗時は黙殺 */ }
+		} catch (Exception ex) {
+			var logger = LoggerFactory.CreateLogger<App>();
+			logger.LogWarning(ex, "Failed to set window icon");
+		}
 	}
 
 	/// <summary>DI コンテナ構築。</summary>

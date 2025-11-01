@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Stores.Settings.Model;
@@ -14,6 +15,7 @@ namespace RemoteLogViewer.Stores.Settings;
 /// </summary>
 [AddSingleton]
 public class SettingsStoreModel {
+	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;
 	public IServiceProvider ScopedService {
 		get;
@@ -32,7 +34,8 @@ public class SettingsStoreModel {
 		private set;
 	}
 
-	public SettingsStoreModel(WorkspaceService workspaceService, IServiceProvider service) {
+	public SettingsStoreModel(WorkspaceService workspaceService, IServiceProvider service, ILogger<SettingsStoreModel> logger) {
+		this._logger = logger;
 		this._workspaceService = workspaceService;
 		this.ScopedService = service;
 		this.Load();
@@ -53,8 +56,9 @@ public class SettingsStoreModel {
 					return;
 				}
 			}
-		} catch {
+		} catch(Exception ex) {
 			// TODO: 失敗通知
+			this._logger.LogWarning(ex, "Failed to load settings from {FilePath}", this.FilePath);
 		}
 		this.SettingsModel = scope.ServiceProvider.GetRequiredService<SettingsModel>();
 	}
@@ -67,8 +71,9 @@ public class SettingsStoreModel {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
 			var json = JsonSerializer.Serialize(SettingsModelForJson.CreateJson(this.SettingsModel), _jsonSerializerOptions);
 			File.WriteAllText(this.FilePath, json);
-		} catch {
+		} catch(Exception ex) {
 			// TODO: 失敗通知
+			this._logger.LogWarning(ex, "Failed to save settings to {FilePath}", this.FilePath);
 		}
 	}
 }
