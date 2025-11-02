@@ -88,8 +88,4 @@
     <PublishReadyToRun Condition="'$(Configuration)' == 'Release-Unpackaged'">True</PublishReadyToRun>
     <ApplicationIcon>Assets\icon128.ico</ApplicationIcon>
   </PropertyGroup>
-  
-  <PropertyGroup>
-    <SatelliteResourceLanguages>en-US;ja-JP</SatelliteResourceLanguages>
-  </PropertyGroup>
 </Project>
