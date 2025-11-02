@@ -25,7 +25,7 @@ jobs:
         run: dotnet restore RemoteLogViewer/RemoteLogViewer.csproj
 
       - name: Publish
-        run: dotnet publish RemoteLogViewer/RemoteLogViewer.csproj  -c Release-Unpackaged -r ${{ matrix.runtime }} -o publish/
+        run: dotnet publish RemoteLogViewer/RemoteLogViewer.csproj -c Release-Unpackaged -r ${{ matrix.runtime }} -o publish/
 
       - name: ZIP
         run: Compress-Archive -Path publish/* -DestinationPath RemoteLogViewer-${{ github.ref_name }}-${{ matrix.runtime }}.zip
@@ -37,32 +37,33 @@ jobs:
           path: RemoteLogViewer-${{ github.ref_name }}-${{ matrix.runtime }}.zip
 
   release:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: RemoteLogViewer-win-x86
-          path: ./artifacts
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: RemoteLogViewer-win-x64
           path: ./artifacts
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: RemoteLogViewer-win-arm64
-          path: ./artifacts
+          
+      - name: Generate release notes from CHANGELOG
+        id: changelog
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          awk "/## ${TAG}/{flag=1;next}/## v/{flag=0}flag" CHANGELOG.md > RELEASE_NOTE.md
+          if [ ! -s RELEASE_NOTE.md ]; then
+            echo "No changelog entry found for ${TAG}, using default note."
+            echo "Release ${TAG}" > RELEASE_NOTE.md
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
+          body_path: RELEASE_NOTE.md
           draft: false
           prerelease: false
-          files: ./artifacts/*.zip
+          files: ./artifacts/**/*.zip
