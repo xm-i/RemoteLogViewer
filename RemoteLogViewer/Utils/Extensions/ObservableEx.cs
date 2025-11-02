@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -5,12 +6,14 @@ using System.Threading;
 namespace RemoteLogViewer.Utils.Extensions;
 
 public static class ObservableEx {
-	public static Observable<Unit> ToUnit<T>(this Observable<T> source) {
+	public static Observable<Unit> ToUnit<T>(this Observable<T> source, TimeProvider? timeProvider = null) {
+		timeProvider ??= TimeProvider.System;
 		return source.Select(_ => Unit.Default);
 	}
 
-	public static Observable<T> Throttle<T>(this Observable<T> source) {
-		return source.ThrottleFirstLast(TimeSpan.FromMilliseconds(300));
+	public static Observable<T> Throttle<T>(this Observable<T> source, TimeProvider? timeProvider = null) {
+		timeProvider ??= TimeProvider.System;
+		return source.ThrottleFirstLast(TimeSpan.FromMilliseconds(300),timeProvider);
 	}
 	public static BindableReactiveProperty<T> ToTwoWayBindableReactiveProperty<T>(this ReactiveProperty<T> source, T initialValue = default!) {
 		var bindable = source.ToBindableReactiveProperty(initialValue);
@@ -25,9 +28,7 @@ public static class ObservableEx {
 		TimeSpan maxInterval,
 		TimeProvider? timeProvider = null,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default) {
-		if (timeProvider == null) {
-			timeProvider = TimeProvider.System;
-		}
+		timeProvider ??= TimeProvider.System;
 		var buffer = new List<T>();
 		var lastFlush = timeProvider.GetUtcNow();
 
@@ -36,14 +37,14 @@ public static class ObservableEx {
 
 			var now = timeProvider.GetUtcNow();
 			if (now - lastFlush >= maxInterval) {
-				yield return buffer;
+				yield return [.. buffer];
 				buffer.Clear();
 				lastFlush = now;
 			}
 		}
 
 		if (buffer.Count > 0) {
-			yield return buffer;
+			yield return [.. buffer];
 		}
 	}
 }
