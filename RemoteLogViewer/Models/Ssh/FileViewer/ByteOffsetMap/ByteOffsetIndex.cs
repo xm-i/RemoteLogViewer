@@ -14,10 +14,13 @@ public class ByteOffsetIndex : IByteOffsetIndex {
 	}
 
 	public void Add(ByteOffset offset) {
+		Debug.Assert(this._entries.Count == 0 || this._entries[^1].LineNumber < offset.LineNumber, "Offsets must be added in ascending order of line numbers.");
 		this._entries.Add(offset);
 	}
 
 	public void AddRange(IEnumerable<ByteOffset> offsets) {
+		Debug.Assert(this._entries.Count == 0 || this._entries[^1].LineNumber < offsets.First().LineNumber, "Offsets must be added in ascending order of line numbers.");
+		Debug.Assert(offsets.OrderBy(o => o.LineNumber).SequenceEqual(offsets), "Offsets must be in ascending order of line numbers.");
 		this._entries.AddRange(offsets);
 	}
 
