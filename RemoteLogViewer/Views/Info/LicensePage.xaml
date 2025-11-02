@@ -15,12 +15,14 @@
                     <DataTemplate x:DataType="vm:LicenseInfo">
                         <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,8" Padding="12">
                             <StackPanel Spacing="4">
-								<TextBlock>
+								<TextBlock TextWrapping="Wrap">
 									<Run Text="{x:Bind Name}" FontWeight="SemiBold"/>
 									<Run Text="{x:Bind License}" FontFamily="Consolas" Foreground="DarkGray"/>
 								</TextBlock>
-								<HyperlinkButton Content="{x:Bind Url}" NavigateUri="{x:Bind Url}"/>
-                            </StackPanel>
+								<HyperlinkButton NavigateUri="{x:Bind Url}" >
+									<TextBlock Text="{x:Bind Url}" TextWrapping="Wrap"/>
+								</HyperlinkButton>
+							</StackPanel>
                         </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>

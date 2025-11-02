@@ -18,6 +18,10 @@ public class InfoWindowViewModel : ViewModelBase<InfoWindowViewModel> {
 		get;
 	} = [];
 
+	public AboutPageViewModel AboutPageViewModel {
+		get;
+	}
+
 	public LicensePageViewModel LicensePageViewModel {
 		get;
 	}
@@ -26,10 +30,11 @@ public class InfoWindowViewModel : ViewModelBase<InfoWindowViewModel> {
 		get;
 	} = new();
 
-	public InfoWindowViewModel(LicensePageViewModel licensePageViewModel, ILogger<InfoWindowViewModel> logger) : base(logger) {
+	public InfoWindowViewModel(AboutPageViewModel aboutPageViewModel, LicensePageViewModel licensePageViewModel, ILogger<InfoWindowViewModel> logger) : base(logger) {
+		this.AboutPageViewModel = aboutPageViewModel;
 		this.LicensePageViewModel = licensePageViewModel;
 
-		this.Pages.AddRange([this.LicensePageViewModel]);
+		this.Pages.AddRange([this.AboutPageViewModel, this.LicensePageViewModel]);
 		this.SelectedSettingsPage.Value = this.Pages[0];
 	}
 }

@@ -13,7 +13,7 @@ public sealed partial class InfoWindow : Window {
 	public InfoWindow(InfoWindowViewModel vm) {
 		this.ViewModel = vm;
 		this.InitializeComponent();
-		this.AppWindow?.Resize(new Windows.Graphics.SizeInt32(1200, 800));
+		this.AppWindow?.Resize(new Windows.Graphics.SizeInt32(800, 800));
 		this.ViewModel.SelectedSettingsPage.Subscribe(vm => {
 			if (vm is null) {
 				return;
@@ -22,6 +22,9 @@ public sealed partial class InfoWindow : Window {
 			switch (vm) {
 				case LicensePageViewModel _:
 					view = typeof(LicensePage);
+					break;
+				case AboutPageViewModel _:
+					view = typeof(AboutPage);
 					break;
 				default:
 					return;
