@@ -7,6 +7,7 @@ using RemoteLogViewer.Views.Settings;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 using Microsoft.Extensions.DependencyInjection;
+using RemoteLogViewer.Views.Info;
 
 namespace RemoteLogViewer.Views;
 
@@ -66,7 +67,8 @@ public sealed partial class MainWindow : Window {
 		window.Activate();
 	}
 
-	private void Button_Click(object sender, RoutedEventArgs e) {
-
+	private void InfoButton_Click(object sender, RoutedEventArgs e) {
+		var window = this._services.GetRequiredService<InfoWindow>();
+		window.Activate();
 	}
 }

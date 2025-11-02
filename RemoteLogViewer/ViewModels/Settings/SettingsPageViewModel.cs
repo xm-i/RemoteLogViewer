@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 namespace RemoteLogViewer.ViewModels.Settings;
 
 public interface ISettingsPageViewModel {
-	string PageName { get; }
+	public string PageName { get; }
 }
 
 public abstract class SettingsPageViewModel<T> : ViewModelBase<T>, ISettingsPageViewModel where T : SettingsPageViewModel<T> {

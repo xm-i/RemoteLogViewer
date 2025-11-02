@@ -48,6 +48,5 @@ public class SettingsWindowViewModel : ViewModelBase<SettingsWindowViewModel> {
 		this.SaveCommand.Subscribe(_ => {
 			model.Save();
 		});
-		this.TextViewerSettings = textViewerSettings;
 	}
 }

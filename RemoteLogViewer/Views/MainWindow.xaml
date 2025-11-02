@@ -22,9 +22,14 @@
 			IsBackButtonVisible="False"
 			IsPaneToggleButtonVisible="False">
 			<TitleBar.RightHeader>
-				<Button Click="OpenSettings_Click" BorderThickness="0" Padding="2">
-					<FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE713;"/>
-				</Button>
+				<StackPanel Orientation="Horizontal" Spacing="2">
+					<Button Click="OpenSettings_Click" BorderThickness="0" Padding="2">
+						<FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE713;"/>
+					</Button>
+					<Button Click="InfoButton_Click" BorderThickness="0" Padding="2">
+						<FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;"/>
+					</Button>
+				</StackPanel>
 			</TitleBar.RightHeader>
 		</TitleBar>
 		<TabView Grid.Row="1"
