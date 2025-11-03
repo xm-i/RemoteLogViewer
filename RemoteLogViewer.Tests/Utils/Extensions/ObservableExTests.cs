@@ -146,26 +146,26 @@ public class ObservableExTests {
 		// 連続して値を送信
 		publisher.OnNext(1);
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
-		publisher.OnNext(2); // スロットルされるはず
+		publisher.OnNext(2);
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
 		publisher.OnNext(3);
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
 		publisher.OnNext(4);
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
-		publisher.OnNext(5); // スロットルされるはず
+		publisher.OnNext(5);
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
 		publisher.OnNext(6);
 		// 十分な時間を空ける（300ms以上）
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(400));
 		publisher.OnNext(7);
 		fakeTimeProvider.Advance(TimeSpan.FromMilliseconds(100));
-		publisher.OnNext(8); // スロットルされるはず
+		publisher.OnNext(8); // 時間経過してなくてもcompleteで確定するはず
 		publisher.OnCompleted();
 
 
 		// Assert
 		// 間引かれるはず
-		results.ShouldBe([1, 3, 4, 6, 7]);
+		results.ShouldBe([3,6,8 ]);
 	}
 	#endregion
 

@@ -28,9 +28,10 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.ProcessedBytes
 			.CombineLatest(this._textFileViewerModel.TotalBytes, (loaded, total) => total == 0 ? 0d : (double)loaded / total)
 			.Throttle()
+			.ObserveOnCurrentSynchronizationContext()
 			.ToReadOnlyBindableReactiveProperty(0)
 			.AddTo(this.CompositeDisposable);
-		this.TotalLines = this._textFileViewerModel.TotalLines.Throttle().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TotalLines = this._textFileViewerModel.TotalLines.Throttle().ObserveOnCurrentSynchronizationContext().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.Content = this._textFileViewerModel.Content.CombineLatest(Observable.Return(false).Merge(this.IsShowingTruncatedText.Where(x => x)), (x, y) => x).Select(lines => {
 			//削減無し
 			if (this.IsShowingTruncatedText.Value) {
@@ -154,7 +155,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._grepCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
 
-		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeOperation.Progress.Throttle().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeOperation.Progress.Throttle().ObserveOnCurrentSynchronizationContext().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.IsRangeContentSaving = this._textFileViewerModel.SaveRangeOperation.IsRunning.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.SaveRangeContentCancelCommand =
 			this.IsRangeContentSaving

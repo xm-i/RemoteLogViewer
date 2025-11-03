@@ -39,7 +39,7 @@
 				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.SaveRangeProgress.Value, Mode=OneWay}"/>
 			</Grid>
 			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
-			<Grid RowDefinitions="*,Auto,Auto" Width="150">
+			<Grid RowDefinitions="*,Auto,Auto" MinWidth="150">
 				<TextBlock FontSize="12" Text="File Information"/>
 				<TextBlock Grid.Row="1" FontSize="14">
 					<Run Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
