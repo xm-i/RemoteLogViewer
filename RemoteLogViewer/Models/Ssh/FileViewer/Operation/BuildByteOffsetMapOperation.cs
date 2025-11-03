@@ -40,7 +40,7 @@ public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOp
 		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 
-	public async IAsyncEnumerable<ByteOffset> RunAsync(SshService sshService, string? filePath, int chunkSize, ulong totalBytes, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<ByteOffset> RunAsync(ISshService sshService, string? filePath, int chunkSize, ulong totalBytes, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;
 		}

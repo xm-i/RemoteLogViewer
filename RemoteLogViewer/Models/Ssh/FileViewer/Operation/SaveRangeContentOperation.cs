@@ -48,7 +48,7 @@ public sealed class SaveRangeContentOperation : ModelBase<SaveRangeContentOperat
 		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 
-	public async Task ExecuteAsync(SshService sshService, string? filePath, StreamWriter writer, long startLine, long endLine, string? encoding, CancellationToken ct) {
+	public async Task ExecuteAsync(ISshService sshService, string? filePath, StreamWriter writer, long startLine, long endLine, string? encoding, CancellationToken ct) {
 		using var op = this._operations.Register(ct);
 
 		if (string.IsNullOrEmpty(filePath)) {

@@ -14,8 +14,8 @@ namespace RemoteLogViewer.Services.Ssh;
 /// <summary>
 ///     SSH 接続とコマンド実行を提供します。
 /// </summary>
-[AddScoped]
-public class SshService : IDisposable {
+[AddScoped(typeof(ISshService))]
+public partial class SshService : ISshService {
 	private ILogger<SshService> logger {
 		get {
 			return field ??= App.LoggerFactory.CreateLogger<SshService>();
@@ -23,12 +23,12 @@ public class SshService : IDisposable {
 	}
 	private readonly NotificationService _notificationService;
 	private SshClient? _client;
-	public string? CSharpEncoding {
+	private string? CSharpEncoding {
 		get;
-		private set;
+		set;
 	}
 
-	public string? IconvEncoding {
+	private string? IconvEncoding {
 		get {
 			if (this.CSharpEncoding is null) {
 				return null;

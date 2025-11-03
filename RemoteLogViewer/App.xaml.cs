@@ -105,7 +105,8 @@ public partial class App : Application {
 				x.GetCustomAttributes<AddSingletonAttribute>(inherit: true).Any());
 
 		foreach (var singletonTargetType in singletonTargetTypes) {
-			serviceCollection.AddSingleton(singletonTargetType);
+			var attribute = singletonTargetType.GetCustomAttribute<AddSingletonAttribute>();
+			serviceCollection.AddSingleton(attribute?.ServiceType ?? singletonTargetType);
 		}
 
 		var scopedTargetTypes = Assembly
@@ -115,7 +116,8 @@ public partial class App : Application {
 				x.GetCustomAttributes<AddScopedAttribute>(inherit: true).Any());
 
 		foreach (var scopedTargetType in scopedTargetTypes) {
-			serviceCollection.AddScoped(scopedTargetType);
+			var attribute = scopedTargetType.GetCustomAttribute<AddScopedAttribute>();
+			serviceCollection.AddScoped(attribute?.ServiceType ?? scopedTargetType, scopedTargetType);
 		}
 
 		Ioc.Default.ConfigureServices(

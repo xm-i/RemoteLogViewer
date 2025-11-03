@@ -5,18 +5,16 @@ using System.Threading;
 
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
-using RemoteLogViewer.Services.Ssh;
 
-namespace RemoteLogViewer.Utils.Extensions;
+namespace RemoteLogViewer.Services.Ssh;
 
-public static class SshServiceEx {
+public partial class SshService {
 	/// <summary>
 	/// SSH サーバー上のディレクトリを一覧表示します。
 	/// </summary>
-	/// <param name="sshService">SSHサービス。</param>
 	/// <param name="path">対象ディレクトリのパス。</param>
 	/// <returns>ディレクトリエントリ一覧。</returns>
-	public static FileSystemObject[] ListDirectory(this SshService sshService, string path) {
+	public FileSystemObject[] ListDirectory(string path) {
 		var escapedPath = path.Replace("\"", "\\\"");
 		var awk =
 			"/^total / { next } " +
@@ -25,7 +23,7 @@ public static class SshServiceEx {
 			"/^-/ { print 1, $0; next } " +
 			"{ print 0, $0 }";
 		var cmd = $"ls -al --time-style=+%Y-%m-%dT%H:%M:%S%z \"{escapedPath}\" | awk -v P=\"{escapedPath}\" '{awk}'";
-		var output = sshService.Run(cmd);
+		var output = this.Run(cmd);
 		var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		var list = new List<FileSystemObject>();
 		// 4 lrwxrwxrwx   1 root root          7 2024-04-22T22:08:03+0900 bin -> usr/bin
@@ -73,10 +71,9 @@ public static class SshServiceEx {
 	/// <summary>
 	///     リモート環境で利用可能な iconv のエンコーディング一覧を取得します。
 	/// </summary>
-	/// <param name="sshService">SSH サービス。</param>
 	/// <returns>エンコーディング名配列。</returns>
-	public static string[] ListIconvEncodings(this SshService sshService) {
-		var output = sshService.Run("iconv -l 2>/dev/null || true");
+	public string[] ListIconvEncodings() {
+		var output = this.Run("iconv -l 2>/dev/null || true");
 		var tokens = output.Split(['\r', '\n', '\t', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var t in tokens) {
@@ -100,7 +97,7 @@ public static class SshServiceEx {
 	/// <param name="endLine">終了行 (1 始まり)。</param>
 	/// <param name="fileEncoding">ソースエンコーディング。</param>
 	/// <returns>取得行。</returns>
-	public static async IAsyncEnumerable<TextLine> GetLinesAsync(this SshService sshService, string remoteFilePath, long startLine, long endLine, string? fileEncoding, ByteOffset byteOffset, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> GetLinesAsync(string remoteFilePath, long startLine, long endLine, string? fileEncoding, ByteOffset byteOffset, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("File path is empty.", nameof(remoteFilePath));
 		}
@@ -110,14 +107,14 @@ public static class SshServiceEx {
 		if (endLine < startLine) {
 			throw new ArgumentException("endLine must be >= startLine.", nameof(endLine));
 		}
-		if (sshService.IconvEncoding == null) {
+		if (this.IconvEncoding == null) {
 			throw new InvalidOperationException("Iconv Encoding not found.");
 		}
 		if (byteOffset.LineNumber > startLine) {
 			throw new ArgumentException("byteOffset.LineNumber is less than startLine", nameof(byteOffset));
 		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE" : string.Empty;
+		var convertPipe = NeedsConversion(fileEncoding, this.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {this.IconvEncoding}//IGNORE" : string.Empty;
 
 		string command;
 		var relativeStart = startLine - byteOffset.LineNumber;
@@ -125,7 +122,7 @@ public static class SshServiceEx {
 		var startBytes = byteOffset.Bytes + 1;
 		command = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | sed -n '{relativeStart},{relativeEnd}p;{relativeEnd}q' 2>/dev/null" + convertPipe;
 
-		var lines = sshService.RunAsync(command, ct);
+		var lines = this.RunAsync(command, ct);
 		await foreach (var line in lines.Select((content, i) => new TextLine(startLine + i, content))) {
 			if (ct.IsCancellationRequested) {
 				yield break;
@@ -137,7 +134,6 @@ public static class SshServiceEx {
 	/// <summary>
 	///     grep 検索 を行います。
 	/// </summary>
-	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイル。</param>
 	/// <param name="pattern">パターン。</param>
 	/// <param name="ignoreCase">大文字小文字無視。</param>
@@ -147,11 +143,11 @@ public static class SshServiceEx {
 	/// <param name="startLine">検索開始時点の行番号</param>
 	/// <param name="ct">キャンセルトークン。</param>
 	/// <returns>一致行。</returns>
-	public static async IAsyncEnumerable<TextLine> GrepAsync(this SshService sshService, string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> GrepAsync(string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
-		if (sshService.IconvEncoding == null) {
+		if (this.IconvEncoding == null) {
 			throw new InvalidOperationException("Iconv Encoding not found.");
 		}
 		pattern ??= string.Empty;
@@ -169,17 +165,17 @@ public static class SshServiceEx {
 		var ic = ignoreCase ? " -i" : string.Empty;
 
 		// パターン変換必要か
-		var needsPatternConversion = NeedsConversion(sshService.IconvEncoding, fileEncoding);
+		var needsPatternConversion = NeedsConversion(this.IconvEncoding, fileEncoding);
 		string patternExpr;
 		if (needsPatternConversion && !string.IsNullOrWhiteSpace(fileEncoding)) {
 			// command substitution を展開させるため、シングルクォートで囲まない
-			patternExpr = "$(printf '%s' '" + escapedPattern + "' | iconv -f " + EscapeSingleQuotes(sshService.IconvEncoding) + " -t " + EscapeSingleQuotes(fileEncoding!) + " 2>/dev/null)";
+			patternExpr = "$(printf '%s' '" + escapedPattern + "' | iconv -f " + EscapeSingleQuotes(this.IconvEncoding) + " -t " + EscapeSingleQuotes(fileEncoding!) + " 2>/dev/null)";
 		} else {
 			// 変換不要: 安全にシングルクォートで囲む
 			patternExpr = "'" + escapedPattern + "'";
 		}
 
-		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(sshService.IconvEncoding) + "//IGNORE" : string.Empty;
+		var convertPipe = NeedsConversion(fileEncoding, this.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(this.IconvEncoding) + "//IGNORE" : string.Empty;
 
 		// 入力を開始バイトから取得
 		var relativeStart = startLine - byteOffset.LineNumber;
@@ -187,7 +183,7 @@ public static class SshServiceEx {
 
 		// 実行コマンド: tail/cat の出力を grep にパイプし、必要なら出力を iconv変換する
 		var cmd = $"LC_ALL=C {inputCmd} | grep -n -h{ic} -m {maxResults} -F --binary-files=text --color=never --line-buffered -- {patternExpr}{convertPipe} 2>/dev/null || true";
-		var lines = sshService.RunAsync(cmd, ct);
+		var lines = this.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {
 			if (ct.IsCancellationRequested) {
@@ -211,12 +207,11 @@ public static class SshServiceEx {
 	///     返されるByteOffset は <paramref name="remoteFilePath"/> 先頭からのオフセット (改行含む) です。
 	///     最終行後(EOF) の行番号 + 1 と最終オフセットも出力されます。
 	/// </summary>
-	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイル 。</param>
 	/// <param name="interval">インデックス間隔行数。1 以上。</param>
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>インデックス列挙。</returns>
-	public static async IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(this SshService sshService, string remoteFilePath, int interval, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(string remoteFilePath, int interval, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -226,7 +221,7 @@ public static class SshServiceEx {
 		}
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
 		var cmd = $"LC_ALL=C awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR, offset }} END {{ if (NR%{interval} != 0) print NR, offset }}' '{escapedPath}' 2>/dev/null";
-		var lines = sshService.RunAsync(cmd, ct);
+		var lines = this.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {
 			if (ct.IsCancellationRequested) {
@@ -250,13 +245,12 @@ public static class SshServiceEx {
 	///既存のバイトオフセット (<paramref name="startOffset"/>)から指定行番号 (<paramref name="targetLine"/>)まで追加で読み込まれるバイト数を AWKで算出し、新しい <see cref="ByteOffset"/> を返します。
 	/// startOffset.LineNumber 行までの内容が既に取得済みである前提で、tail -c +{startOffset.Bytes+1}で残りを読み進めます。
 	/// </summary>
-	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイルパス。</param>
 	/// <param name="startOffset">開始バイトオフセット。</param>
 	/// <param name="targetLine">新規に算出したい行番号 (startOffset.LineNumber以上)。</param>
 	/// <param name="ct">キャンセルトークン。</param>
 	/// <returns>対象行までの累積バイトオフセット。</returns>
-	public static async Task<ByteOffset> CreateByteOffsetUntilLineAsync(this SshService sshService, string remoteFilePath, ByteOffset startOffset, long targetLine, CancellationToken ct) {
+	public async Task<ByteOffset> CreateByteOffsetUntilLineAsync(string remoteFilePath, ByteOffset startOffset, long targetLine, CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -270,7 +264,7 @@ public static class SshServiceEx {
 		var relativeLines = targetLine - startOffset.LineNumber;
 		var startBytes = startOffset.Bytes + 1;
 		var cmd = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | awk -v base={startOffset.Bytes} -v maxLines={relativeLines} '{{ base+=length($0)+1; if (NR==maxLines) {{ print base; exit }} }} END {{ if (NR<maxLines) print base }}' 2>/dev/null";
-		var lines = await sshService.RunAsync(cmd, ct).ToArrayAsync();
+		var lines = await this.RunAsync(cmd, ct).ToArrayAsync();
 		if (lines.Length != 1) {
 			throw new InvalidOperationException("Failed to calculate byte offset.");
 		}
@@ -284,25 +278,24 @@ public static class SshServiceEx {
 	/// <summary>
 	/// ファイル末尾の新規追記行を取得します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
 	/// </summary>
-	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイル。</param>
 	/// <param name="fileEncoding">ファイルエンコーディング。</param>
 	/// <param name="startOffset">開始オフセット。</param>
 	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
 	/// <param name="ct">キャンセルトークン。</param>
-	public static async IAsyncEnumerable<TextLine> TailFollowAsync(this SshService sshService, string remoteFilePath, string? fileEncoding, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> TailFollowAsync(string remoteFilePath, string? fileEncoding, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			yield break;
 		}
-		if (sshService.IconvEncoding == null) {
+		if (this.IconvEncoding == null) {
 			yield break;
 		}
 		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var convertPipe = NeedsConversion(fileEncoding, sshService.IconvEncoding) ? $" | while read L ; do echo $L | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {sshService.IconvEncoding}//IGNORE ; done" : string.Empty;
+		var convertPipe = NeedsConversion(fileEncoding, this.IconvEncoding) ? $" | while read L ; do echo $L | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {this.IconvEncoding}//IGNORE ; done" : string.Empty;
 		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
 		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null" + convertPipe;
 		var nextLine = startOffset.LineNumber + 1;
-		await foreach (var line in sshService.RunAsync(cmd, ct)) {
+		await foreach (var line in this.RunAsync(cmd, ct)) {
 			if (ct.IsCancellationRequested) {
 				yield break;
 			}
@@ -314,13 +307,11 @@ public static class SshServiceEx {
 	/// <summary>
 	/// ファイル末尾の新規追記行を取得し、行数のみを返却します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
 	/// </summary>
-	/// <param name="sshService">SSH サービス。</param>
 	/// <param name="remoteFilePath">対象ファイル。</param>
-	/// <param name="fileEncoding">ファイルエンコーディング。</param>
 	/// <param name="startOffset">開始オフセット。</param>
 	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
 	/// <param name="ct">キャンセルトークン。</param>
-	public static async IAsyncEnumerable<long> TailFollowAsyncOnlyLineNumber(this SshService sshService, string remoteFilePath, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<long> TailFollowAsyncOnlyLineNumber(string remoteFilePath, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			yield break;
 		}
@@ -328,7 +319,7 @@ public static class SshServiceEx {
 		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
 		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null | awk '{{print NR}}'";
 		var nextLine = startOffset.LineNumber + 1;
-		await foreach (var line in sshService.RunAsync(cmd, ct)) {
+		await foreach (var line in this.RunAsync(cmd, ct)) {
 			if (ct.IsCancellationRequested) {
 				yield break;
 			}

@@ -14,14 +14,14 @@ namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
 [AddScoped]
 public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
-	private readonly SshService _sshService;
+	private readonly ISshService _sshService;
 	private readonly SettingsStoreModel _settingsStore;
 	private const double loadingBuffer = 5;
 	private readonly IOperationRegistry _operations = new OperationRegistry();
 	private readonly IByteOffsetIndex _byteOffsetIndex = new ByteOffsetIndex();
 	private const int ByteOffsetMapChunkSize = 10000;
 
-	public TextFileViewerModel(SshService sshService, SettingsStoreModel settingsStore, ILogger<TextFileViewerModel> logger) : base(logger) {
+	public TextFileViewerModel(ISshService sshService, SettingsStoreModel settingsStore, ILogger<TextFileViewerModel> logger) : base(logger) {
 		this._sshService = sshService;
 		this._settingsStore = settingsStore;
 		this._operations.AddTo(this.CompositeDisposable);

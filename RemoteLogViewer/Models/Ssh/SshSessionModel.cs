@@ -14,7 +14,7 @@ namespace RemoteLogViewer.Models.Ssh;
 /// </summary>
 [AddScoped]
 public class SshSessionModel : ModelBase<SshSessionModel> {
-	private readonly SshService _sshService;
+	private readonly ISshService _sshService;
 	private readonly SshConnectionStoreModel _store;
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private readonly NotificationService _notificationService;
@@ -57,7 +57,7 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		get;
 	} = Encoding.GetEncodings().Where(x => Constants.EncodingPairs.Any(ep => ep.CSharp == x.Name)).ToArray();
 
-	public SshSessionModel(SshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger) : base(logger) {
+	public SshSessionModel(ISshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger) : base(logger) {
 		this._sshService = sshService.AddTo(this.CompositeDisposable);
 		this._store = store;
 		this._textFileViewerModel = textFileViewerModel.AddTo(this.CompositeDisposable);

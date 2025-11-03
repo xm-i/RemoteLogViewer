@@ -44,7 +44,7 @@ public sealed class GrepOperation : ModelBase<GrepOperation> {
 		get;
 	}
 
-	public async IAsyncEnumerable<TextLine> RunAsync(SshService sshService, string? filePath, string? query, string? encoding, ByteOffset startOffset, long startLine, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> RunAsync(ISshService sshService, string? filePath, string? query, string? encoding, ByteOffset startOffset, long startLine, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
 		this._receivedLineCount.Value = 0;
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;

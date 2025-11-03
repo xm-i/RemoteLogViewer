@@ -25,7 +25,7 @@ public sealed class TailFollowOperation : ModelBase<TailFollowOperation> {
 		this._chunkSize = chunkSize;
 	}
 
-	public async IAsyncEnumerable<long> RunAsync(SshService sshService, string? filePath, string? encoding, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<long> RunAsync(ISshService sshService, string? filePath, string? encoding, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;
 		}
