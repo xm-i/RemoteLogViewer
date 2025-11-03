@@ -25,8 +25,8 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this._textFileViewerModel = textFileViewerModel;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.ProcessedBytes
-			.CombineLatest(this._textFileViewerModel.TotalBytes, (loaded, total) => total == 0 ? 0d : (double)loaded / total)
+		this.TotalBytes = this._textFileViewerModel.TotalBytes.Select(x => x is { } ul ? (long?)ul : null).ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
+		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.Progress
 			.Throttle()
 			.ObserveOnCurrentSynchronizationContext()
 			.ToReadOnlyBindableReactiveProperty(0)
@@ -176,6 +176,11 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 
 	/// <summary>開いているファイルのパス。</summary>
 	public IReadOnlyBindableReactiveProperty<string?> OpenedFilePath {
+		get;
+	}
+
+	/// <summary>総バイト数。</summary>
+	public IReadOnlyBindableReactiveProperty<long?> TotalBytes {
 		get;
 	}
 

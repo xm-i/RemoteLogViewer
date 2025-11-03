@@ -17,7 +17,12 @@
 			<RowDefinition Height="*" MinHeight="100"/>
 		</Grid.RowDefinitions>
 		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4" VerticalAlignment="Center">
-			<TextBlock FontSize="14" Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" Width="180" MaxHeight="50" TextWrapping="Wrap" />
+			<TextBlock Width="180" FontSize="14" MaxHeight="50" TextWrapping="Wrap" >
+				<Run Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
+				<Run Text=" ("/>
+				<Run Text="{x:Bind ViewModel.TotalBytes.Value,Mode=OneWay, Converter={StaticResource FileSizeToFriendlyStringConverter}}"/>
+				<Run Text=" )"/>
+			</TextBlock>
 			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
 			<Grid RowDefinitions="Auto,Auto">
 				<TextBlock FontSize="12" Text=" Encoding"/>

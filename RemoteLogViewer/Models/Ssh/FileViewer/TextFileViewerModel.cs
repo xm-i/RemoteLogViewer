@@ -138,7 +138,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 
 	/// ファイルサイズ
 	/// </summary>
-	public ReactiveProperty<ulong> TotalBytes {
+	public ReactiveProperty<ulong?> TotalBytes {
 		get;
 	} = new(0);
 
@@ -159,7 +159,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		this.FileEncoding.Value = encoding;
 		this.TotalBytes.Value = fso.FileSize;
 		this._byteOffsetIndex.Reset();
-		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, this.TotalBytes.Value, ct);
+		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, fso.FileSize, ct);
 		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
 			this._byteOffsetIndex.AddRange(entry);
 			this.TotalLines.Value = entry.Max(x => x.LineNumber);
@@ -318,6 +318,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	private void ResetStates() {
 		this._operations.CancelAll();
 		this.TotalLines.Value = 0;
+		this.TotalBytes.Value = null;
 		this.OpenedFilePath.Value = null;
 		this.GrepResults.Clear();
 		this.LoadedLines.Clear();
