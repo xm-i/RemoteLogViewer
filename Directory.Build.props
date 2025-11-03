@@ -3,5 +3,6 @@
     <Deterministic>true</Deterministic>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 </Project>
