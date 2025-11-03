@@ -71,7 +71,14 @@ public partial class App : Application {
 	/// <summary>DI コンテナ構築。</summary>
 	private static void Build() {
 		// Serilog設定
-		var template = "| {Timestamp:HH:mm:ss.fff} | {Level:u4} | {ThreadId:00} | {Message:j} | {SourceContext} | {NewLine}{Exception}";
+		string[] logFileds = [
+			"{Timestamp:HH:mm:ss.fff}",
+			"{Level:u4}",
+			"{ThreadId:00}",
+			"{Message:j}",
+			"{SourceContext}",
+			"{NewLine}{Exception}"
+		];
 
 		Log.Logger = new LoggerConfiguration()
 			.Enrich.WithThreadId()
@@ -80,8 +87,8 @@ public partial class App : Application {
 #else
 			.MinimumLevel.Information()
 #endif
-			.WriteTo.Debug(outputTemplate: template)
-			.WriteTo.File(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "log", ".log"),rollingInterval:RollingInterval.Month, outputTemplate: template)
+			.WriteTo.Debug(outputTemplate: string.Join("｜", logFileds))
+			.WriteTo.File(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "log", ".log"),rollingInterval:RollingInterval.Month, outputTemplate: string.Join("\t", logFileds))
 			.CreateLogger();
 
 		var serviceCollection = new ServiceCollection();
