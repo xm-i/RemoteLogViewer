@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Time.Testing;
-using Shouldly;
-using RemoteLogViewer.Utils.Extensions;
+
 using R3;
-using R3.Collections;
+
+using RemoteLogViewer.Utils.Extensions;
+
+using Shouldly;
 
 namespace RemoteLogViewer.Tests.Utils.Extensions;
 
@@ -22,13 +24,11 @@ public class ObservableExTests {
 			fakeTimeProvider.Advance(maxInterval);
 			// 要素追加
 			publisher.OnNext(i);
-
-			await Task.Delay(1);
+			await WaitUntilAsync(() => list.SelectMany(x => x).Count(), i);
 		}
 
 		publisher.OnCompleted();
-
-		await Task.Delay(1);
+		await WaitUntilAsync(() => list.IsCompleted, true);
 
 		// Assert
 		// 各要素が別々のチャンクになるはず
@@ -48,12 +48,11 @@ public class ObservableExTests {
 		foreach (var i in Enumerable.Range(1, 5)) {
 			// 要素追加
 			publisher.OnNext(i);
-
-			await Task.Delay(1);
+			await Task.Delay(100);
 		}
 		publisher.OnCompleted();
 
-		await Task.Delay(1);
+		await WaitUntilAsync(() => list.IsCompleted, true);
 
 		// Assert
 		// すべての要素が1つのチャンクにまとめられるはず
@@ -73,7 +72,7 @@ public class ObservableExTests {
 		// なにも追加せずに終了する。
 		publisher.OnCompleted();
 
-		await Task.Delay(1);
+		await WaitUntilAsync(() => list.IsCompleted, true);
 
 		// Assert
 		// 空のソースからはチャンクが生成されないはず
@@ -96,11 +95,11 @@ public class ObservableExTests {
 			// 要素追加
 			publisher.OnNext(i);
 
-			await Task.Delay(1);
+			await Task.Delay(100);
 		}
 		publisher.OnCompleted();
 
-		await Task.Delay(1);
+		await WaitUntilAsync(() => list.IsCompleted, true);
 
 		// Assert
 		// 時間間隔が短いため2個のチャンクに分かれるはず
@@ -163,7 +162,6 @@ public class ObservableExTests {
 		publisher.OnNext(8); // スロットルされるはず
 		publisher.OnCompleted();
 
-		await Task.Delay(500);
 
 		// Assert
 		// 間引かれるはず
