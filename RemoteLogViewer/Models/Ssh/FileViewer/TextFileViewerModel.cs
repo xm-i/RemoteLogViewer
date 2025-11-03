@@ -33,7 +33,8 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
 			.Throttle()
-			.Where(x => x.path != null);
+			.Where(x => x.path != null)
+			.ObserveOnCurrentSynchronizationContext();
 
 		// 表示行枠確保
 		lineNumbersChangedStream.Subscribe(x => {
