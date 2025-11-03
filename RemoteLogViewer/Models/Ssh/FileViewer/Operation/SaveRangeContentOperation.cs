@@ -64,10 +64,9 @@ public sealed class SaveRangeContentOperation : ModelBase<SaveRangeContentOperat
 			var byteOffset = this._byteOffsetIndex.Find(startLine);
 			var lines = sshService.GetLinesAsync(filePath, startLine, endLine, encoding, byteOffset, op.Token);
 			var total = endLine - startLine + 1;
-			long current = 0;
 			await foreach (var line in lines.WithCancellation(op.Token)) {
 				await writer.WriteLineAsync(line.Content);
-				current++;
+				this._savedLines.Value++;
 				if (op.Token.IsCancellationRequested) {
 					break;
 				}
