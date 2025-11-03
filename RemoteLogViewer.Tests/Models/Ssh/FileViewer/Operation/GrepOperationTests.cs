@@ -19,8 +19,8 @@ public class GrepOperationTests {
 
 		using var opRegistry = new OperationRegistry();
 		var loggerMock = new Mock<ILogger<GrepOperation>>();
-		var totalLines = new ReactiveProperty<long>(1000);
-		var op = new GrepOperation(opRegistry, totalLines.ToReadOnlyReactiveProperty(), loggerMock.Object);
+		var op = new GrepOperation(opRegistry, loggerMock.Object);
+		op.TotalLineCount.Value = 1000;
 
 		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", "ERR", null, new ByteOffset(0,0),1,100, CancellationToken.None)).ToLiveList();
 
@@ -36,14 +36,14 @@ public class GrepOperationTests {
 		await WaitUntilAsync(() => list.Count,1);
 		list.ShouldBe([l1]);
 		op.IsRunning.CurrentValue.ShouldBeTrue();
-		op.Progress.CurrentValue.ShouldBe(l1.LineNumber / (double)totalLines.Value,0.001);
+		op.Progress.CurrentValue.ShouldBe(l1.LineNumber / 1000d,0.001);
 		op.ReceivedLineCount.CurrentValue.ShouldBe(10);
 
 		subject.OnNext(l2);
 		await WaitUntilAsync(() => list.Count,2);
 		list.ShouldBe([l1, l2]);
 		op.IsRunning.CurrentValue.ShouldBeTrue();
-		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / (double)totalLines.Value,0.001);
+		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / 1000d,0.001);
 		op.ReceivedLineCount.CurrentValue.ShouldBe(200);
 
 		subject.OnCompleted();
@@ -62,8 +62,8 @@ public class GrepOperationTests {
 
 		using var opRegistry = new OperationRegistry();
 		var loggerMock = new Mock<ILogger<GrepOperation>>();
-		var totalLines = new ReactiveProperty<long>(1000);
-		var op = new GrepOperation(opRegistry, totalLines.ToReadOnlyReactiveProperty(), loggerMock.Object);
+		var op = new GrepOperation(opRegistry, loggerMock.Object);
+		op.TotalLineCount.Value = 1000;
 
 		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", "ERR", null, new ByteOffset(0,0),1,100, cts.Token)).ToLiveList();
 
@@ -76,7 +76,7 @@ public class GrepOperationTests {
 
 		list.ShouldBe([l1, l2]);
 		op.IsRunning.CurrentValue.ShouldBeTrue();
-		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / (double)totalLines.Value,0.001);
+		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / 1000d,0.001);
 		op.ReceivedLineCount.CurrentValue.ShouldBe(200);
 
 		cts.Cancel();

@@ -23,9 +23,9 @@ public class TailFollowOperationTests {
 		using var opRegistry = new OperationRegistry();
 		var loggerMock = new Mock<ILogger<TailFollowOperation>>();
 		var index = new ByteOffsetIndex();
-		var op = new TailFollowOperation(opRegistry, index, chunkSize: 1000, loggerMock.Object);
+		var op = new TailFollowOperation(opRegistry, index, loggerMock.Object);
 
-		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", null, currentLastLine: 0, CancellationToken.None)).ToLiveList();
+		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", null, currentLastLine: 0, chunkSize: 1000, CancellationToken.None)).ToLiveList();
 
 		// 初期状態
 		list.Count.ShouldBe(0);
@@ -71,9 +71,9 @@ public class TailFollowOperationTests {
 		using var opRegistry = new OperationRegistry();
 		var loggerMock = new Mock<ILogger<TailFollowOperation>>();
 		var index = new ByteOffsetIndex();
-		var op = new TailFollowOperation(opRegistry, index, chunkSize: 1000, loggerMock.Object);
+		var op = new TailFollowOperation(opRegistry, index, loggerMock.Object);
 
-		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", null, currentLastLine: 0, cts.Token)).ToLiveList();
+		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", null, currentLastLine: 0, chunkSize: 1000, cts.Token)).ToLiveList();
 
 		subject.OnNext(1000); // 境界 ->追加
 		await WaitUntilAsync(() => list.Count, 1);

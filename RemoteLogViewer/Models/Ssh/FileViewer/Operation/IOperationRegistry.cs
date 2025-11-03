@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;

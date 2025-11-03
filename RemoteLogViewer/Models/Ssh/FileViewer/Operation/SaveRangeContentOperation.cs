@@ -9,7 +9,8 @@ using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class SaveRangeContentOperation : ModelBase<SaveRangeContentOperation> {
+[AddScoped(typeof(ISaveRangeContentOperation))]
+public sealed class SaveRangeContentOperation : ModelBase<SaveRangeContentOperation>, ISaveRangeContentOperation {
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;
 	private readonly ReactiveProperty<bool> _isRunning = new(false);

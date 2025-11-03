@@ -4,6 +4,7 @@ using System.Threading;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
+[AddScoped(typeof(IOperationRegistry))]
 public class OperationRegistry : IOperationRegistry {
 	private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _sources = new();
 	public OperationHandle Register(CancellationToken externalToken) {

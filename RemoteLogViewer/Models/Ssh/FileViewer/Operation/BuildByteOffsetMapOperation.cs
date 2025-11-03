@@ -8,7 +8,8 @@ using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOperation> {
+[AddScoped(typeof(IBuildByteOffsetMapOperation))]
+public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOperation>, IBuildByteOffsetMapOperation {
 	private readonly IOperationRegistry _operations;
 	private readonly ReactiveProperty<ulong> _totalBytes = new(0);
 

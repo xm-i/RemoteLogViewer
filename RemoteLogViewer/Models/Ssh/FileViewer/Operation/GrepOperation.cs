@@ -8,10 +8,10 @@ using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-public sealed class GrepOperation : ModelBase<GrepOperation> {
-	public GrepOperation(IOperationRegistry operationRegistry, ReadOnlyReactiveProperty<long> totalLineCountProperty, ILogger<GrepOperation> logger) : base(logger) {
+[AddScoped(typeof(IGrepOperation))]
+public sealed class GrepOperation : ModelBase<GrepOperation>, IGrepOperation {
+	public GrepOperation(IOperationRegistry operationRegistry, ILogger<GrepOperation> logger) : base(logger) {
 		this._operationRegistry = operationRegistry;
-		this.TotalLineCount = totalLineCountProperty;
 		this.Progress = this.ReceivedLineCount.CombineLatest(this.TotalLineCount, (received, total) => {
 			if (total <= 0) {
 				return 0;
@@ -29,9 +29,9 @@ public sealed class GrepOperation : ModelBase<GrepOperation> {
 		}
 	}
 
-	public ReadOnlyReactiveProperty<long> TotalLineCount {
+	public ReactiveProperty<long> TotalLineCount {
 		get;
-	}
+	} = new(0);
 
 	private readonly ReactiveProperty<long> _receivedLineCount = new(0);
 	public ReadOnlyReactiveProperty<long> ReceivedLineCount {

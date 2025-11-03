@@ -17,19 +17,30 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	private readonly ISshService _sshService;
 	private readonly SettingsStoreModel _settingsStore;
 	private const double loadingBuffer = 5;
-	private readonly IOperationRegistry _operations = new OperationRegistry();
-	private readonly IByteOffsetIndex _byteOffsetIndex = new ByteOffsetIndex();
-	private const int ByteOffsetMapChunkSize = 10000;
+	private readonly IOperationRegistry _operations;
+	private readonly IByteOffsetIndex _byteOffsetIndex;
 
-	public TextFileViewerModel(ISshService sshService, SettingsStoreModel settingsStore, ILogger<TextFileViewerModel> logger) : base(logger) {
+	public TextFileViewerModel(
+		ISshService sshService,
+		SettingsStoreModel settingsStore,
+		IOperationRegistry operations,
+		IByteOffsetIndex byteOffsetIndex,
+		IGrepOperation grepOperation,
+		ITailFollowOperation tailFollowOperation,
+		ISaveRangeContentOperation saveRangeContentOperation,
+		IBuildByteOffsetMapOperation buildByteOffsetMapOperation,
+		ILogger<TextFileViewerModel> logger) : base(logger) {
 		this._sshService = sshService;
 		this._settingsStore = settingsStore;
-		this._operations.AddTo(this.CompositeDisposable);
-		this.GrepOperation = new GrepOperation(this._operations, this.TotalLines, Ioc.Default.GetRequiredService<ILogger<GrepOperation>>()).AddTo(this.CompositeDisposable);
-		this.TailOperation = new TailFollowOperation(this._operations, this._byteOffsetIndex, ByteOffsetMapChunkSize, Ioc.Default.GetRequiredService<ILogger<TailFollowOperation>>()).AddTo(this.CompositeDisposable);
-		this.SaveRangeOperation = new SaveRangeContentOperation(this._operations, this._byteOffsetIndex, Ioc.Default.GetRequiredService<ILogger<SaveRangeContentOperation>>()).AddTo(this.CompositeDisposable);
-		this.BuildByteOffsetMapOperation = new BuildByteOffsetMapOperation(this._operations, Ioc.Default.GetRequiredService<ILogger<BuildByteOffsetMapOperation>>()).AddTo(this.CompositeDisposable);
-
+		this._operations = operations.AddTo(this.CompositeDisposable);
+		this._byteOffsetIndex = byteOffsetIndex;
+		this.GrepOperation = grepOperation.AddTo(this.CompositeDisposable);
+		this.TailOperation = tailFollowOperation.AddTo(this.CompositeDisposable);
+		this.TotalLines.Subscribe(x => {
+			this.GrepOperation.TotalLineCount.Value = x;
+		}).AddTo(this.CompositeDisposable);
+		this.SaveRangeOperation = saveRangeContentOperation.AddTo(this.CompositeDisposable);
+		this.BuildByteOffsetMapOperation = buildByteOffsetMapOperation.AddTo(this.CompositeDisposable);
 		var lineNumbersChangedStream = this.LineNumbers
 			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
 			.Throttle()
@@ -95,18 +106,18 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		get;
 	} = new();
 
-	public GrepOperation GrepOperation {
+	public IGrepOperation GrepOperation {
 		get;
 	}
 
-	public TailFollowOperation TailOperation {
+	public ITailFollowOperation TailOperation {
 		get;
 	}
 
-	public SaveRangeContentOperation SaveRangeOperation {
+	public ISaveRangeContentOperation SaveRangeOperation {
 		get;
 	}
-	public BuildByteOffsetMapOperation BuildByteOffsetMapOperation {
+	public IBuildByteOffsetMapOperation BuildByteOffsetMapOperation {
 		get;
 	}
 
@@ -148,7 +159,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		this.FileEncoding.Value = encoding;
 		this.TotalBytes.Value = fso.FileSize;
 		this._byteOffsetIndex.Reset();
-		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, ByteOffsetMapChunkSize, this.TotalBytes.Value, ct);
+		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, this.TotalBytes.Value, ct);
 		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
 			this._byteOffsetIndex.AddRange(entry);
 			this.TotalLines.Value = entry.Max(x => x.LineNumber);
@@ -256,7 +267,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 			await this.BuildByteOffsetMapOperation.IsRunning.Where(x => !x).FirstAsync(ct);
 		}
 		var currentLastLine = this.TotalLines.Value;
-		var lines = this.TailOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this.FileEncoding.Value, currentLastLine, ct);
+		var lines = this.TailOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this.FileEncoding.Value, currentLastLine, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, ct);
 		await foreach (var line in lines) {
 			this.TotalLines.Value = line;
 			if (ct.IsCancellationRequested) {

@@ -6,7 +6,7 @@ namespace RemoteLogViewer.Stores.Settings.Model;
 /// アプリケーション設定全体モデル。カテゴリ毎の設定を保持します。
 /// </summary>
 [AddSingleton]
-public class SettingsModel(HighlightSettingsModel highlightSettingModel, TextViewerSettingsModel textViewerSettingsModel) {
+public class SettingsModel(HighlightSettingsModel highlightSettingModel, TextViewerSettingsModel textViewerSettingsModel, AdvancedSettingsModel advancedSettingsModel) {
 	/// <summary>ハイライト設定。</summary>
 	public HighlightSettingsModel HighlightSettings {
 		get;
@@ -17,6 +17,10 @@ public class SettingsModel(HighlightSettingsModel highlightSettingModel, TextVie
 		get;
 		set;
 	} = textViewerSettingsModel;
+
+	public AdvancedSettingsModel AdvancedSettings {
+		get; set;
+	} = advancedSettingsModel;
 }
 
 public class SettingsModelForJson {
@@ -28,6 +32,10 @@ public class SettingsModelForJson {
 		get; set;
 	}
 
+	public AdvancedSettingsModelForJson? AdvancedSettings {
+		get; set;
+	}
+
 	public static SettingsModel CreateModel(SettingsModelForJson json, IServiceProvider service) {
 		var model = service.GetRequiredService<SettingsModel>();
 		if (json.HighlightSettings != null) {
@@ -36,13 +44,16 @@ public class SettingsModelForJson {
 		if (json.TextViewerSettings != null) {
 			model.TextViewerSettings = TextViewerSettingsModelForJson.CreateModel(json.TextViewerSettings, service);
 		}
+		if (json.AdvancedSettings != null) {
+			model.AdvancedSettings = AdvancedSettingsModelForJson.CreateModel(json.AdvancedSettings, service);
+		}
 		return model;
 	}
 	public static SettingsModelForJson CreateJson(SettingsModel model) {
 		return new SettingsModelForJson {
 			HighlightSettings = HighlightSettingsModelForJson.CreateJson(model.HighlightSettings),
-			TextViewerSettings = TextViewerSettingsModelForJson.CreateJson(model.TextViewerSettings)
-
+			TextViewerSettings = TextViewerSettingsModelForJson.CreateJson(model.TextViewerSettings),
+			AdvancedSettings = AdvancedSettingsModelForJson.CreateJson(model.AdvancedSettings),
 		};
 	}
 }
