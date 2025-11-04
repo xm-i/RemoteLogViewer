@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -10,7 +10,7 @@
   <Identity
     Name="xmi.RemoteLogViewer"
     Publisher="CN=E31B20E5-2E2D-4987-A053-01449B6DA81A"
-    Version="1.0.1.0" />
+    Version="1.0.2.0" />
 
   <mp:PhoneIdentity PhoneProductId="548898cc-2522-48ed-8bb3-2426a53663e6" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
