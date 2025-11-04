@@ -12,11 +12,11 @@ public class AboutPageViewModel : InfoPageViewModel<AboutPageViewModel> {
 	} = "RemoteLogViewer";
 	public string Version {
 		get;
-	} = "1.0.0";
+	} = "1.0.2";
 	public string Description {
 		get;
 	} = "A Windows application for viewing remote log files over SSH.";
 	public string Repository {
 		get;
-	} = "https://github.com/southernwind/RemoteLogViewer";
+	} = "https://github.com/xm-i/RemoteLogViewer";
 }
