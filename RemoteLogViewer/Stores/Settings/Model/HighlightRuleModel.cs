@@ -27,16 +27,18 @@ public class HighlightRuleModel(IServiceProvider service) {
 }
 
 public class HighlightRuleModelForJson {
-	public string Name { get; set; } = string.Empty;
+	public string? Name { get; set; } = string.Empty;
 	public List<HighlightConditionModelForJson>? Conditions {
 		get; set;
 	}
 	public static HighlightRuleModel CreateModel(HighlightRuleModelForJson json, IServiceProvider service) {
 		var scope = service.CreateScope();
 		var model = scope.ServiceProvider.GetRequiredService<HighlightRuleModel>();
-		model.Name.Value = json.Name;
-		if (json.Conditions != null) {
-			foreach (var c in json.Conditions) {
+		if (json.Name is { } name) {
+			model.Name.Value = name;
+		}
+		if (json.Conditions is { } conditions) {
+			foreach (var c in conditions) {
 				model.Conditions.Add(HighlightConditionModelForJson.CreateModel(c, scope.ServiceProvider));
 			}
 		}

@@ -15,14 +15,16 @@ public class AdvancedSettingsModel(IServiceProvider service) {
 }
 
 public class AdvancedSettingsModelForJson {
-	public required int ByteOffsetMapChunkSize {
+	public int? ByteOffsetMapChunkSize {
 		get;
 		set;
 	}
 
 	public static AdvancedSettingsModel CreateModel(AdvancedSettingsModelForJson json, IServiceProvider service) {
 		var model = service.GetRequiredService<AdvancedSettingsModel>();
-		model.ByteOffsetMapChunkSize.Value = json.ByteOffsetMapChunkSize;
+		if (json.ByteOffsetMapChunkSize is { } byteOffsetMapChunkSize) {
+			model.ByteOffsetMapChunkSize.Value = byteOffsetMapChunkSize;
+		}
 		return model;
 	}
 	public static AdvancedSettingsModelForJson CreateJson(AdvancedSettingsModel model) {

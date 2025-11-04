@@ -38,14 +38,14 @@ public class SettingsModelForJson {
 
 	public static SettingsModel CreateModel(SettingsModelForJson json, IServiceProvider service) {
 		var model = service.GetRequiredService<SettingsModel>();
-		if (json.HighlightSettings != null) {
-			model.HighlightSettings = HighlightSettingsModelForJson.CreateModel(json.HighlightSettings, service);
+		if (json.HighlightSettings is { } highlightSettings) {
+			model.HighlightSettings = HighlightSettingsModelForJson.CreateModel(highlightSettings, service);
 		}
-		if (json.TextViewerSettings != null) {
-			model.TextViewerSettings = TextViewerSettingsModelForJson.CreateModel(json.TextViewerSettings, service);
+		if (json.TextViewerSettings is { } textViewerSettings) {
+			model.TextViewerSettings = TextViewerSettingsModelForJson.CreateModel(textViewerSettings, service);
 		}
-		if (json.AdvancedSettings != null) {
-			model.AdvancedSettings = AdvancedSettingsModelForJson.CreateModel(json.AdvancedSettings, service);
+		if (json.AdvancedSettings is { } advancedSettings) {
+			model.AdvancedSettings = AdvancedSettingsModelForJson.CreateModel(advancedSettings, service);
 		}
 		return model;
 	}

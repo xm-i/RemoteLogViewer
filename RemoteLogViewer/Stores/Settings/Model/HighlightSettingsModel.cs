@@ -23,14 +23,14 @@ public class HighlightSettingsModel(IServiceProvider service) {
 }
 
 public class HighlightSettingsModelForJson {
-	public required List<HighlightRuleModelForJson> Rules {
+	public List<HighlightRuleModelForJson>? Rules {
 		get; set;
 	}
 
 	public static HighlightSettingsModel CreateModel(HighlightSettingsModelForJson json, IServiceProvider service) {
 		var model = service.GetRequiredService<HighlightSettingsModel>();
-		if (json.Rules != null) {
-			foreach (var c in json.Rules) {
+		if (json.Rules is { } rules) {
+			foreach (var c in rules) {
 				model.Rules.Add(HighlightRuleModelForJson.CreateModel(c, service));
 			}
 		}

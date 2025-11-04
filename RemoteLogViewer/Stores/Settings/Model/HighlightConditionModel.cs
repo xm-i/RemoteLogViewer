@@ -22,10 +22,10 @@ public enum HighlightPatternType {
 }
 
 public class HighlightConditionModelForJson {
-	public string Pattern { get; set; } = string.Empty;
-	public HighlightPatternType PatternType { get; set; } = HighlightPatternType.Regex;
-	public bool IgnoreCase { get; set; } = true;
-	public bool HighlightOnlyMatch { get; set; } = false;
+	public string? Pattern { get; set; } = string.Empty;
+	public HighlightPatternType? PatternType { get; set; } = HighlightPatternType.Regex;
+	public bool? IgnoreCase { get; set; } = true;
+	public bool? HighlightOnlyMatch { get; set; } = false;
 	public string? ForeColor { get; set; } = null;
 	public string? BackColor { get; set; } = null;
 
@@ -57,12 +57,25 @@ public class HighlightConditionModelForJson {
 	public static HighlightConditionModel CreateModel(HighlightConditionModelForJson json, IServiceProvider service) {
 		var scope = service.CreateScope();
 		var model = scope.ServiceProvider.GetRequiredService<HighlightConditionModel>();
-		model.Pattern.Value = json.Pattern;
-		model.PatternType.Value = json.PatternType;
-		model.IgnoreCase.Value = json.IgnoreCase;
-		model.HighlightOnlyMatch.Value = json.HighlightOnlyMatch;
-		model.ForeColor.Value = HexToColor(json.ForeColor);
-		model.BackColor.Value = HexToColor(json.BackColor);
+
+		if (json.Pattern is { } pattern) {
+			model.Pattern.Value = pattern;
+		}
+		if (json.PatternType is { } patternType) {
+			model.PatternType.Value = patternType;
+		}
+		if (json.IgnoreCase is { } ignoreCase) {
+			model.IgnoreCase.Value = ignoreCase;
+		}
+		if (json.HighlightOnlyMatch is { } highlightOnlyMatch) {
+			model.HighlightOnlyMatch.Value = highlightOnlyMatch;
+		}
+		if (json.ForeColor is { } foreColor) {
+			model.ForeColor.Value = HexToColor(foreColor);
+		}
+		if (json.BackColor is { } backColor) {
+			model.BackColor.Value = HexToColor(backColor);
+		}
 		return model;
 	}
 	public static HighlightConditionModelForJson CreateJson(HighlightConditionModel model) {

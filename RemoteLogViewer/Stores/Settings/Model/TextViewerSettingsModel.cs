@@ -29,23 +29,29 @@ public class TextViewerSettingsModel(IServiceProvider service) {
 }
 
 public class TextViewerSettingsModelForJson {
-	public required int MaxPreviewOneLineCharacters {
+	public int? MaxPreviewOneLineCharacters {
 		get; set;
 	}
 
-	public required int MaxPreviewCharacters {
+	public int? MaxPreviewCharacters {
 		get; set;
 	}
 
-	public required int GrepMaxResults {
+	public int? GrepMaxResults {
 		get; set;
 	}
 
 	public static TextViewerSettingsModel CreateModel(TextViewerSettingsModelForJson json, IServiceProvider service) {
 		var model = service.GetRequiredService<TextViewerSettingsModel>();
-		model.MaxPreviewOneLineCharacters.Value = json.MaxPreviewOneLineCharacters;
-		model.MaxPreviewCharacters.Value = json.MaxPreviewCharacters;
-		model.GrepMaxResults.Value = json.GrepMaxResults;
+		if (json.MaxPreviewOneLineCharacters is { } maxPreviewOneLineCharacters) {
+			model.MaxPreviewOneLineCharacters.Value = maxPreviewOneLineCharacters;
+		}
+		if (json.MaxPreviewCharacters is { } maxPreviewCharacters) {
+			model.MaxPreviewCharacters.Value = maxPreviewCharacters;
+		}
+		if (json.GrepMaxResults is { } grepMaxResults) {
+			model.GrepMaxResults.Value = grepMaxResults;
+		}
 		return model;
 	}
 	public static TextViewerSettingsModelForJson CreateJson(TextViewerSettingsModel model) {
