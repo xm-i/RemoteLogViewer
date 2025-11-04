@@ -39,7 +39,7 @@ public class HighlightSettingsPageViewModel : SettingsPageViewModel<HighlightSet
 			if (rule == null) {
 				return;
 			}
-			model.removeRule(rule.Model);
+			model.RemoveRule(rule.Model);
 			if (this.SelectedRule.Value == null) {
 				this.SelectedRule.Value = this.Rules.LastOrDefault();
 			}

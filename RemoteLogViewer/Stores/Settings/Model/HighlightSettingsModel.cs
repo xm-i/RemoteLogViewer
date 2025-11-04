@@ -17,7 +17,7 @@ public class HighlightSettingsModel(IServiceProvider service) {
 		return rule;
 	}
 
-	public void removeRule(HighlightRuleModel rule) {
+	public void RemoveRule(HighlightRuleModel rule) {
 		this.Rules.Remove(rule);
 	}
 }
