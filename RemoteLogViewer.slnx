@@ -8,6 +8,16 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Libs/">
+    <Project Path="R3.JsonConfig/R3.JsonConfig.Generators/R3.JsonConfig.Generators.csproj">
+      <BuildType Solution="Debug-Unpackaged|*" Project="Debug" />
+      <BuildType Solution="Release-Unpackaged|*" Project="Release" />
+    </Project>
+    <Project Path="R3.JsonConfig/R3.JsonConfig/R3.JsonConfig.csproj">
+      <BuildType Solution="Debug-Unpackaged|*" Project="Debug" />
+      <BuildType Solution="Release-Unpackaged|*" Project="Release" />
+    </Project>
+  </Folder>
   <Folder Name="/SolutionItems/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
@@ -18,6 +28,10 @@
     <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>
+  <Project Path="RemoteLogViewer.Generators/RemoteLogViewer.Generators.csproj">
+    <BuildType Solution="Debug-Unpackaged|*" Project="Debug" />
+    <BuildType Solution="Release-Unpackaged|*" Project="Release" />
+  </Project>
   <Project Path="RemoteLogViewer.Tests/RemoteLogViewer.Tests.csproj" Id="15ab1059-0a93-4bfd-b38e-748a18fb3088">
     <BuildType Solution="Debug-Unpackaged|*" Project="Debug" />
     <BuildType Solution="Release-Unpackaged|*" Project="Release" />

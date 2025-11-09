@@ -1,9 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace RemoteLogViewer.Stores.Settings.Model;
 
 /// <summary>Advanced設定。</summary>
 [AddSingleton]
+[GenerateSettingsJsonDto]
 public class AdvancedSettingsModel(IServiceProvider service) {
 	public IServiceProvider ScopedService { get; } = service;
 	/// <summary>
@@ -12,24 +11,4 @@ public class AdvancedSettingsModel(IServiceProvider service) {
 	public ReactiveProperty<int> ByteOffsetMapChunkSize {
 		get;
 	} = new(10000);
-}
-
-public class AdvancedSettingsModelForJson {
-	public int? ByteOffsetMapChunkSize {
-		get;
-		set;
-	}
-
-	public static AdvancedSettingsModel CreateModel(AdvancedSettingsModelForJson json, IServiceProvider service) {
-		var model = service.GetRequiredService<AdvancedSettingsModel>();
-		if (json.ByteOffsetMapChunkSize is { } byteOffsetMapChunkSize) {
-			model.ByteOffsetMapChunkSize.Value = byteOffsetMapChunkSize;
-		}
-		return model;
-	}
-	public static AdvancedSettingsModelForJson CreateJson(AdvancedSettingsModel model) {
-		return new AdvancedSettingsModelForJson {
-			ByteOffsetMapChunkSize = model.ByteOffsetMapChunkSize.Value
-		};
-	}
 }

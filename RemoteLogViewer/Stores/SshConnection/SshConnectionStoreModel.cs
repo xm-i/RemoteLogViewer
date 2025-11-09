@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services;
 
 namespace RemoteLogViewer.Stores.SshConnection;
@@ -16,6 +17,7 @@ namespace RemoteLogViewer.Stores.SshConnection;
 public class SshConnectionStoreModel {
 	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;
+	private readonly IServiceProvider _serviceProvider;
 	private string FilePath {
 		get {
 			return this._workspaceService.GetConfigFilePath("connections.json");
@@ -29,9 +31,10 @@ public class SshConnectionStoreModel {
 		get;
 	} = [];
 
-	public SshConnectionStoreModel(WorkspaceService workspaceService, ILogger<SshConnectionStoreModel> logger) {
+	public SshConnectionStoreModel(WorkspaceService workspaceService, IServiceProvider serviceProvider,ILogger<SshConnectionStoreModel> logger) {
 		this._logger = logger;
 		this._workspaceService = workspaceService;
+		this._serviceProvider = serviceProvider;
 		this.Load();
 	}
 
@@ -45,7 +48,7 @@ public class SshConnectionStoreModel {
 				var loaded = JsonSerializer.Deserialize<List<SshConnectionInfoModelForJson>>(json) ?? [];
 				this.Items.Clear();
 				foreach (var c in loaded) {
-					this.Items.Add(SshConnectionInfoModelForJson.CreateSshConnectionInfoModel(c));
+					this.Items.Add(SshConnectionInfoModelForJson.CreateModel(c, this._serviceProvider.CreateScope().ServiceProvider));
 				}
 			}
 		} catch(Exception ex) {
@@ -60,7 +63,7 @@ public class SshConnectionStoreModel {
 	public void Save() {
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
-			var json = JsonSerializer.Serialize(this.Items.Select(SshConnectionInfoModelForJson.CreateSshConnectionInfoModelForJson), _jsonSerializerOptions);
+			var json = JsonSerializer.Serialize(this.Items.Select(SshConnectionInfoModelForJson.CreateJson), _jsonSerializerOptions);
 			File.WriteAllText(this.FilePath, json);
 		} catch (Exception ex) {
 			// TODO: 失敗通知
@@ -77,7 +80,7 @@ public class SshConnectionStoreModel {
 	}
 
 	public void Add() {
-		var scope = Ioc.Default.CreateScope();
+		var scope = this._serviceProvider.CreateScope();
 		var scim = scope.ServiceProvider.GetRequiredService<SshConnectionInfoModel>();
 		scim.Id.Value = Guid.NewGuid();
 		this.Items.Add(scim);

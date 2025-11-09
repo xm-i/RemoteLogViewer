@@ -1,0 +1,3 @@
+[submodule "R3.JsonConfig"]
+	path = R3.JsonConfig
+	url = https://github.com/xm-i/R3.JsonConfig.git
