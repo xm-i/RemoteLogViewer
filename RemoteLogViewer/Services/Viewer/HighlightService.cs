@@ -4,8 +4,8 @@ using System.Text.RegularExpressions;
 
 using Microsoft.UI.Xaml.Documents;
 
+using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Stores.Settings;
-using RemoteLogViewer.Stores.Settings.Model;
 
 namespace RemoteLogViewer.Services.Viewer;
 
@@ -118,11 +118,11 @@ public class HighlightService {
 		var pointStyles = segments.Where(x => x.OnlyMatch).OrderBy(s => s.Start).ThenByDescending(s => s.End);
 		var styleTypes = new SingleStyle[] {
 			new(){
-				IsTargetPredicate = x => x.Style.ForeColor.HasValue,
+				IsTargetPredicate = x => x.Style.ForeColor is not null,
 				SetAction = (to,from) =>to.ForeColor = from.ForeColor
 			},
 			new(){
-				IsTargetPredicate = x => x.Style.BackColor.HasValue,
+				IsTargetPredicate = x => x.Style.BackColor is not null,
 				SetAction = (to,from) =>to.BackColor = from.BackColor
 			}
 		};

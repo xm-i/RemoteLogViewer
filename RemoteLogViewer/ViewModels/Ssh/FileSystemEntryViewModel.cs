@@ -1,6 +1,5 @@
 using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services.Ssh;
-using RemoteLogViewer.Utils;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 

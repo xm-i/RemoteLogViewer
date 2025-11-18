@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+using RemoteLogViewer.Composition.Utils.Attributes;
+
 namespace RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 [AddScoped(typeof(IByteOffsetIndex))]

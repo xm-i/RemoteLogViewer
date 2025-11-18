@@ -83,7 +83,7 @@
 											HorizontalAlignment="Stretch"
 											Visibility="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.IsForeColorSet.Value, Mode=OneWay,Converter={StaticResource BooleanToVisibilityConverter}}">
 											<Rectangle.Fill>
-												<SolidColorBrush Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=OneWay}" />
+												<SolidColorBrush Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=OneWay, Converter={StaticResource ColorModelToColorConverter}}" />
 											</Rectangle.Fill>
 										</Rectangle>
 										<Rectangle
@@ -100,7 +100,7 @@
 								</Button.Content>
 								<Button.Flyout>
 									<Flyout>
-										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=TwoWay}" IsAlphaEnabled="False" />
+										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=TwoWay, Converter={StaticResource ColorModelToColorConverter}}" IsAlphaEnabled="False" />
 									</Flyout>
 								</Button.Flyout>
 							</Button>
@@ -120,7 +120,7 @@
 											HorizontalAlignment="Stretch"
 											Visibility="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.IsBackColorSet.Value, Mode=OneWay,Converter={StaticResource BooleanToVisibilityConverter}}">
 											<Rectangle.Fill>
-												<SolidColorBrush Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=OneWay}" />
+												<SolidColorBrush Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=OneWay, Converter={StaticResource ColorModelToColorConverter}}" />
 											</Rectangle.Fill>
 										</Rectangle>
 										<Rectangle
@@ -137,7 +137,7 @@
 								</Button.Content>
 								<Button.Flyout>
 									<Flyout>
-										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=TwoWay}" IsAlphaEnabled="True" />
+										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.BackColor.Value, Mode=TwoWay, Converter={StaticResource ColorModelToColorConverter}}" IsAlphaEnabled="True" />
 									</Flyout>
 								</Button.Flyout>
 							</Button>

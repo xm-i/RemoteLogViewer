@@ -1,8 +1,15 @@
-namespace RemoteLogViewer.Stores.Settings.Model;
+using System;
+
+using R3;
+using R3.JsonConfig.Attributes;
+
+using RemoteLogViewer.Composition.Utils.Attributes;
+
+namespace RemoteLogViewer.Composition.Stores.Settings;
 
 /// <summary>Advanced設定。</summary>
 [AddSingleton]
-[GenerateSettingsJsonDto]
+[GenerateR3JsonConfigDto]
 public class AdvancedSettingsModel(IServiceProvider service) {
 	public IServiceProvider ScopedService { get; } = service;
 	/// <summary>

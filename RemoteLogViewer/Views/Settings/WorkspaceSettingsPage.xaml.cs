@@ -2,9 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
-using RemoteLogViewer.Services;
 using RemoteLogViewer.ViewModels.Settings;
-using RemoteLogViewer.ViewModels.Settings.Highlight;
 
 using Windows.Storage.Pickers;
 

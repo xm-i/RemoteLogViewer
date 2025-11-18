@@ -1,12 +1,14 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-using RemoteLogViewer.Models.Ssh;
+using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Services;
+using RemoteLogViewer.Stores.SerializerContext;
 
 namespace RemoteLogViewer.Stores.SshConnection;
 
@@ -23,15 +25,16 @@ public class SshConnectionStoreModel {
 			return this._workspaceService.GetConfigFilePath("connections.json");
 		}
 	}
-	private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
+
 	/// <summary>
 	///     設定一覧を取得します。
 	/// </summary>
-	public ObservableList<SshConnectionInfoModel> Items {
+	public SshConnectionProfileModel Profile {
 		get;
-	} = [];
+		private set;
+	}
 
-	public SshConnectionStoreModel(WorkspaceService workspaceService, IServiceProvider serviceProvider,ILogger<SshConnectionStoreModel> logger) {
+	public SshConnectionStoreModel(WorkspaceService workspaceService, IServiceProvider serviceProvider, ILogger<SshConnectionStoreModel> logger) {
 		this._logger = logger;
 		this._workspaceService = workspaceService;
 		this._serviceProvider = serviceProvider;
@@ -41,20 +44,24 @@ public class SshConnectionStoreModel {
 	/// <summary>
 	///     保存済み設定を読み込みます。
 	/// </summary>
+	[MemberNotNull(nameof(Profile))]
 	public void Load() {
 		try {
 			if (File.Exists(this.FilePath)) {
 				var json = File.ReadAllText(this.FilePath);
-				var loaded = JsonSerializer.Deserialize<List<SshConnectionInfoModelForJson>>(json) ?? [];
-				this.Items.Clear();
-				foreach (var c in loaded) {
-					this.Items.Add(SshConnectionInfoModelForJson.CreateModel(c, this._serviceProvider.CreateScope().ServiceProvider));
+				var loaded = JsonSerializer.Deserialize(json, SshConnectionJsonSerializerContext.Default.SshConnectionProfileModelForJson);
+
+				if (loaded != null) {
+					this.Profile = SshConnectionProfileModelForJson.CreateModel(loaded, this._serviceProvider);
+					return;
 				}
 			}
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			// TODO: 失敗通知
 			this._logger.LogWarning(ex, "Failed to load connections settings from {FilePath}", this.FilePath);
 		}
+
+		this.Profile = this._serviceProvider.GetRequiredService<SshConnectionProfileModel>();
 	}
 
 	/// <summary>
@@ -63,7 +70,7 @@ public class SshConnectionStoreModel {
 	public void Save() {
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
-			var json = JsonSerializer.Serialize(this.Items.Select(SshConnectionInfoModelForJson.CreateJson), _jsonSerializerOptions);
+			var json = JsonSerializer.Serialize(SshConnectionProfileModelForJson.CreateJson(this.Profile), SshConnectionJsonSerializerContext.Default.SshConnectionProfileModelForJson);
 			File.WriteAllText(this.FilePath, json);
 		} catch (Exception ex) {
 			// TODO: 失敗通知
@@ -72,18 +79,12 @@ public class SshConnectionStoreModel {
 	}
 
 	public void Remove(Guid id) {
-		var target = this.Items.FirstOrDefault(x => x.Id.Value == id);
-		if (target != null) {
-			this.Items.Remove(target);
-			this.Save();
-		}
+		this.Profile.Remove(id);
+		this.Save();
 	}
 
 	public void Add() {
-		var scope = this._serviceProvider.CreateScope();
-		var scim = scope.ServiceProvider.GetRequiredService<SshConnectionInfoModel>();
-		scim.Id.Value = Guid.NewGuid();
-		this.Items.Add(scim);
+		this.Profile.Add();
 		this.Save();
 	}
 }

@@ -1,9 +1,8 @@
-using System.Collections.Generic;
-using Windows.UI;
+using RemoteLogViewer.Composition.Utils.Objects;
 
 namespace RemoteLogViewer.Services.Viewer;
 
 public class TextStyle {
-	public Color? ForeColor { get; set; }
-	public Color? BackColor { get; set; }
+	public ColorModel? ForeColor { get; set; }
+	public ColorModel? BackColor { get; set; }
 }

@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
 using RemoteLogViewer.ViewModels.Ssh;
-using RemoteLogViewer.Models.Ssh;
+using RemoteLogViewer.Composition.Stores.Ssh;
 
 namespace RemoteLogViewer.Views.SshSession;
 
@@ -77,10 +77,10 @@ public sealed partial class SshBrowserPage : Page {
 	}
 
 	private void CurrentDirectoryBookmarkedToggleButton_CheckedChange(object sender, RoutedEventArgs e) {
-		if(this.ViewModel == null) {
+		if (this.ViewModel == null) {
 			return;
 		}
-		if (this.CurrentDirectoryBookmarkedToggleButton.IsChecked  is not { } isChecked) {
+		if (this.CurrentDirectoryBookmarkedToggleButton.IsChecked is not { } isChecked) {
 			return;
 		}
 		this.ViewModel.ToggleCurrentDirectoryBookmarkCommand.Execute(isChecked);

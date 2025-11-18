@@ -2,6 +2,7 @@ using RemoteLogViewer.Models.Ssh;
 using RemoteLogViewer.Services.Ssh;
 using RemoteLogViewer.ViewModels.Ssh.FileViewer; // for SshEntry
 using Microsoft.Extensions.Logging;
+using RemoteLogViewer.Composition.Stores.Ssh;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 

@@ -5,8 +5,9 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Services;
-using RemoteLogViewer.Stores.Settings.Model;
+using RemoteLogViewer.Stores.SerializerContext;
 
 namespace RemoteLogViewer.Stores.Settings;
 
@@ -25,7 +26,7 @@ public class SettingsStoreModel {
 			return this._workspaceService.GetConfigFilePath("settings.json");
 		}
 	}
-	private static readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
+
 	/// <summary>
 	///     設定一覧を取得します。
 	/// </summary>
@@ -50,13 +51,13 @@ public class SettingsStoreModel {
 		try {
 			if (File.Exists(this.FilePath)) {
 				var json = File.ReadAllText(this.FilePath);
-				var loaded = JsonSerializer.Deserialize<SettingsModelForJson>(json);
+				var loaded = JsonSerializer.Deserialize(json, SettingsJsonSerializerContext.Default.SettingsModelForJson);
 				if (loaded != null) {
 					this.SettingsModel = SettingsModelForJson.CreateModel(loaded, scope.ServiceProvider);
 					return;
 				}
 			}
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			// TODO: 失敗通知
 			this._logger.LogWarning(ex, "Failed to load settings from {FilePath}", this.FilePath);
 		}
@@ -69,9 +70,9 @@ public class SettingsStoreModel {
 	public void Save() {
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
-			var json = JsonSerializer.Serialize(SettingsModelForJson.CreateJson(this.SettingsModel), _jsonSerializerOptions);
+			var json = JsonSerializer.Serialize(SettingsModelForJson.CreateJson(this.SettingsModel), SettingsJsonSerializerContext.Default.SettingsModelForJson);
 			File.WriteAllText(this.FilePath, json);
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			// TODO: 失敗通知
 			this._logger.LogWarning(ex, "Failed to save settings to {FilePath}", this.FilePath);
 		}

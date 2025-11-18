@@ -63,8 +63,8 @@ public sealed partial class TextFileViewer {
 		var hss = this._highlightService.ComputeHighlightSpans(content);
 		foreach (var hs in hss) {
 			var th = new TextHighlighter() {
-				Foreground = hs.Style.ForeColor.HasValue ? this.GetBrush(hs.Style.ForeColor.Value) : null,
-				Background = hs.Style.BackColor.HasValue ? this.GetBrush(hs.Style.BackColor.Value) : this._transparentColorBrush
+				Foreground = hs.Style.ForeColor is { } fore ? this.GetBrush(fore.ToColor()) : null,
+				Background = hs.Style.BackColor is { } back ? this.GetBrush(back.ToColor()) : this._transparentColorBrush
 			};
 			foreach (var range in hs.Ranges) {
 				th.Ranges.Add(range);

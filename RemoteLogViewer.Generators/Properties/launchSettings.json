@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "profile 1": {
-      "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\RemoteLogViewer\\RemoteLogViewer.csproj"
-    }
-  }
-}

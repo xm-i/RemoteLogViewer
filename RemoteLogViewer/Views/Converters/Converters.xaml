@@ -16,5 +16,6 @@
 	<conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
 	<conv:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter" />
 	<conv:HighlightPatternTypeToStringConverter x:Key="HighlightPatternTypeToStringConverter" />
+	<conv:ColorModelToColorConverter x:Key="ColorModelToColorConverter" />
 	<winUiConverters:FileSizeToFriendlyStringConverter x:Key="FileSizeToFriendlyStringConverter"/>
 </ResourceDictionary>

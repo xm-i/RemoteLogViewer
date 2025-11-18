@@ -1,3 +1,4 @@
+using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Stores.SshConnection;
 
 namespace RemoteLogViewer.ViewModels.Ssh;

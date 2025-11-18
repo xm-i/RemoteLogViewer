@@ -2,6 +2,7 @@ using System.Text;
 
 using Microsoft.Extensions.Logging;
 
+using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Models.Ssh.FileViewer;
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Services.Ssh;
@@ -62,7 +63,7 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		this._store = store;
 		this._textFileViewerModel = textFileViewerModel.AddTo(this.CompositeDisposable);
 		this._notificationService = notificationService;
-		this.SavedConnections = store.Items;
+		this.SavedConnections = store.Profile.Items;
 		this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
 		this.IsCurrentDirectoryBookmarked = this.CurrentPath.Select(x => {
 			if (this.SelectedSshConnectionInfo.Value is not { } ci) {

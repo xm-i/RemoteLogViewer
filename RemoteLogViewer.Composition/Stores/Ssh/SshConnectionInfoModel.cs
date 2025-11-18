@@ -1,17 +1,19 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using System;
 
-using RemoteLogViewer.Models.Ssh;
+using ObservableCollections;
 
-using System.Collections.Generic;
+using R3;
+using R3.JsonConfig.Attributes;
 
-namespace RemoteLogViewer.Stores.SshConnection;
+using RemoteLogViewer.Composition.Utils.Attributes;
+
+namespace RemoteLogViewer.Composition.Stores.Ssh;
 
 /// <summary>
 ///     SSH 接続設定情報を表します。
 /// </summary>
 [AddScoped]
-[GenerateConnectionJsonDto]
+[GenerateR3JsonConfigDto]
 public class SshConnectionInfoModel {
 	public ReactiveProperty<string> Name {
 		get;

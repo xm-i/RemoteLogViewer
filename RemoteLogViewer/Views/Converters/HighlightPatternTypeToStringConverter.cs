@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml.Data;
 
-using RemoteLogViewer.Stores.Settings.Model;
+using RemoteLogViewer.Composition.Stores.Settings;
 
 namespace RemoteLogViewer.Views.Converters;
 

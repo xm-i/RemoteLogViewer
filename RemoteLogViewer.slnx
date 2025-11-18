@@ -28,7 +28,7 @@
     <File Path="Directory.Build.props" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="RemoteLogViewer.Generators/RemoteLogViewer.Generators.csproj">
+  <Project Path="RemoteLogViewer.Composition/RemoteLogViewer.Composition.csproj" Id="4298513e-0412-44f4-99de-3f61ab5019ee">
     <BuildType Solution="Debug-Unpackaged|*" Project="Debug" />
     <BuildType Solution="Release-Unpackaged|*" Project="Release" />
   </Project>

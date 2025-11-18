@@ -1,10 +1,7 @@
 using Microsoft.Extensions.Logging;
 
-using R3;
-
-using RemoteLogViewer.Stores.Settings.Model;
-
-using Windows.UI;
+using RemoteLogViewer.Composition.Stores.Settings;
+using RemoteLogViewer.Composition.Utils.Objects;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
@@ -30,11 +27,11 @@ public class HighlightConditionViewModel : ViewModelBase<HighlightConditionViewM
 		get;
 	}
 
-	public BindableReactiveProperty<Color> ForeColor {
+	public BindableReactiveProperty<ColorModel> ForeColor {
 		get;
 	}
 
-	public BindableReactiveProperty<Color> BackColor {
+	public BindableReactiveProperty<ColorModel> BackColor {
 		get;
 	}
 
@@ -62,12 +59,12 @@ public class HighlightConditionViewModel : ViewModelBase<HighlightConditionViewM
 		this.IgnoreCase = model.IgnoreCase.ToTwoWayBindableReactiveProperty(false).AddTo(this.CompositeDisposable);
 		this.HighlightOnlyMatch = model.HighlightOnlyMatch.ToTwoWayBindableReactiveProperty(true).AddTo(this.CompositeDisposable);
 
-		var defaultForeColor = Color.FromArgb(0xff, 0xff, 0xff, 0xff);
-		var defaultBackColor = Color.FromArgb(0x0, 0x0, 0x0, 0x0);
-		this.ForeColor = model.ForeColor.Select(x => x.HasValue ? x.Value : defaultForeColor).ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.BackColor = model.BackColor.Select(x => x.HasValue ? x.Value : defaultBackColor).ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.IsForeColorSet = model.ForeColor.Select(x => x.HasValue).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.IsBackColorSet = model.BackColor.Select(x => x.HasValue).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		var defaultForeColor = ColorModel.FromArgb(0xff, 0xff, 0xff, 0xff);
+		var defaultBackColor = ColorModel.FromArgb(0x0, 0x0, 0x0, 0x0);
+		this.ForeColor = model.ForeColor.Select(x => x ?? defaultForeColor).ToBindableReactiveProperty(defaultForeColor).AddTo(this.CompositeDisposable);
+		this.BackColor = model.BackColor.Select(x => x ?? defaultBackColor).ToBindableReactiveProperty(defaultBackColor).AddTo(this.CompositeDisposable);
+		this.IsForeColorSet = model.ForeColor.Select(x => x is { }).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsBackColorSet = model.BackColor.Select(x => x is { }).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.ForeColor.Subscribe(color => {
 			if (this.Model.ForeColor.Value == null && color == defaultForeColor) {
 				return;

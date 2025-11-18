@@ -6,7 +6,7 @@
 	xmlns:fileViewer="using:RemoteLogViewer.Views.Ssh.FileViewer"
     xmlns:ssh="using:RemoteLogViewer.Services.Ssh"
     xmlns:sshVm="using:RemoteLogViewer.ViewModels.Ssh"
-	xmlns:models="using:RemoteLogViewer.Models.Ssh"
+	xmlns:comStore="using:RemoteLogViewer.Composition.Stores.Ssh"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d">
@@ -66,7 +66,7 @@
 					 ScrollViewer.VerticalScrollBarVisibility="Auto"
 					 DoubleTapped="Bookmarks_DoubleTapped">
 				<ListView.ItemTemplate>
-					<DataTemplate x:DataType="models:SshBookmarkModel">
+					<DataTemplate x:DataType="comStore:SshBookmarkModel">
 						<StackPanel Orientation="Horizontal" Spacing="4" Padding="4,2">
 							<FontIcon Glyph="&#xE735;" Foreground="Gold" />
 							<TextBlock Text="{x:Bind Name.Value}" />

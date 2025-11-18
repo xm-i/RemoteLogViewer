@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using System.Runtime.InteropServices;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -8,7 +7,6 @@ using Microsoft.UI.Xaml;
 using RemoteLogViewer.Services;
 using RemoteLogViewer.Views;
 using System.IO;
-using WinRT.Interop;
 using Serilog;
 using Microsoft.Extensions.Logging;
 
@@ -88,42 +86,31 @@ public partial class App : Application {
 			.MinimumLevel.Information()
 #endif
 			.WriteTo.Debug(outputTemplate: string.Join("｜", logFileds))
-			.WriteTo.File(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "log", ".log"),rollingInterval:RollingInterval.Month, outputTemplate: string.Join("\t", logFileds))
+			.WriteTo.File(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "log", ".log"), rollingInterval: RollingInterval.Month, outputTemplate: string.Join("\t", logFileds))
 			.CreateLogger();
 
 		var serviceCollection = new ServiceCollection();
-		serviceCollection.AddLogging(loggingBuilder =>
-		{
+		serviceCollection.AddLogging(loggingBuilder => {
 			loggingBuilder.AddSerilog(dispose: true);
 		});
 
-		var targetTypes = Assembly
-			.GetExecutingAssembly()
-			.GetTypes()
-			.Where(x =>
-				x.GetCustomAttributes<AddTransientAttribute>(inherit: true).Any());
+		var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());
+
+		var targetTypes = types.Where(x => x.GetCustomAttributes<AddTransientAttribute>(inherit: true).Any());
 
 		foreach (var targetType in targetTypes) {
 			var attribute = targetType.GetCustomAttribute<AddTransientAttribute>();
 			serviceCollection.AddTransient(attribute?.ServiceType ?? targetType, targetType);
 		}
 
-		var singletonTargetTypes = Assembly
-			.GetExecutingAssembly()
-			.GetTypes()
-			.Where(x =>
-				x.GetCustomAttributes<AddSingletonAttribute>(inherit: true).Any());
+		var singletonTargetTypes = types.Where(x => x.GetCustomAttributes<AddSingletonAttribute>(inherit: true).Any());
 
 		foreach (var singletonTargetType in singletonTargetTypes) {
 			var attribute = singletonTargetType.GetCustomAttribute<AddSingletonAttribute>();
 			serviceCollection.AddSingleton(attribute?.ServiceType ?? singletonTargetType);
 		}
 
-		var scopedTargetTypes = Assembly
-			.GetExecutingAssembly()
-			.GetTypes()
-			.Where(x =>
-				x.GetCustomAttributes<AddScopedAttribute>(inherit: true).Any());
+		var scopedTargetTypes = types.Where(x => x.GetCustomAttributes<AddScopedAttribute>(inherit: true).Any());
 
 		foreach (var scopedTargetType in scopedTargetTypes) {
 			var attribute = scopedTargetType.GetCustomAttribute<AddScopedAttribute>();
