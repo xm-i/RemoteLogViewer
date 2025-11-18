@@ -179,7 +179,7 @@ public partial class SshService {
 
 		// 入力を開始バイトから取得
 		var relativeStart = startLine - byteOffset.LineNumber;
-		var inputCmd = $"tail -c +{byteOffset.Bytes} '{escapedPath}' 2>/dev/null | tail +'{relativeStart}' 2>/dev/null";
+		var inputCmd = $"tail -c +{byteOffset.Bytes} '{escapedPath}' 2>/dev/null | tail -n +'{relativeStart}' 2>/dev/null";
 
 		// 実行コマンド: tail/cat の出力を grep にパイプし、必要なら出力を iconv変換する
 		var cmd = $"LC_ALL=C {inputCmd} | grep -n -h{ic} -m {maxResults} -F --binary-files=text --color=never --line-buffered -- {patternExpr}{convertPipe} 2>/dev/null || true";
@@ -196,8 +196,8 @@ public partial class SshService {
 			if (!long.TryParse(line[..idx], out var relLn)) {
 				continue;
 			}
-			var content = line[(idx +1)..];
-			var actualLn = relLn + (startLine -1);
+			var content = line[(idx + 1)..];
+			var actualLn = relLn + (startLine - 1);
 			yield return new TextLine(actualLn, content);
 		}
 	}
