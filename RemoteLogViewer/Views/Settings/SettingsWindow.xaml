@@ -20,7 +20,7 @@
 		</StackPanel>
 		<Frame x:Name="ContentFrame" Grid.Column="1"/>
 		<controls:DockPanel Grid.Row="1" Grid.ColumnSpan="2">
-			<Button controls:DockPanel.Dock="Right" Content="OK" Command="{x:Bind ViewModel.SaveCommand}"/>
+			<Button controls:DockPanel.Dock="Right" Content="OK" Click="Button_Click"/>
 			<Grid/>
 		</controls:DockPanel>
 	</Grid>
