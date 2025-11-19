@@ -7,14 +7,12 @@ using ObservableCollections;
 
 using R3.JsonConfig.Attributes;
 
-using RemoteLogViewer.Composition.Utils.Attributes;
-
 namespace RemoteLogViewer.Composition.Stores.Ssh;
 
 /// <summary>
 ///     SSH 接続設定情報の一覧を保持するモデルを表します。
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 [GenerateR3JsonConfigDto]
 public class SshConnectionProfileModel(IServiceProvider serviceProvider) {
 	/// <summary>

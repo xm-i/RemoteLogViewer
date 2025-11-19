@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -94,28 +93,8 @@ public partial class App : Application {
 			loggingBuilder.AddSerilog(dispose: true);
 		});
 
-		var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes());
-
-		var targetTypes = types.Where(x => x.GetCustomAttributes<AddTransientAttribute>(inherit: true).Any());
-
-		foreach (var targetType in targetTypes) {
-			var attribute = targetType.GetCustomAttribute<AddTransientAttribute>();
-			serviceCollection.AddTransient(attribute?.ServiceType ?? targetType, targetType);
-		}
-
-		var singletonTargetTypes = types.Where(x => x.GetCustomAttributes<AddSingletonAttribute>(inherit: true).Any());
-
-		foreach (var singletonTargetType in singletonTargetTypes) {
-			var attribute = singletonTargetType.GetCustomAttribute<AddSingletonAttribute>();
-			serviceCollection.AddSingleton(attribute?.ServiceType ?? singletonTargetType);
-		}
-
-		var scopedTargetTypes = types.Where(x => x.GetCustomAttributes<AddScopedAttribute>(inherit: true).Any());
-
-		foreach (var scopedTargetType in scopedTargetTypes) {
-			var attribute = scopedTargetType.GetCustomAttribute<AddScopedAttribute>();
-			serviceCollection.AddScoped(attribute?.ServiceType ?? scopedTargetType, scopedTargetType);
-		}
+		DIRegistration.AddGeneratedServices(serviceCollection);
+		Composition.DIRegistration.AddGeneratedServices(serviceCollection);
 
 		Ioc.Default.ConfigureServices(
 			serviceCollection.BuildServiceProvider()

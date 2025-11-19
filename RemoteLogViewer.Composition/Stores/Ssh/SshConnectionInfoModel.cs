@@ -5,14 +5,12 @@ using ObservableCollections;
 using R3;
 using R3.JsonConfig.Attributes;
 
-using RemoteLogViewer.Composition.Utils.Attributes;
-
 namespace RemoteLogViewer.Composition.Stores.Ssh;
 
 /// <summary>
 ///     SSH 接続設定情報を表します。
 /// </summary>
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 [GenerateR3JsonConfigDto]
 public class SshConnectionInfoModel {
 	public ReactiveProperty<string> Name {

@@ -8,7 +8,7 @@ using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-[AddScoped(typeof(IGrepOperation))]
+[Inject(InjectServiceLifetime.Scoped, typeof(IGrepOperation))]
 public sealed class GrepOperation : ModelBase<GrepOperation>, IGrepOperation {
 	public GrepOperation(IOperationRegistry operationRegistry, ILogger<GrepOperation> logger) : base(logger) {
 		this._operationRegistry = operationRegistry;

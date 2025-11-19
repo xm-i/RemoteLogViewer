@@ -3,13 +3,12 @@ using System;
 using R3;
 using R3.JsonConfig.Attributes;
 
-using RemoteLogViewer.Composition.Utils.Attributes;
 using RemoteLogViewer.Composition.Utils.Objects;
 
 namespace RemoteLogViewer.Composition.Stores.Settings;
 
 /// <summary>ハイライト条件。</summary>
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 [GenerateR3JsonConfigDto]
 public class HighlightConditionModel(IServiceProvider service) {
 	public IServiceProvider ScopedService { get; } = service;

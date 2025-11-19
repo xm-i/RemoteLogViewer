@@ -7,7 +7,7 @@ namespace RemoteLogViewer.ViewModels.Settings;
 /// <summary>
 /// TextViewer設定ページ用 ViewModel です。
 /// </summary>
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public class TextViewerSettingsPageViewModel : SettingsPageViewModel<TextViewerSettingsPageViewModel> {
 	/// <summary>
 	/// 1行に表示する最大文字数

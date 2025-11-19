@@ -4,7 +4,7 @@ using RemoteLogViewer.ViewModels.Info;
 
 namespace RemoteLogViewer.Views.Info;
 
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public sealed partial class InfoWindow : Window {
 	public InfoWindowViewModel ViewModel {
 		get;

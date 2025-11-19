@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer.ViewModels.Info;
 
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class AboutPageViewModel : InfoPageViewModel<AboutPageViewModel> {
 	public AboutPageViewModel(ILogger<AboutPageViewModel> logger) : base("About", logger) {
 	}

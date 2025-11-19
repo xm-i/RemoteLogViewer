@@ -6,12 +6,10 @@ using ObservableCollections;
 
 using R3.JsonConfig.Attributes;
 
-using RemoteLogViewer.Composition.Utils.Attributes;
-
 namespace RemoteLogViewer.Composition.Stores.Settings;
 
 /// <summary>ハイライト設定。</summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 [GenerateR3JsonConfigDto]
 public class HighlightSettingsModel(IServiceProvider service) {
 	public IServiceProvider ScopedService { get; } = service;

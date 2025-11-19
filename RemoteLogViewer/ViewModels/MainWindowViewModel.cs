@@ -8,7 +8,7 @@ namespace RemoteLogViewer.ViewModels;
 /// <summary>
 ///     メインウィンドウ用の ViewModel です。タブ一覧およびタブ追加コマンドを公開します。
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class MainWindowViewModel: ViewModelBase<MainWindowViewModel> {
 	private readonly ObservableList<LogViewerViewModel> _tabs = [];
 	/// <summary>

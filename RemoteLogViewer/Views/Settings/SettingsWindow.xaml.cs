@@ -5,7 +5,7 @@ using RemoteLogViewer.ViewModels.Settings.Highlight;
 
 namespace RemoteLogViewer.Views.Settings;
 
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public sealed partial class SettingsWindow : Window {
 	public SettingsWindow(SettingsWindowViewModel vm) {
 		this.ViewModel = vm;

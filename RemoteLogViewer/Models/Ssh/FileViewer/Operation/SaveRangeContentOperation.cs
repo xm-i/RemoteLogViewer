@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 using Microsoft.Extensions.Logging;
@@ -9,7 +8,7 @@ using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-[AddScoped(typeof(ISaveRangeContentOperation))]
+[Inject(InjectServiceLifetime.Scoped, typeof(ISaveRangeContentOperation))]
 public sealed class SaveRangeContentOperation : ModelBase<SaveRangeContentOperation>, ISaveRangeContentOperation {
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;

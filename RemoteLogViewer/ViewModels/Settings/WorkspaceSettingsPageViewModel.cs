@@ -8,7 +8,7 @@ namespace RemoteLogViewer.ViewModels.Settings;
 /// <summary>
 /// ワークスペース選択ページ用 ViewModel です。パス選択と確定操作を提供します。
 /// </summary>
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public class WorkspaceSettingsPageViewModel: SettingsPageViewModel<WorkspaceSettingsPageViewModel> {
 	private readonly WorkspaceService _workspaceService;
 	/// <summary>選択中のワークスペースパス。</summary>

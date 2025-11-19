@@ -5,7 +5,7 @@ namespace RemoteLogViewer.Services;
 /// <summary>
 /// ユーザー通知 (エラー含む) を提供するサービスです。Publish された通知を購読できます。
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class NotificationService {
 	private readonly Subject<NotificationInfo> _notificationsSubject = new();
 	/// <summary>通知ストリーム。</summary>

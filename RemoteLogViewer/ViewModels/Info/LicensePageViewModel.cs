@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RemoteLogViewer.ViewModels.Info;
 
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class LicensePageViewModel : InfoPageViewModel<LicensePageViewModel> {
 	public LicensePageViewModel(ILogger<LicensePageViewModel> logger) : base("Licenses", logger) {
 	}

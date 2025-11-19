@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AutoDiAttributes\AutoDiAttributes\AutoDiAttributes.csproj" />
+    <ProjectReference Include="..\AutoDiAttributes\AutoDiAttributes.Generator\AutoDiAttributes.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\R3.JsonConfig\R3.JsonConfig\R3.JsonConfig.csproj" />
     <ProjectReference Include="..\R3.JsonConfig\R3.JsonConfig.Generators\R3.JsonConfig.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />

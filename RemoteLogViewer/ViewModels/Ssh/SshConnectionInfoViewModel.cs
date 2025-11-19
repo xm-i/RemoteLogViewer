@@ -3,7 +3,7 @@ using RemoteLogViewer.Stores.SshConnection;
 
 namespace RemoteLogViewer.ViewModels.Ssh;
 
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class SshConnectionInfoViewModel {
 	private readonly Subject<Unit> _sshConnectionInfoUpdated = new();
 	/// <summary>

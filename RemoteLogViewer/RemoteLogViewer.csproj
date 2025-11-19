@@ -11,6 +11,7 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
+    <EnableMsixTooling Condition="'$(Configuration)' == 'Debug-Unpackaged' Or '$(Configuration)' == 'Release-Unpackaged'">false</EnableMsixTooling>
     <PublishTrimmed>False</PublishTrimmed>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;Debug-Unpackaged;Release-Unpackaged</Configurations>
@@ -75,6 +76,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AutoDiAttributes\AutoDiAttributes\AutoDiAttributes.csproj" />
+    <ProjectReference Include="..\AutoDiAttributes\AutoDiAttributes.Generator\AutoDiAttributes.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\RemoteLogViewer.Composition\RemoteLogViewer.Composition.csproj" />
   </ItemGroup>
 
@@ -108,5 +111,6 @@
     <PackageCertificateKeyFile>RemoteLogViewer_TemporaryKey.pfx</PackageCertificateKeyFile>
     <DefaultLanguage>ja-jp</DefaultLanguage>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 </Project>

@@ -7,7 +7,7 @@ using RemoteLogViewer.ViewModels.Settings;
 namespace RemoteLogViewer.Views;
 
 /// <summary>ワークスペース選択ウィンドウ。</summary>
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public sealed partial class WorkspaceSelectionWindow : Window {
 	/// <summary>選択イベント。(path, persist)</summary>
 	public event Action? WorkspaceSelected;

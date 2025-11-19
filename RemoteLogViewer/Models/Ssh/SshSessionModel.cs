@@ -13,7 +13,7 @@ namespace RemoteLogViewer.Models.Ssh;
 /// <summary>
 ///     SSH セッションのドメインモデル。接続状態と接続操作を担います。
 /// </summary>
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class SshSessionModel : ModelBase<SshSessionModel> {
 	private readonly ISshService _sshService;
 	private readonly SshConnectionStoreModel _store;

@@ -5,7 +5,7 @@ using RemoteLogViewer.Composition.Stores.Settings;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class HighlightSettingsPageViewModel : SettingsPageViewModel<HighlightSettingsPageViewModel> {
 	/// <summary>
 	/// ルールリスト。

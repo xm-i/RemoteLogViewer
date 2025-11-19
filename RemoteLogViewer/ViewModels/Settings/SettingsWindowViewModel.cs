@@ -8,7 +8,7 @@ using RemoteLogViewer.ViewModels.Settings.Highlight;
 
 namespace RemoteLogViewer.ViewModels.Settings;
 
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class SettingsWindowViewModel : ViewModelBase<SettingsWindowViewModel> {
 	public ObservableList<string> Categories {
 		get;

@@ -14,7 +14,7 @@ namespace RemoteLogViewer.Services.Ssh;
 /// <summary>
 ///     SSH 接続とコマンド実行を提供します。
 /// </summary>
-[AddScoped(typeof(ISshService))]
+[Inject(InjectServiceLifetime.Scoped, typeof(ISshService))]
 public partial class SshService : ISshService {
 	private ILogger<SshService> logger {
 		get {

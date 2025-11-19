@@ -10,7 +10,7 @@ namespace RemoteLogViewer.ViewModels;
 /// <summary>
 ///     ログ表示用の ViewModel です。タブタイトルなどの表示情報を提供します。
 /// </summary>
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class LogViewerViewModel : ViewModelBase<LogViewerViewModel> {
 	private readonly SshSessionModel _sshSessionModel;
 	/// <summary>

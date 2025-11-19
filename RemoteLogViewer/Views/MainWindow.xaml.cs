@@ -14,7 +14,7 @@ namespace RemoteLogViewer.Views;
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public sealed partial class MainWindow : Window {
 	private readonly IServiceProvider _services;
 	public MainWindow(MainWindowViewModel mainWindowViewModel, IServiceProvider services) {

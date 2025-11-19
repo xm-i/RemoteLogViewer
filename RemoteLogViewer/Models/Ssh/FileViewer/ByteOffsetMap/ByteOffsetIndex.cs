@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 
-using RemoteLogViewer.Composition.Utils.Attributes;
-
 namespace RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
-[AddScoped(typeof(IByteOffsetIndex))]
+[Inject(InjectServiceLifetime.Scoped, typeof(IByteOffsetIndex))]
 public class ByteOffsetIndex : IByteOffsetIndex {
 	private readonly List<ByteOffset> _entries = [];
 	public int Count {

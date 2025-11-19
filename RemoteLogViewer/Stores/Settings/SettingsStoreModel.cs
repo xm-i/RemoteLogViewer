@@ -14,7 +14,7 @@ namespace RemoteLogViewer.Stores.Settings;
 /// <summary>
 ///     設定の保存と読み込みを行います。
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class SettingsStoreModel {
 	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;

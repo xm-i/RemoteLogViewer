@@ -6,7 +6,7 @@ namespace RemoteLogViewer.Services;
 /// <summary>
 /// ワークスペース(設定ファイル保存先)の管理サービス。
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class WorkspaceService {
 	private readonly ILogger<WorkspaceService> _logger;
 	private readonly string _persistFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RemoteLogViewer", "WorkSpacePath.txt");

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer.ViewModels.Info;
 
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class InfoWindowViewModel : ViewModelBase<InfoWindowViewModel> {
 	public ObservableList<string> Categories {
 		get;

@@ -3,7 +3,7 @@ using RemoteLogViewer.Stores.Settings;
 
 namespace RemoteLogViewer.ViewModels.Settings;
 
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public class AdvancedSettingsPageViewModel : SettingsPageViewModel<AdvancedSettingsPageViewModel> {
 	public BindableReactiveProperty<int> ByteOffsetMapChunkSize { get; }
 	public AdvancedSettingsPageViewModel(SettingsStoreModel settingsStoreModel, ILogger<AdvancedSettingsPageViewModel> logger) : base("Advanced", logger) {

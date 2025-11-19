@@ -15,7 +15,7 @@ namespace RemoteLogViewer.Stores.SshConnection;
 /// <summary>
 ///     接続設定の保存と読み込みを行います。
 /// </summary>
-[AddSingleton]
+[Inject(InjectServiceLifetime.Singleton)]
 public class SshConnectionStoreModel {
 	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;

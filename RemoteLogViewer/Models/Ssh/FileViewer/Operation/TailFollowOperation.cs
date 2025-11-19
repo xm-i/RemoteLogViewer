@@ -9,7 +9,7 @@ using RemoteLogViewer.Models.Ssh.FileViewer.ByteOffsetMap;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer.Operation;
 
-[AddScoped(typeof(ITailFollowOperation))]
+[Inject(InjectServiceLifetime.Scoped, typeof(ITailFollowOperation))]
 public sealed class TailFollowOperation : ModelBase<TailFollowOperation>, ITailFollowOperation {
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;

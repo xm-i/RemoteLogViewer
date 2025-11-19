@@ -14,7 +14,7 @@ namespace RemoteLogViewer.ViewModels.Ssh.FileViewer;
 /// <summary>
 ///     テキストファイル閲覧 ViewModel。スクロール位置に応じて部分読み込み + GREP 検索を提供します。
 /// </summary>
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private const long LineHeight = 16;

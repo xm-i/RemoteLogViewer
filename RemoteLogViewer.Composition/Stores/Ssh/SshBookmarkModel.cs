@@ -1,14 +1,12 @@
 using R3;
 using R3.JsonConfig.Attributes;
 
-using RemoteLogViewer.Composition.Utils.Attributes;
-
 namespace RemoteLogViewer.Composition.Stores.Ssh;
 
 /// <summary>
 /// SSH 接続設定に紐づくブックマークを表します。
 /// </summary>
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 [GenerateR3JsonConfigDto]
 public class SshBookmarkModel {
 	public SshBookmarkModel() {

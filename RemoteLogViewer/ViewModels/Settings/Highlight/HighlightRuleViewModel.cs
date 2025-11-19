@@ -5,7 +5,7 @@ using RemoteLogViewer.Composition.Stores.Settings;
 
 namespace RemoteLogViewer.ViewModels.Settings.Highlight;
 
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class HighlightRuleViewModel : ViewModelBase<HighlightRuleViewModel> {
 	public HighlightRuleModel Model {
 		get;

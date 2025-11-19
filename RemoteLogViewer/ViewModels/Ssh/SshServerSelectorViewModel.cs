@@ -8,7 +8,7 @@ namespace RemoteLogViewer.ViewModels.Ssh;
 /// <summary>
 ///     SSH 接続設定と接続後の状態管理を行います。
 /// </summary>
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class SshServerSelectorViewModel : BaseSshPageViewModel<SshServerSelectorViewModel> {
 	private readonly SshSessionModel _model;
 

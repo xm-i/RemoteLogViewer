@@ -1,3 +1,4 @@
+global using AutoDiAttributes;
 global using System;
 global using System.Diagnostics;
 global using System.Linq;
@@ -5,6 +6,5 @@ global using System.Threading.Tasks;
 global using ObservableCollections;
 global using R3;
 global using RemoteLogViewer.Utils;
-global using RemoteLogViewer.Composition.Utils.Attributes;
 global using RemoteLogViewer.Utils.Extensions;
 global using CommunityToolkit.Mvvm.DependencyInjection;

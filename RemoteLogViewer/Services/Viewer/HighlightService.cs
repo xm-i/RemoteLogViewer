@@ -9,7 +9,7 @@ using RemoteLogViewer.Stores.Settings;
 
 namespace RemoteLogViewer.Services.Viewer;
 
-[AddTransient]
+[Inject(InjectServiceLifetime.Transient)]
 public class HighlightService {
 	private readonly SettingsStoreModel _settingsStoreModel;
 	private readonly ConcurrentDictionary<(string pattern, bool ignoreCase), Regex> _regexCache = [];

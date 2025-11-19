@@ -12,7 +12,7 @@ using RemoteLogViewer.Stores.Settings;
 
 namespace RemoteLogViewer.Models.Ssh.FileViewer;
 
-[AddScoped]
+[Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	private readonly ISshService _sshService;
 	private readonly SettingsStoreModel _settingsStore;
