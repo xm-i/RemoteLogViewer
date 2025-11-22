@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+	x:Name="Root"
+	x:Class="RemoteLogViewer.WinUI.Views.Ssh.FileViewer.TextFileViewer"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:sys="using:System"
+	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:models="using:RemoteLogViewer.Core.Models.Ssh.FileViewer"
+	mc:Ignorable="mc">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="auto"/>
+			<RowDefinition Height="2*" MinHeight="100"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*" MinHeight="100"/>
+		</Grid.RowDefinitions>
+		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4" VerticalAlignment="Center">
+			<TextBlock Width="180" FontSize="14" MaxHeight="50" TextWrapping="Wrap" >
+				<Run Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
+				<Run Text=" ("/>
+				<Run Text="{x:Bind ViewModel.TotalBytes.Value,Mode=OneWay, Converter={StaticResource FileSizeToFriendlyStringConverter}}"/>
+				<Run Text=" )"/>
+			</TextBlock>
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Grid RowDefinitions="Auto,Auto">
+				<TextBlock FontSize="12" Text=" Encoding"/>
+				<AutoSuggestBox Grid.Row="1" Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
+			</Grid>
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Button Content="Tail Start" Command="{x:Bind ViewModel.TailStartCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+			<Button Content="Tail Stop" Command="{x:Bind ViewModel.TailStopCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Grid RowDefinitions="*,Auto,Auto">
+				<TextBlock FontSize="12" Text="Download Selected Range"/>
+				<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+					<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
+					<TextBox x:Name="EndLineBox" Width="80" PlaceholderText="End"/>
+					<Button Content="Save" Click="SaveRangeButton_Click" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+					<Button Content="Cancel" Command="{x:Bind ViewModel.SaveRangeContentCancelCommand}" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+				</StackPanel>
+				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.SaveRangeProgress.Value, Mode=OneWay}"/>
+			</Grid>
+			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
+			<Grid RowDefinitions="*,Auto,Auto" MinWidth="150">
+				<TextBlock FontSize="12" Text="File Information"/>
+				<TextBlock Grid.Row="1" FontSize="14">
+					<Run Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
+					<Run Text=" - ("/>
+					<Run Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
+					<Run Text=") / "/>
+					<Run Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
+				</TextBlock>
+				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
+			</Grid>
+		</StackPanel>
+
+		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto,Auto">
+			<ScrollViewer x:Name="LineViewer"
+				VerticalScrollBarVisibility="Hidden"
+				HorizontalScrollBarVisibility="Hidden"
+				Padding="0,8"
+				PointerWheelChanged="ContentViewer_PointerWheelChanged">
+				<ItemsRepeater ItemsSource="{x:Bind ViewModel.LineNumbers.Value, Mode=OneWay}"
+					PointerWheelChanged="ContentViewer_PointerWheelChanged">
+					<ItemsRepeater.ItemTemplate>
+						<DataTemplate x:DataType="sys:Int64">
+							<Grid Height="16">
+								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}" >
+									<HyperlinkButton Content="{x:Bind }" Click="HyperlinkButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
+								</Border>
+							</Grid>
+						</DataTemplate>
+					</ItemsRepeater.ItemTemplate>
+				</ItemsRepeater>
+			</ScrollViewer>
+			<ScrollViewer x:Name="ContentViewer"
+				Grid.Column="1"
+				VerticalScrollBarVisibility="Hidden"
+				HorizontalScrollBarVisibility="Auto"
+				Padding="0,8"
+				SizeChanged="ContentViewer_SizeChanged"
+				PointerWheelChanged="ContentViewer_PointerWheelChanged">
+				<RichTextBlock x:Name="ContentRichTextBlock"
+					ManipulationMode="TranslateRailsY"
+					KeyDown="ContentRichTextBlock_KeyDown"
+					FontFamily="Consolas"
+					IsTextSelectionEnabled="True"
+					TextWrapping="NoWrap"
+					FlowDirection="LeftToRight"
+					LineHeight="16"
+					LineStackingStrategy="BlockLineHeight"
+					PointerWheelChanged="ContentViewer_PointerWheelChanged"
+					ManipulationDelta="ContentRichTextBlock_ManipulationDelta">
+					<Paragraph LineHeight="16">
+						<Run Text="{x:Bind ViewModel.Content.Value, Mode=OneWay}" />
+					</Paragraph>
+				</RichTextBlock>
+			</ScrollViewer>
+			<Button
+				Grid.Column="2"
+				Visibility="{x:Bind ViewModel.IsTruncated.Value,Mode=OneWay}"
+				VerticalAlignment="Stretch"
+				Background="LightPink"
+				Command="{x:Bind ViewModel.ShowMoreCommand}">
+				<ToolTipService.ToolTip>
+					<TextBlock TextWrapping="Wrap">
+						<Run Text="Show more ("/>
+							<Run Text="{x:Bind ViewModel.TruncatedCharacterCount.Value,Mode=OneWay}"/>
+						<Run Text=" letters)"/>
+					</TextBlock>
+				</ToolTipService.ToolTip>
+				<TextBlock Text=">"/>
+			</Button>
+			<ScrollViewer x:Name="VirtualScrollViewer"
+				Height="{x:Bind ViewModel.ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
+				Grid.Column="3"
+				VerticalScrollBarVisibility="Visible"
+				HorizontalScrollBarVisibility="Disabled"
+				Background="Transparent"
+				Padding="0"
+				IsTabStop="False"
+				ViewChanged="VirtualScrollViewer_ViewChanged">
+				<Grid x:Name="Kari" Height="{x:Bind ViewModel.TotalHeight.Value, Mode=OneWay,Converter={StaticResource LongToDoubleConverter}}" />
+			</ScrollViewer>
+		</Grid>
+		<controls:GridSplitter Grid.Row="2"
+                               VerticalAlignment="Top"
+						   ResizeDirection="Rows"
+						   ResizeBehavior="PreviousAndNext"
+						   HorizontalAlignment="Stretch"
+						   Margin="0,5,0,0">
+			<controls:GridSplitter.RenderTransform>
+				<TranslateTransform Y="-7" />
+			</controls:GridSplitter.RenderTransform>
+		</controls:GridSplitter>
+
+		<TabView Grid.Row="3" x:Name="BottomTabView" IsAddTabButtonVisible="False" VerticalAlignment="Stretch">
+			<TabViewItem Header="Grep" IsClosable="False">
+				<Grid RowDefinitions="Auto,*" Padding="0,8" CornerRadius="4">
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<TextBox Width="260" PlaceholderText="grep pattern" Text="{x:Bind ViewModel.GrepQuery.Value, Mode=TwoWay}"/>
+						<NumberBox Width="80" PlaceholderText="Start Line" Value="{x:Bind ViewModel.GrepStartLine.Value, Mode=TwoWay, Converter={StaticResource LongToDoubleConverter}}" Minimum="1" Maximum="{x:Bind ViewModel.TotalLines.Value,Mode=OneWay,Converter={StaticResource LongToDoubleConverter}}"/>
+						<Button Content="Search" Command="{x:Bind ViewModel.GrepCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+						<Button Content="Cancel" Command="{x:Bind ViewModel.GrepCancelCommand}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+						<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.GrepProgress.Value, Mode=OneWay}" Visibility="{x:Bind ViewModel.IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+						<TextBlock VerticalAlignment="Center">
+							<Run Text="結果:"/>
+							<Run Text="{x:Bind ViewModel.GrepResults.Count, Mode=OneWay}"/>
+						</TextBlock>
+					</StackPanel>
+					<ScrollViewer
+						Grid.Row="1"
+						VerticalScrollBarVisibility="Auto"
+						Padding="0,8"
+						HorizontalScrollBarVisibility="Auto">
+						<ItemsRepeater ItemsSource="{x:Bind ViewModel.GrepResults}">
+							<ItemsRepeater.ItemTemplate>
+								<DataTemplate x:DataType="models:TextLine">
+									<Grid ColumnDefinitions="Auto,*" MinHeight="16">
+										<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}">
+											<HyperlinkButton Content="{x:Bind LineNumber}" Click="GrepResultLineButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
+										</Border>
+										<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
+									</Grid>
+								</DataTemplate>
+							</ItemsRepeater.ItemTemplate>
+						</ItemsRepeater>
+					</ScrollViewer>
+				</Grid>
+			</TabViewItem>
+			<TabViewItem x:Name="SelectedLineView" Header="選択行表示" IsClosable="False">
+				<Grid VerticalAlignment="Stretch">
+					<ScrollViewer
+						 VerticalScrollBarVisibility="Auto"
+						 HorizontalScrollBarVisibility="Disabled"
+						 VerticalAlignment="Stretch">
+						<Grid ColumnDefinitions="Auto,*" MinHeight="16" VerticalAlignment="Stretch">
+							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{x:Bind ViewModel.LineNumberColumnWidth.Value, Mode=OneWay}">
+								<TextBlock Text="{x:Bind ViewModel.PickedupTextLine.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+							</Border>
+							<RichTextBlock
+								Grid.Column="1"
+								x:Name="PickedupRichTextBlock"
+								FontFamily="Consolas"
+								IsTextSelectionEnabled="True"
+								TextWrapping="Wrap"
+								LineHeight="16"
+								LineStackingStrategy="BlockLineHeight">
+								<Paragraph LineHeight="16">
+									<Run Text="{x:Bind ViewModel.PickedupTextLine.Value.Content, Mode=OneWay}" />
+								</Paragraph>
+							</RichTextBlock>
+						</Grid>
+					</ScrollViewer>
+				</Grid>
+			</TabViewItem>
+		</TabView>
+	</Grid>
+</UserControl>
