@@ -1,0 +1,1 @@
+global using static RemoteLogViewer.Core.Tests.TestHelpers.AsyncHelper;
