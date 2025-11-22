@@ -1,9 +1,10 @@
-using Microsoft.UI.Xaml.Controls;
+using System.Windows.Controls;
+
 using RemoteLogViewer.Core.ViewModels;
 using RemoteLogViewer.Core.ViewModels.Ssh;
-using RemoteLogViewer.WinUI.Views.Ssh;
+using RemoteLogViewer.WPF.Views.Ssh;
 
-namespace RemoteLogViewer.WinUI.Views;
+namespace RemoteLogViewer.WPF.Views;
 
 public sealed partial class LogViewerControl : UserControl {
 	public LogViewerViewModel ViewModel {

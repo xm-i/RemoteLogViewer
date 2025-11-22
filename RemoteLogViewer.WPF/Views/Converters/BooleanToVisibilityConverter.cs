@@ -1,20 +1,21 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Data;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Data;
 
-namespace RemoteLogViewer.WinUI.Views.Converters;
+namespace RemoteLogViewer.WPF.Views.Converters;
 
 /// <summary>
 ///     bool を Visibility に変換します。
 /// </summary>
 public sealed class BooleanToVisibilityConverter : IValueConverter {
-    public object Convert(object value, Type targetType, object parameter, string language) {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
         if (value is bool b) {
             return b ? Visibility.Visible : Visibility.Collapsed;
         }
         return Visibility.Collapsed;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, string language) {
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
         if (value is Visibility v) {
             return v == Visibility.Visible;
         }

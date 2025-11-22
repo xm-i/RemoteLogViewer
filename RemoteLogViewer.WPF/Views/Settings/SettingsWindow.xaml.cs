@@ -1,8 +1,9 @@
-using Microsoft.UI.Xaml;
+using System.Windows;
+
 using RemoteLogViewer.Core.ViewModels.Settings;
 using RemoteLogViewer.Core.ViewModels.Settings.Highlight;
 
-namespace RemoteLogViewer.WinUI.Views.Settings;
+namespace RemoteLogViewer.WPF.Views.Settings;
 
 [Inject(InjectServiceLifetime.Transient)]
 public sealed partial class SettingsWindow : Window {

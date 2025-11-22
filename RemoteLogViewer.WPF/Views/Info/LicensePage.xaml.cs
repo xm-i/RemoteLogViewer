@@ -1,8 +1,8 @@
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
+using System.Windows.Controls;
+
 using RemoteLogViewer.Core.ViewModels.Info;
 
-namespace RemoteLogViewer.WinUI.Views.Info {
+namespace RemoteLogViewer.WPF.Views.Info {
 	public sealed partial class LicensePage : Page {
 		public LicensePageViewModel? ViewModel {
 			get;

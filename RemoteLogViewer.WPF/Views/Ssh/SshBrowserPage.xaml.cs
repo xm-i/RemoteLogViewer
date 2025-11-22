@@ -1,11 +1,9 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
+using System.Windows.Controls;
+
 using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Core.ViewModels.Ssh;
 
-namespace RemoteLogViewer.WinUI.Views.Ssh;
+namespace RemoteLogViewer.WPF.Views.Ssh;
 
 /// <summary>
 /// SSH ブラウザページです。リモートファイルシステムの閲覧およびファイルオープン操作を提供します。

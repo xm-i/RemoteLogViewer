@@ -1,7 +1,8 @@
-using Windows.UI;
+using System.Windows.Media;
+
 using RemoteLogViewer.Composition.Utils.Objects;
 
-namespace RemoteLogViewer.WinUI.Utils;
+namespace RemoteLogViewer.WPF.Utils;
 
 public static class ColorEx {
 	public static ColorModel ToColorModel(this Color color) {

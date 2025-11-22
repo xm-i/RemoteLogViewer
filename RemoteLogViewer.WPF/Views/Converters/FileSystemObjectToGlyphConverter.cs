@@ -1,13 +1,15 @@
-using Microsoft.UI.Xaml.Data;
+using System.Globalization;
+using System.Windows.Data;
+
 using RemoteLogViewer.Core.Services.Ssh;
 
-namespace RemoteLogViewer.WinUI.Views.Converters;
+namespace RemoteLogViewer.WPF.Views.Converters;
 
 /// <summary>
 ///     FileSystemObjectType からアイコン用グリフ文字列を返します。
 /// </summary>
 public sealed class FileSystemObjectTypeToGlyphConverter : IValueConverter {
-	public object Convert(object value, Type targetType, object parameter, string language) {
+	public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
 		if (value is not FileSystemObjectType fsoType) {
 			return string.Empty;
 		}
@@ -20,7 +22,7 @@ public sealed class FileSystemObjectTypeToGlyphConverter : IValueConverter {
 		};
 	}
 
-	public object ConvertBack(object value, Type targetType, object parameter, string language) {
+	public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
 		throw new NotSupportedException();
 	}
 }

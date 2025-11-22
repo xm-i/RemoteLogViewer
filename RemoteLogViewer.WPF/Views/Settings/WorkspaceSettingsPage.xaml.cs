@@ -1,11 +1,8 @@
-using Windows.Storage.Pickers;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
-using RemoteLogViewer.Core.ViewModels.Settings;
-using WinRT.Interop;
+using System.Windows.Controls;
 
-namespace RemoteLogViewer.WinUI.Views.Settings;
+using RemoteLogViewer.Core.ViewModels.Settings;
+
+namespace RemoteLogViewer.WPF.Views.Settings;
 
 public sealed partial class WorkspaceSettingsPage : Page {
 	public WorkspaceSettingsPageViewModel? ViewModel {

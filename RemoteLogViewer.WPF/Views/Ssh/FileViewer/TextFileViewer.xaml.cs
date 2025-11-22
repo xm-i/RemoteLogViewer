@@ -1,21 +1,12 @@
 using System.Collections.Concurrent;
 using System.IO;
-using Windows.Storage.Pickers;
-using Windows.UI;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using RemoteLogViewer.Core.Services.Viewer;
-using RemoteLogViewer.Core.Utils.Extensions;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
-using RemoteLogViewer.WinUI.Utils;
-using WinRT.Interop;
+using RemoteLogViewer.WPF.Utils;
 using TextRange = Microsoft.UI.Xaml.Documents.TextRange;
 
-namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
+namespace RemoteLogViewer.WPF.Views.Ssh.FileViewer;
 
 /// <summary>
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。

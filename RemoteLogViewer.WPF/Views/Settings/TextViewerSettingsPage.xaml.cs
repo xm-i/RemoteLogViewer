@@ -1,8 +1,8 @@
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
+using System.Windows.Controls;
+
 using RemoteLogViewer.Core.ViewModels.Settings;
 
-namespace RemoteLogViewer.WinUI.Views.Settings;
+namespace RemoteLogViewer.WPF.Views.Settings;
 
 public sealed partial class TextViewerSettingsPage : Page {
 	public TextViewerSettingsPageViewModel? ViewModel {

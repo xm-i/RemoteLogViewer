@@ -1,13 +1,14 @@
-using Windows.UI;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Data;
-using RemoteLogViewer.Composition.Utils.Objects;
-using RemoteLogViewer.WinUI.Utils;
+using System.Globalization;
+using System.Windows.Data;
+using System.Windows.Media;
 
-namespace RemoteLogViewer.WinUI.Views.Converters;
+using RemoteLogViewer.Composition.Utils.Objects;
+using RemoteLogViewer.WPF.Utils;
+
+namespace RemoteLogViewer.WPF.Views.Converters;
 
 public class ColorModelToColorConverter : IValueConverter {
-	public object Convert(object value, Type targetType, object parameter, string language) {
+	public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
 		if (value is ColorModel m) {
 			return m.ToColor();
 		}
@@ -15,7 +16,7 @@ public class ColorModelToColorConverter : IValueConverter {
 		return Colors.Transparent;
 	}
 
-	public object ConvertBack(object value, Type targetType, object parameter, string language) {
+	public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
 		if (value is Color c) {
 			return c.ToColorModel();
 		}

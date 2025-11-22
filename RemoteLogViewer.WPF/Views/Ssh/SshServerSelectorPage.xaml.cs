@@ -1,13 +1,9 @@
-using Windows.Storage.Pickers;
-using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
-using RemoteLogViewer.Core.ViewModels.Ssh;
-using WinRT.Interop;
+using System.Windows.Controls;
 
-namespace RemoteLogViewer.WinUI.Views.Ssh;
+using Microsoft.Extensions.Logging;
+using RemoteLogViewer.Core.ViewModels.Ssh;
+
+namespace RemoteLogViewer.WPF.Views.Ssh;
 
 /// <summary>
 /// SSH サーバー選択ページです。接続設定の選択および編集を行います。

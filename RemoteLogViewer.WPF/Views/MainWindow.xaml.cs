@@ -1,14 +1,14 @@
+using System.Windows;
+
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using RemoteLogViewer.Core.ViewModels;
-using RemoteLogViewer.WinUI.Views.Info;
-using RemoteLogViewer.WinUI.Views.Settings;
+using RemoteLogViewer.WPF.Views.Info;
+using RemoteLogViewer.WPF.Views.Settings;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace RemoteLogViewer.WinUI.Views;
+namespace RemoteLogViewer.WPF.Views;
 
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.
@@ -19,11 +19,8 @@ public sealed partial class MainWindow : Window {
 	public MainWindow(MainWindowViewModel mainWindowViewModel, IServiceProvider services) {
 		this._services = services;
 		this.InitializeComponent();
-		this.ExtendsContentIntoTitleBar = true;
-		this.AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
-		this.SetTitleBar(this.titleBar);
-		this.AppWindow.SetIcon("Assets/icon256x256.ico");
 		this.ViewModel = mainWindowViewModel;
+		this.DataContext = this.ViewModel;
 		this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
 			var dialog = new ContentDialog {
 				XamlRoot = this.Content.XamlRoot,
@@ -55,10 +52,11 @@ public sealed partial class MainWindow : Window {
 		get;
 	}
 
-	private void TabView_TabCloseRequested(object sender, TabViewTabCloseRequestedEventArgs e) {
-		if (e.Item is LogViewerViewModel vm) {
-			this.ViewModel.CloseTabCommand.Execute(vm);
+	private void TabCloseButton_Click(object sender, RoutedEventArgs e) {
+		if (this.ViewModel.SelectedTab.Value is null) {
+			return;
 		}
+		this.ViewModel.CloseTabCommand.Execute(this.ViewModel.SelectedTab.Value);
 	}
 
 	private void OpenSettings_Click(object sender, RoutedEventArgs e) {

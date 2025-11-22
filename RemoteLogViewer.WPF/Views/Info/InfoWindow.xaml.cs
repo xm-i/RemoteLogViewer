@@ -1,7 +1,8 @@
-using Microsoft.UI.Xaml;
+using System.Windows;
+
 using RemoteLogViewer.Core.ViewModels.Info;
 
-namespace RemoteLogViewer.WinUI.Views.Info;
+namespace RemoteLogViewer.WPF.Views.Info;
 
 [Inject(InjectServiceLifetime.Transient)]
 public sealed partial class InfoWindow : Window {

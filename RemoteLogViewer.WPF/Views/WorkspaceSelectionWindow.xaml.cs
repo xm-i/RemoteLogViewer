@@ -1,10 +1,6 @@
-using Windows.Storage.Pickers;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using RemoteLogViewer.Core.ViewModels.Settings;
-using WinRT.Interop;
 
-namespace RemoteLogViewer.WinUI.Views;
+namespace RemoteLogViewer.WPF.Views;
 
 /// <summary>ワークスペース選択ウィンドウ。</summary>
 [Inject(InjectServiceLifetime.Transient)]

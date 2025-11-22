@@ -1,7 +1,8 @@
-using Microsoft.UI.Xaml.Controls;
+using System.Windows.Controls;
+
 using RemoteLogViewer.Core.Services;
 
-namespace RemoteLogViewer.WinUI.Views;
+namespace RemoteLogViewer.WPF.Views;
 
 public sealed partial class ContentDialogContent : Page {
 	public NotificationSeverity Severity {

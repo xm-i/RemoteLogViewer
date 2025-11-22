@@ -1,23 +1,17 @@
 using System.IO;
 using System.Text;
+using System.Windows;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml;
+
 using RemoteLogViewer.Core.Services;
-using RemoteLogViewer.WinUI.Views;
+using RemoteLogViewer.WPF.Views;
 using Serilog;
 
-namespace RemoteLogViewer.WinUI;
+namespace RemoteLogViewer.WPF;
 
 public partial class App : Application {
-	/// <summary>
-	///     メインウィンドウインスタンスを取得します。
-	/// </summary>
-	public static Window MainWindow {
-		get {
-			return field ??= Ioc.Default.GetRequiredService<MainWindow>();
-		}
-	}
 
 	/// <summary>
 	///     ILoggerFactory for DI外クラスでのログ使用。
@@ -35,21 +29,18 @@ public partial class App : Application {
 		this.InitializeComponent();
 	}
 
-	/// <summary>
-	///     アプリ起動時に呼び出されます。
-	/// </summary>
-	/// <param name="args">起動引数。</param>
-	protected override void OnLaunched(LaunchActivatedEventArgs args) {
+	protected override void OnStartup(StartupEventArgs e) {
+		base.OnStartup(e);
 		Build();
 		var logger = LoggerFactory.CreateLogger<App>();
-		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => logger.LogWarning(ex, "Exception"));
+		WpfProviderInitializer.SetDefaultObservableSystem(ex => logger.LogWarning(ex, "Exception"));
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
+		this.MainWindow = Ioc.Default.GetRequiredService<MainWindow>();
 		var workspaceService = Ioc.Default.GetRequiredService<WorkspaceService>();
 		if (string.IsNullOrWhiteSpace(workspaceService.WorkspacePath)) {
 			this.ShowWorkspaceSelectionWindow(workspaceService);
 		} else {
-			MainWindow.Activate();
+			this.MainWindow.Activate();
 		}
 	}
 
@@ -59,7 +50,7 @@ public partial class App : Application {
 		wsWindow.AppWindow?.Resize(new(600, 250));
 		wsWindow.Activate();
 		wsWindow.WorkspaceSelected += () => {
-			MainWindow.Activate();
+			this.MainWindow.Activate();
 		};
 	}
 

@@ -1,6 +1,7 @@
-using Microsoft.UI.Xaml.Data;
+using System.Globalization;
+using System.Windows.Data;
 
-namespace RemoteLogViewer.WinUI.Views.Converters;
+namespace RemoteLogViewer.WPF.Views.Converters;
 
 /// <summary>
 ///     long 値を double に、double 値を long に相互変換します。
@@ -12,9 +13,9 @@ public sealed class LongToDoubleConverter : IValueConverter {
 	/// <param name="value">long または数値文字列。</param>
 	/// <param name="targetType">ターゲット型。</param>
 	/// <param name="parameter">未使用。</param>
-	/// <param name="language">未使用。</param>
+	/// <param name="culture">未使用。</param>
 	/// <returns>double 値。</returns>
-	public object Convert(object value, Type targetType, object parameter, string language) {
+	public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
 		return value switch {
 			long l => (double)l,
 			int i => (double)i,
@@ -30,9 +31,9 @@ public sealed class LongToDoubleConverter : IValueConverter {
 	/// <param name="value">double または数値文字列。</param>
 	/// <param name="targetType">ターゲット型。</param>
 	/// <param name="parameter">未使用。</param>
-	/// <param name="language">未使用。</param>
+	/// <param name="culture">未使用。</param>
 	/// <returns>long 値。</returns>
-	public object ConvertBack(object value, Type targetType, object parameter, string language) {
+	public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
 		return value switch {
 			double d => (long)Math.Round(d, MidpointRounding.AwayFromZero),
 			float f => (long)Math.Round(f, MidpointRounding.AwayFromZero),
