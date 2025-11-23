@@ -1,4 +1,5 @@
 using System.Windows.Controls;
+using System.Windows.Input;
 
 using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Core.ViewModels.Ssh;
@@ -14,7 +15,10 @@ public sealed partial class SshBrowserPage : Page {
 	/// </summary>
 	public SshBrowserViewModel? ViewModel {
 		get;
-		private set;
+		set {
+			field = value;
+			this.DataContext = field;
+		}
 	}
 
 	/// <summary>
@@ -25,21 +29,9 @@ public sealed partial class SshBrowserPage : Page {
 	}
 
 	/// <summary>
-	/// ナビゲート時に ViewModel を受け取ります。
-	/// </summary>
-	protected override void OnNavigatedTo(NavigationEventArgs e) {
-		if (e.Parameter is SshBrowserViewModel vm) {
-			this.ViewModel = vm;
-		} else {
-			throw new InvalidOperationException("ViewModel is not passed.");
-		}
-		base.OnNavigatedTo(e);
-	}
-
-	/// <summary>
 	/// ディレクトリエントリをダブルタップした際に開く処理を実行します。
 	/// </summary>
-	private void Entries_DoubleTapped(object sender, DoubleTappedRoutedEventArgs _) {
+	private void Entries_MouseDoubleClick(object sender, MouseButtonEventArgs _) {
 		if (this.ViewModel == null) {
 			return;
 		}
@@ -51,11 +43,11 @@ public sealed partial class SshBrowserPage : Page {
 	/// <summary>
 	/// パス入力テキストボックスで Enter キー押下時にナビゲーションを実行します。
 	/// </summary>
-	private void CurrentPathTextBox_KeyDown(object _, KeyRoutedEventArgs e) {
+	private void CurrentPathTextBox_KeyDown(object _, KeyEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
-		if (e.Key == Windows.System.VirtualKey.Enter) {
+		if (e.Key == Key.Enter) {
 			this.ViewModel.NavigatePathCommand.Execute(Unit.Default);
 			e.Handled = true;
 		}
@@ -64,7 +56,7 @@ public sealed partial class SshBrowserPage : Page {
 	/// <summary>
 	/// ブックマークリストダブルタップでそのパスへ遷移します。
 	/// </summary>
-	private void Bookmarks_DoubleTapped(object sender, DoubleTappedRoutedEventArgs _) {
+	private void Bookmarks_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
@@ -73,7 +65,7 @@ public sealed partial class SshBrowserPage : Page {
 		}
 	}
 
-	private void CurrentDirectoryBookmarkedToggleButton_CheckedChange(object sender, RoutedEventArgs e) {
+	private void CurrentDirectoryBookmarkedToggleButton_CheckedChange(object sender, System.Windows.RoutedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
@@ -81,6 +73,5 @@ public sealed partial class SshBrowserPage : Page {
 			return;
 		}
 		this.ViewModel.ToggleCurrentDirectoryBookmarkCommand.Execute(isChecked);
-
 	}
 }
