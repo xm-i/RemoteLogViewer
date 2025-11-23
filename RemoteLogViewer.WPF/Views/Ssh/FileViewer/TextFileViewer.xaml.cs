@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
 using System.IO;
+using System.Windows;
+using System.Windows.Documents;
+
 using Microsoft.Extensions.Logging;
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
@@ -14,7 +17,7 @@ namespace RemoteLogViewer.WPF.Views.Ssh.FileViewer;
 public sealed partial class TextFileViewer {
 	private ILogger<TextFileViewer> logger {
 		get {
-			return field ??= WinUI.App.LoggerFactory.CreateLogger<TextFileViewer>();
+			return field ??= App.LoggerFactory.CreateLogger<TextFileViewer>();
 		}
 	}
 	private readonly HighlightService _highlightService;
@@ -125,7 +128,7 @@ public sealed partial class TextFileViewer {
 		if (this.ViewModel == null) {
 			return;
 		}
-		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
+		if (sender is Hyperlink btn && long.TryParse(btn.Content?.ToString(), out var line)) {
 			this.ViewModel.JumpToLineCommand.Execute(line);
 		}
 	}
