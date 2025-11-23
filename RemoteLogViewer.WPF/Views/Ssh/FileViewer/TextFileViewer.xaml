@@ -4,10 +4,10 @@
 	x:Class="RemoteLogViewer.WPF.Views.Ssh.FileViewer.TextFileViewer"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:sys="using:System"
-	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+	xmlns:sys="clr-namespace:System"
+	xmlns:controls="clr-namespace:CommunityToolkit.WinUI.Controls"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:models="using:RemoteLogViewer.Core.Models.Ssh.FileViewer"
+	xmlns:models="clr-namespace:RemoteLogViewer.Core.Models.Ssh.FileViewer"
 	mc:Ignorable="mc">
 	<Grid>
 		<Grid.RowDefinitions>

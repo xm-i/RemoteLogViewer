@@ -5,43 +5,49 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:views="using:RemoteLogViewer.Views"
-	xmlns:vm="using:RemoteLogViewer.Core.ViewModels"
-	xmlns:views1="using:RemoteLogViewer.Core.Views"
-	xmlns:views2="using:RemoteLogViewer.WinUI.Views"
+	xmlns:views="clr-namespace:RemoteLogViewer.WPF.Views"
+	xmlns:vm="clr-namespace:RemoteLogViewer.Core.ViewModels"
 	mc:Ignorable="d"
 	Title="RemoteLogViewer">
 
-	<Grid RowDefinitions="Auto,*">
-		<TitleBar
-			Grid.Row="0"
-			x:Name="titleBar"
-			Title="RemoteLogViewer"
-			IsBackButtonVisible="False"
-			IsPaneToggleButtonVisible="False">
-			<TitleBar.RightHeader>
-				<StackPanel Orientation="Horizontal" Spacing="2">
+	<DockPanel>
+		<!-- Title bar area (WPFには TitleBar コントロールがないため自作) -->
+		<Border Background="#EEE" DockPanel.Dock="Top" Padding="8">
+			<DockPanel>
+				<TextBlock Text="RemoteLogViewer"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center" />
+
+				<StackPanel Orientation="Horizontal"
+                            DockPanel.Dock="Right"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right"
+                            Margin="8,0,0,0">
+					<Button Command="{Binding OpenSettingsCommand}" Content="⚙" Margin="0,0,4,0"/>
+					<Button Command="{Binding OpenInfoCommand}" Content="ℹ"/>
+
+					<Button Content="Add" Command="{Binding AddTabCommand}"/>
+					<Button x:Name="TabCloseButton" Content="Close" Click="TabCloseButton_Click"/>
 				</StackPanel>
-			</TitleBar.RightHeader>
-		</TitleBar>
-		<Button Content="Add" Command="{Binding DataContext.AddTabCommand}"/>
-		<Button x:Name="TabCloseButton" Content="Close" Click="TabCloseButton_Click"/>
+			</DockPanel>
+		</Border>
 		<TabControl
-			Grid.Row="1"
-			VerticalAlignment="Stretch"
-			ItemsSource="{x:Bind DataContext.Tabs, Mode=OneWay}"
-			SelectedItem="{x:Bind DataContext.SelectedTab.Value, Mode=TwoWay}"
-			TabCloseRequested="TabView_TabCloseRequested">
+			ItemsSource="{Binding Tabs}"
+			SelectedItem="{Binding SelectedTab.Value}">
 			<TabControl.ItemTemplate>
+				<!-- Tab Header -->
 				<DataTemplate>
-					<TextBlock Text="{x:Bind Title.Value, Mode=OneWay}" />
+					<TextBlock Text="{Binding Title.Value}" />
 				</DataTemplate>
 			</TabControl.ItemTemplate>
+
 			<TabControl.ContentTemplate>
-				<DataTemplate>
-					<views2:LogViewerControl ViewModel="{x:Bind }" />
+				<!-- Tab Body -->
+				<DataTemplate DataType="{x:Type vm:LogViewerViewModel}">
+					<views:LogViewerControl />
 				</DataTemplate>
 			</TabControl.ContentTemplate>
 		</TabControl>
-	</Grid>
+	</DockPanel>
 </Window>

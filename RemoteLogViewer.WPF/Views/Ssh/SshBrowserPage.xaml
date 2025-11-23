@@ -2,15 +2,12 @@
     x:Class="RemoteLogViewer.WPF.Views.Ssh.SshBrowserPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-	xmlns:fileViewer="using:RemoteLogViewer.Views.Ssh.FileViewer"
-    xmlns:ssh="using:RemoteLogViewer.Services.Ssh"
-    xmlns:comStore="using:RemoteLogViewer.Composition.Stores.Ssh"
+	xmlns:controls="clr-namespace:CommunityToolkit.WinUI.Controls"
+	xmlns:fileViewer="clr-namespace:RemoteLogViewer.WPF.Views.Ssh.FileViewer"
+    xmlns:comStore="clr-namespace:RemoteLogViewer.Composition.Stores.Ssh"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:sshVm="using:RemoteLogViewer.Core.ViewModels.Ssh"
-    xmlns:fileViewer1="using:RemoteLogViewer.Core.Views.Ssh.FileViewer"
-    xmlns:fileViewer2="using:RemoteLogViewer.WinUI.Views.Ssh.FileViewer"
+    xmlns:sshVm="clr-namespace:RemoteLogViewer.Core.ViewModels.Ssh"
     mc:Ignorable="d">
 
 	<Page.Resources>
