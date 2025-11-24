@@ -1,9 +1,9 @@
-using System.Windows.Controls;
+using System.Windows.Documents;
 
 using RemoteLogViewer.Core.ViewModels.Info;
 
 namespace RemoteLogViewer.WPF.Views.Info {
-	public sealed partial class LicensePage : Page {
+	public sealed partial class LicensePage {
 		public LicensePageViewModel? ViewModel {
 			get;
 			set;
@@ -11,14 +11,17 @@ namespace RemoteLogViewer.WPF.Views.Info {
 
 		public LicensePage() {
 			this.InitializeComponent();
-			this.DataContext = this;
+			this.DataContextChanged += (_, _2) => {
+				if (this.DataContext is LicensePageViewModel vm) {
+					this.ViewModel = vm;
+				}
+			};
 		}
 
-		protected override void OnNavigatedTo(NavigationEventArgs e) {
-			if (e.Parameter is LicensePageViewModel vm) {
-				this.ViewModel = vm;
+		private void Hyperlink_Click(object sender, System.Windows.RoutedEventArgs e) {
+			if (sender is Hyperlink link) {
+
 			}
-			base.OnNavigatedTo(e);
 		}
 	}
 }
