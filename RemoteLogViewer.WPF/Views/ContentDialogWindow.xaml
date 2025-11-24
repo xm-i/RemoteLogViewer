@@ -1,0 +1,31 @@
+<Window x:Class="RemoteLogViewer.WPF.Views.ContentDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStartupLocation="CenterOwner"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        Background="{DynamicResource DialogBackground}"
+		Title="{Binding MessageTitle}">
+	<Border Padding="20" CornerRadius="8">
+		<StackPanel>
+			<TextBlock Text="{Binding MessageTitle}" 
+                       FontSize="18" Margin="0 0 0 12"
+                       FontWeight="SemiBold"/>
+
+			<TextBlock Text="{Binding Message}"
+                       TextWrapping="Wrap" Margin="0 0 0 20"/>
+
+			<TextBlock FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,2,0,0" Text="{Binding Severity, Mode=OneTime, Converter={StaticResource SeverityToGlyphConverter}}" />
+
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+				<Button Content="{Binding SecondaryButtonText}"
+                        Command="{Binding SecondaryButtonCommand}"
+                        Visibility="{Binding HasSecondaryButton}" Width="100"/>
+
+				<Button Content="{Binding PrimaryButtonText}"
+                        Command="{Binding PrimaryButtonCommand}"
+                        Visibility="{Binding HasPrimaryButton}" Width="100"/>
+			</StackPanel>
+		</StackPanel>
+	</Border>
+</Window>

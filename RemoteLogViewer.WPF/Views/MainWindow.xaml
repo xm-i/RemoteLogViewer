@@ -6,7 +6,7 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:views="clr-namespace:RemoteLogViewer.WPF.Views"
-	xmlns:vm="clr-namespace:RemoteLogViewer.Core.ViewModels"
+	xmlns:vm="clr-namespace:RemoteLogViewer.Core.ViewModels;assembly=RemoteLogViewer.Core"
 	mc:Ignorable="d"
 	Title="RemoteLogViewer">
 
@@ -24,8 +24,8 @@
                             VerticalAlignment="Center"
                             HorizontalAlignment="Right"
                             Margin="8,0,0,0">
-					<Button Command="{Binding OpenSettingsCommand}" Content="⚙" Margin="0,0,4,0"/>
-					<Button Command="{Binding OpenInfoCommand}" Content="ℹ"/>
+					<Button Click="OpenSettings_Click" Content="⚙" Margin="0,0,4,0"/>
+					<Button Click="InfoButton_Click" Content="ℹ"/>
 
 					<Button Content="Add" Command="{Binding AddTabCommand}"/>
 					<Button x:Name="TabCloseButton" Content="Close" Click="TabCloseButton_Click"/>

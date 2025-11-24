@@ -21,30 +21,27 @@ public sealed partial class MainWindow : Window {
 		this.InitializeComponent();
 		this.ViewModel = mainWindowViewModel;
 		this.DataContext = this.ViewModel;
-		this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
-			var dialog = new ContentDialog {
-				XamlRoot = this.Content.XamlRoot,
-				Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
-				Title = "Message",
+		this.ViewModel.Notifications.Subscribe(notification => {
+			var dialog = new ContentDialogWindow {
+				MessageTitle = "Message",
 				PrimaryButtonText = "OK",
-				DefaultButton = ContentDialogButton.Primary,
-				Content = new ContentDialogContent(notification.Message, notification.Severity)
+				PrimaryButtonCommand = new ReactiveCommand(_ => { }),
+				Message = notification.Message,
+				Severity = notification.Severity
 			};
-			await dialog.ShowAsync();
+			dialog.ShowDialog();
 		});
-		this.ViewModel.NotificationWithActions.SubscribeAwait(async (notification, ct) => {
-			var dialog = new ContentDialog {
-				XamlRoot = this.Content.XamlRoot,
-				Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
-				Title = "Message",
+		this.ViewModel.NotificationWithActions.Subscribe(notification => {
+			var dialog = new ContentDialogWindow {
+				MessageTitle = "Message",
 				PrimaryButtonText = notification.PrimaryActionText,
 				PrimaryButtonCommand = new ReactiveCommand(_ => notification.PrimaryAction()),
 				SecondaryButtonText = notification.SecondaryActionText,
 				SecondaryButtonCommand = new ReactiveCommand(_ => notification.SecondaryAction()),
-				DefaultButton = ContentDialogButton.Primary,
-				Content = new ContentDialogContent(notification.Message, notification.Severity)
+				Message = notification.Message,
+				Severity = notification.Severity
 			};
-			await dialog.ShowAsync();
+			dialog.ShowDialog();
 		});
 	}
 
@@ -61,11 +58,11 @@ public sealed partial class MainWindow : Window {
 
 	private void OpenSettings_Click(object sender, RoutedEventArgs e) {
 		var window = this._services.GetRequiredService<SettingsWindow>();
-		window.Activate();
+		window.ShowDialog();
 	}
 
 	private void InfoButton_Click(object sender, RoutedEventArgs e) {
 		var window = this._services.GetRequiredService<InfoWindow>();
-		window.Activate();
+		window.ShowDialog();
 	}
 }

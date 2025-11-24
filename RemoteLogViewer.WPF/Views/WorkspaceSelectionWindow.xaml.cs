@@ -1,3 +1,8 @@
+using System.Windows;
+
+using Microsoft.Win32;
+
+using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.ViewModels.Settings;
 
 namespace RemoteLogViewer.WPF.Views;
@@ -20,24 +25,26 @@ public sealed partial class WorkspaceSelectionWindow : Window {
 		};
 		this.ViewModel.ErrorMessage.ObservePropertyChanged(x => x.Value).Subscribe(msg => {
 			if (!string.IsNullOrWhiteSpace(msg)) {
-				var dialog = new ContentDialog {
-					XamlRoot = this.Content.XamlRoot,
-					Title = "エラー",
+				var dialog = new ContentDialogWindow {
+					MessageTitle = "エラー",
 					PrimaryButtonText = "OK",
-					Content = msg
+					PrimaryButtonCommand = new ReactiveCommand(_ => { }),
+					Severity = NotificationSeverity.Error,
+					Message = msg
 				};
-				_ = dialog.ShowAsync();
+				dialog.ShowDialog();
 			}
 		});
 	}
 
 	private async void Browse_Click(object sender, RoutedEventArgs e) {
-		var picker = new FolderPicker();
-		picker.FileTypeFilter.Add("*");
-		InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-		var folder = await picker.PickSingleFolderAsync();
-		if (folder != null) {
-			this.ViewModel.SelectedPath.Value = folder.Path;
+		var ofd = new OpenFolderDialog() {
+			Multiselect = false
+		};
+
+		var result = ofd.ShowDialog();
+		if (result ?? false) {
+			this.ViewModel.SelectedPath.Value = ofd.FolderName;
 		}
 	}
 

@@ -39,19 +39,17 @@ public partial class App : Application {
 		var workspaceService = Ioc.Default.GetRequiredService<WorkspaceService>();
 		if (string.IsNullOrWhiteSpace(workspaceService.WorkspacePath)) {
 			this.ShowWorkspaceSelectionWindow(workspaceService);
-		} else {
-			this.MainWindow.Activate();
 		}
+		if (string.IsNullOrWhiteSpace(workspaceService.WorkspacePath)) {
+			return;
+		}
+		this.MainWindow.ShowDialog();
 	}
 
 	/// <summary>ワークスペース選択ウィンドウ表示。</summary>
 	private void ShowWorkspaceSelectionWindow(WorkspaceService workspaceService) {
 		var wsWindow = Ioc.Default.GetRequiredService<WorkspaceSelectionWindow>();
-		wsWindow.AppWindow?.Resize(new(600, 250));
-		wsWindow.Activate();
-		wsWindow.WorkspaceSelected += () => {
-			this.MainWindow.Activate();
-		};
+		wsWindow.ShowDialog();
 	}
 
 	/// <summary>DI コンテナ構築。</summary>
