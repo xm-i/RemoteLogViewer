@@ -4,25 +4,42 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:controls="clr-namespace:CommunityToolkit.WinUI.Controls"
-	xmlns:settings="clr-namespace:RemoteLogViewer.Core.ViewModels.Settings"
+	xmlns:settingsVm="clr-namespace:RemoteLogViewer.Core.ViewModels.Settings;assembly=RemoteLogViewer.Core"
+	xmlns:settingsHighlightVm="clr-namespace:RemoteLogViewer.Core.ViewModels.Settings.Highlight;assembly=RemoteLogViewer.Core"
+	xmlns:settingsV="clr-namespace:RemoteLogViewer.WPF.Views.Settings"
 	mc:Ignorable="d"
 	Title="Settings">
-	<Grid ColumnDefinitions="220,*" RowDefinitions="*,Auto"  ColumnSpacing="8">
-		<StackPanel Grid.Column="0" Padding="12" Spacing="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+	<Grid ColumnDefinitions="220,*" RowDefinitions="*,Auto" >
+		<Grid.Resources>
+			<DataTemplate DataType="{x:Type settingsVm:TextViewerSettingsPageViewModel}">
+				<settingsV:TextViewerSettingsPage DataContext="{Binding}"/>
+			</DataTemplate>
+			<DataTemplate DataType="{x:Type settingsVm:WorkspaceSettingsPageViewModel}">
+				<settingsV:WorkspaceSettingsPage DataContext="{Binding}"/>
+			</DataTemplate>
+			<DataTemplate DataType="{x:Type settingsHighlightVm:HighlightSettingsPageViewModel}">
+				<settingsV:HighlightSettingsPage DataContext="{Binding}"/>
+			</DataTemplate>
+			<DataTemplate DataType="{x:Type settingsVm:AdvancedSettingsPageViewModel}">
+				<settingsV:AdvancedSettingsPage DataContext="{Binding}"/>
+			</DataTemplate>
+		</Grid.Resources>
+		<StackPanel Grid.Column="0">
 			<TextBlock Text="Categories" FontWeight="SemiBold"/>
-			<ListView x:Name="CategoryList" ItemsSource="{x:Bind ViewModel.Pages}" SelectedItem="{x:Bind ViewModel.SelectedSettingsPage.Value, Mode=TwoWay}">
+			<ListView x:Name="CategoryList" ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedSettingsPage.Value, Mode=TwoWay}">
 				<ListView.ItemTemplate>
-					<DataTemplate x:DataType="settings:ISettingsPageViewModel">
+					<DataTemplate>
 						<TextBlock Text="{Binding PageName}"/>
 					</DataTemplate>
 				</ListView.ItemTemplate>
 			</ListView>
 		</StackPanel>
-		<Frame x:Name="ContentFrame" Grid.Column="1"/>
-		<controls:DockPanel Grid.Row="1" Grid.ColumnSpan="2">
-			<Button controls:DockPanel.Dock="Right" Content="OK" Click="Button_Click"/>
-			<Grid/>
-		</controls:DockPanel>
+
+		<Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Padding="12">
+			<ContentControl Content="{Binding SelectedSettingsPage.Value}" />
+		</Border>
+		<DockPanel Grid.Row="1" Grid.ColumnSpan="2" LastChildFill="False">
+			<Button DockPanel.Dock="Right" Content="OK" Click="Button_Click"/>
+		</DockPanel>
 	</Grid>
 </Window>

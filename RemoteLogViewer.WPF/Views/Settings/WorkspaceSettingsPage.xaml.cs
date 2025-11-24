@@ -1,10 +1,13 @@
-using System.Windows.Controls;
+using System.Windows;
 
+using Microsoft.Win32;
+
+using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.ViewModels.Settings;
 
 namespace RemoteLogViewer.WPF.Views.Settings;
 
-public sealed partial class WorkspaceSettingsPage : Page {
+public sealed partial class WorkspaceSettingsPage {
 	public WorkspaceSettingsPageViewModel? ViewModel {
 		get;
 		private set;
@@ -12,40 +15,36 @@ public sealed partial class WorkspaceSettingsPage : Page {
 
 	public WorkspaceSettingsPage() {
 		this.InitializeComponent();
-	}
-	/// <summary>
-	/// ナビゲート時に ViewModel を受け取ります。
-	/// </summary>
-	protected override void OnNavigatedTo(NavigationEventArgs e) {
-		if (e.Parameter is not WorkspaceSettingsPageViewModel vm) {
-			throw new InvalidOperationException("ViewModel is not passed.");
-		}
-		this.ViewModel = vm;
-		this.ViewModel.ErrorMessage.ObservePropertyChanged(x => x.Value).Subscribe(msg => {
-			if (!string.IsNullOrWhiteSpace(msg)) {
-				var dialog = new ContentDialog {
-					XamlRoot = this.Content.XamlRoot,
-					Title = "エラー",
-					PrimaryButtonText = "OK",
-					Content = msg
-				};
-				_ = dialog.ShowAsync();
+		this.DataContextChanged += (_, _2) => {
+			if (this.DataContext is WorkspaceSettingsPageViewModel vm) {
+				this.ViewModel = vm;
+				this.ViewModel.ErrorMessage.ObservePropertyChanged(x => x.Value).Subscribe(msg => {
+					if (!string.IsNullOrWhiteSpace(msg)) {
+						var dialog = new ContentDialogWindow {
+							MessageTitle = "エラー",
+							PrimaryButtonText = "OK",
+							PrimaryButtonCommand = new ReactiveCommand(),
+							Message = msg,
+							Severity = NotificationSeverity.Error
+						};
+						dialog.ShowDialog();
+					}
+				});
 			}
-		});
-		base.OnNavigatedTo(e);
+		};
 	}
 
 	private async void Browse_Click(object sender, RoutedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
-		var picker = new FolderPicker();
-		picker.FileTypeFilter.Add("*");
-		var window = Ioc.Default.GetRequiredService<SettingsWindow>();
-		InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
-		var folder = await picker.PickSingleFolderAsync();
-		if (folder != null) {
-			this.ViewModel.SelectedPath.Value = folder.Path;
+		var ofd = new OpenFolderDialog() {
+			Multiselect = false
+		};
+
+		var result = ofd.ShowDialog();
+		if (result ?? false) {
+			this.ViewModel.SelectedPath.Value = ofd.FolderName;
 		}
 	}
 
@@ -54,6 +53,5 @@ public sealed partial class WorkspaceSettingsPage : Page {
 			return;
 		}
 		this.ViewModel.ConfirmCommand.Execute(Unit.Default);
-		Application.Current.Exit();
 	}
 }

@@ -1,10 +1,8 @@
-using System.Windows.Controls;
-
 using RemoteLogViewer.Core.ViewModels.Settings;
 
 namespace RemoteLogViewer.WPF.Views.Settings;
 
-public sealed partial class TextViewerSettingsPage : Page {
+public sealed partial class TextViewerSettingsPage {
 	public TextViewerSettingsPageViewModel? ViewModel {
 		get;
 		private set;
@@ -12,15 +10,10 @@ public sealed partial class TextViewerSettingsPage : Page {
 
 	public TextViewerSettingsPage() {
 		this.InitializeComponent();
-	}
-	/// <summary>
-	/// ナビゲート時に ViewModel を受け取ります。
-	/// </summary>
-	protected override void OnNavigatedTo(NavigationEventArgs e) {
-		if (e.Parameter is not TextViewerSettingsPageViewModel vm) {
-			throw new InvalidOperationException("ViewModel is not passed.");
-		}
-		this.ViewModel = vm;
-		base.OnNavigatedTo(e);
+		this.DataContextChanged += (_, _2) => {
+			if (this.DataContext is TextViewerSettingsPageViewModel vm) {
+				this.ViewModel = vm;
+			}
+		};
 	}
 }

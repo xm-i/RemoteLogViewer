@@ -1,10 +1,11 @@
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 using RemoteLogViewer.Core.ViewModels.Settings.Highlight;
 
 namespace RemoteLogViewer.WPF.Views.Settings;
 
-public sealed partial class HighlightSettingsPage : Page {
+public sealed partial class HighlightSettingsPage {
 	public HighlightSettingsPageViewModel? ViewModel {
 		get;
 		private set;
@@ -12,17 +13,21 @@ public sealed partial class HighlightSettingsPage : Page {
 
 	public HighlightSettingsPage() {
 		this.InitializeComponent();
+		this.DataContextChanged += (_, _2) => {
+			if (this.DataContext is HighlightSettingsPageViewModel vm) {
+				this.ViewModel = vm;
+			}
+		};
 	}
 
-	/// <summary>
-	/// ナビゲート時に ViewModel を受け取ります。
-	/// </summary>
-	protected override void OnNavigatedTo(NavigationEventArgs e) {
-		if (e.Parameter is HighlightSettingsPageViewModel vm) {
-			this.ViewModel = vm;
-		} else {
-			throw new InvalidOperationException("ViewModel is not passed.");
-		}
-		base.OnNavigatedTo(e);
+	private void ForeColorButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+		var popup = this.ForeColorPopup;
+		popup.IsOpen = true;
+	}
+
+	private void BackColorButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+		var popup = this.BackColorPopup;
+		popup.IsOpen = true;
+
 	}
 }
