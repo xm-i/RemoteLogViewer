@@ -32,6 +32,23 @@ public sealed partial class SshServerSelectorPage {
 	/// </summary>
 	public SshServerSelectorPage() {
 		this.InitializeComponent();
+		this.DataContextChanged += (_, _2) => {
+			if (this.DataContext is SshServerSelectorViewModel vm) {
+				this.ViewModel = vm;
+			}
+		};
+	}
+
+	private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e) {
+		if (this.ViewModel?.SelectedSshConnectionInfo.Value is { } vm) {
+			vm.Password.Value = this.PasswordBox.Password;
+		}
+	}
+
+	private void PrivateKeyPassphraseBox_PasswordChanged(object sender, RoutedEventArgs e) {
+		if (this.ViewModel?.SelectedSshConnectionInfo.Value is { } vm) {
+			vm.PrivateKeyPassphrase.Value = this.PrivateKeyPassphraseBox.Password;
+		}
 	}
 
 	/// <summary>

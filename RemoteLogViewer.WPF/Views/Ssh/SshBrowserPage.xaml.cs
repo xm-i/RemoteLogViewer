@@ -9,7 +9,7 @@ namespace RemoteLogViewer.WPF.Views.Ssh;
 /// <summary>
 /// SSH ブラウザページです。リモートファイルシステムの閲覧およびファイルオープン操作を提供します。
 /// </summary>
-public sealed partial class SshBrowserPage : Page {
+public sealed partial class SshBrowserPage {
 	/// <summary>
 	/// 閲覧用 ViewModel を取得します。
 	/// </summary>
@@ -26,6 +26,11 @@ public sealed partial class SshBrowserPage : Page {
 	/// </summary>
 	public SshBrowserPage() {
 		this.InitializeComponent();
+		this.DataContextChanged += (_, _2) => {
+			if (this.DataContext is SshBrowserViewModel vm) {
+				this.ViewModel = vm;
+			}
+		};
 	}
 
 	/// <summary>

@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
+
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Services.Ssh;
 using RemoteLogViewer.Core.Stores.Settings;
@@ -70,7 +72,8 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			.AddTo(this.CompositeDisposable);
 		this.GrepProgress = this._textFileViewerModel.GrepOperation.Progress.ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
-		this.AvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.FilteredAvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.AvailableEncodings = this._textFileViewerModel.AvailableEncodings.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
 		// Tail 実行状態
 		this.IsTailRunning = this._textFileViewerModel.TailOperation.IsRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
@@ -80,7 +83,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 				.IsRunning
 				.Select(x => !x)
 				.ToReactiveCommand().AddTo(this.CompositeDisposable);
-		this.TailStartCommand.SubscribeAwait(async (_, ct) => {
+		_ = this.TailStartCommand.SubscribeAwait(async (_, ct) => {
 			this._tailCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			try {
 				await this._textFileViewerModel.TailFollowAsync(this._tailCts.Token);
@@ -95,7 +98,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		}).AddTo(this.CompositeDisposable);
 
 		// 行番号列幅: 桁数に応じて更新
-		this.TotalLines.ObservePropertyChanged(x => x.Value).Subscribe(total => {
+		_ = this.TotalLines.ObservePropertyChanged(x => x.Value).Subscribe(total => {
 			var digits = total <= 0 ? 1 : (int)Math.Floor(Math.Log10(total)) + 1;
 			if (digits < 2) {
 				digits = 2;
@@ -103,7 +106,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this.LineNumberColumnWidth.Value = (digits * (LineHeight / 2)) + 12; // 余白込み
 		}).AddTo(this.CompositeDisposable);
 
-		this.SelectedEncoding.Subscribe(x => {
+		_ = this.SelectedEncoding.Subscribe(x => {
 			if (string.IsNullOrWhiteSpace(x)) {
 				view.ResetFilter();
 				return;
@@ -111,14 +114,14 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			view.AttachFilter(ae => Regex.IsMatch(ae, string.Join(".*?", x.Select(c => c)), RegexOptions.IgnoreCase));
 		}).AddTo(this.CompositeDisposable);
 
-		this.JumpToLineCommand.Where(x => x != this.WindowStartLine.Value).Subscribe(line => {
+		_ = this.JumpToLineCommand.Where(x => x != this.WindowStartLine.Value).Subscribe(line => {
 			logger.LogTrace($"Jump to Line Command start: {line}");
 			this.WindowStartLine.Value = Math.Max(1, Math.Min(this.TotalLines.Value - this.VisibleLineCount.Value + 1, line));
 			this.IsShowingTruncatedText.Value = false;
 			logger.LogTrace("Jump to Line Command end");
 		}).AddTo(this.CompositeDisposable);
 
-		this.WindowStartLine
+		_ = this.WindowStartLine
 			.CombineLatest(this.VisibleLineCount, (start, count) => (start, count))
 			.CombineLatest(
 				this.TotalLines
@@ -137,7 +140,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			});
 
 		// GREP 実行: 既存タスクをキャンセルして新規開始
-		this.GrepCommand.SubscribeAwait(async (_, ct) => {
+		_ = this.GrepCommand.SubscribeAwait(async (_, ct) => {
 			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			try {
 				logger.LogTrace($"Grep start: {this.GrepQuery.Value}");
@@ -151,7 +154,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
 
 		// GREP キャンセルコマンド
-		this.GrepCancelCommand.Subscribe(_ => {
+		_ = this.GrepCancelCommand.Subscribe(_ => {
 			this._grepCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
 
@@ -162,11 +165,11 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())
 			.AddTo(this.CompositeDisposable);
 
-		this.PickupTextLineCommand.SubscribeAwait(async (x, ct) => {
+		_ = this.PickupTextLineCommand.SubscribeAwait(async (x, ct) => {
 			this.PickedupTextLine.Value = await this._textFileViewerModel.PickupTextLine(x, ct);
 		}).AddTo(this.CompositeDisposable);
 
-		this.ChangeEncodingCommand.Subscribe(_ => {
+		_ = this.ChangeEncodingCommand.Subscribe(_ => {
 			if (this.SelectedEncoding.Value is null) {
 				return;
 			}
@@ -283,6 +286,11 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 
 	/// <summary>利用可能エンコーディング。</summary>
 	public NotifyCollectionChangedSynchronizedViewList<string> AvailableEncodings {
+		get;
+	}
+
+	/// <summary>フィルター後利用可能エンコーディング。</summary>
+	public NotifyCollectionChangedSynchronizedViewList<string> FilteredAvailableEncodings {
 		get;
 	}
 

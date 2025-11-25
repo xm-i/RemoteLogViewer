@@ -1,20 +1,20 @@
-<Page
+<UserControl
 	x:Class="RemoteLogViewer.WPF.Views.Ssh.SshBrowserPage"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:sshVm="clr-namespace:RemoteLogViewer.Core.ViewModels.Ssh"
-	xmlns:comStore="clr-namespace:RemoteLogViewer.Composition.Stores.Ssh"
+	xmlns:sshVm="clr-namespace:RemoteLogViewer.Core.ViewModels.Ssh;assembly=RemoteLogViewer.Core"
+	xmlns:comStore="clr-namespace:RemoteLogViewer.Composition.Stores.Ssh;assembly=RemoteLogViewer.Composition"
 	xmlns:fileViewer="clr-namespace:RemoteLogViewer.WPF.Views.Ssh.FileViewer"
 	mc:Ignorable="d">
-	<Page.Resources>
+	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceDictionary Source="/Views/Styles/StarStyles.xaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
-	</Page.Resources>
+	</UserControl.Resources>
 	<Grid Margin="4">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="300"/>
@@ -39,27 +39,27 @@
 
 			<StackPanel Grid.Row="0" Orientation="Horizontal">
 				<TextBox Width="240"
-                     Text="{Binding CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     KeyDown="CurrentPathTextBox_KeyDown" />
+					Text="{Binding CurrentPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					KeyDown="CurrentPathTextBox_KeyDown" />
 				<Button Content="Go"
-                    Command="{Binding NavigatePathCommand}"
-                    Margin="4,0,0,0"/>
+					Command="{Binding NavigatePathCommand}"
+					Margin="4,0,0,0"/>
 			</StackPanel>
 
 			<StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,4,0,0">
 				<TextBox Width="240"
-                     Text="{Binding EntryFilterWord.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Filter"/>
+					Text="{Binding EntryFilterWord.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					ToolTip="Filter"/>
 				<ToggleButton x:Name="CurrentDirectoryBookmarkedToggleButton"
-                          Style="{StaticResource StarToggleButtonStyle}"
-                          Width="24" Height="24" Margin="4,0,0,0"
-                          IsChecked="{Binding ViewModel.IsCurrentDirectoryBookmarked.Value}"
-                          Click="CurrentDirectoryBookmarkedToggleButton_CheckedChange">
+					Style="{StaticResource StarToggleButtonStyle}"
+					Width="24" Height="24" Margin="4,0,0,0"
+					IsChecked="{Binding IsCurrentDirectoryBookmarked.Value, Mode=OneWay}"
+					Click="CurrentDirectoryBookmarkedToggleButton_CheckedChange">
 					<Grid>
-						<TextBlock Text="&#xE735;" FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="Gold"
-                               Visibility="{Binding IsChecked, ElementName=CurrentDirectoryBookmarkedToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-						<TextBlock Text="&#xE734;" FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="Gray"
-                               Visibility="{Binding IsChecked, ElementName=CurrentDirectoryBookmarkedToggleButton, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+						<TextBlock Text="&#xE735;" FontFamily="Segoe Fluent Icons" Foreground="Gold"
+							Visibility="{Binding IsChecked, ElementName=CurrentDirectoryBookmarkedToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+						<TextBlock Text="&#xE734;" FontFamily="Segoe Fluent Icons" Foreground="Gray"
+							Visibility="{Binding IsChecked, ElementName=CurrentDirectoryBookmarkedToggleButton, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 					</Grid>
 				</ToggleButton>
 			</StackPanel>
@@ -67,8 +67,8 @@
 			<TextBlock Grid.Row="2" Text="Entries" FontWeight="SemiBold" Margin="0,4,0,2"/>
 
 			<ListView Grid.Row="3"
-                  ItemsSource="{Binding Entries}"
-                  MouseDoubleClick="Entries_MouseDoubleClick">
+				ItemsSource="{Binding Entries}"
+				MouseDoubleClick="Entries_MouseDoubleClick">
 				<ListView.ItemTemplate>
 					<DataTemplate DataType="{x:Type sshVm:FileSystemEntryViewModel}">
 						<Grid Margin="0,2">
@@ -77,18 +77,18 @@
 								<ColumnDefinition Width="*"/>
 							</Grid.ColumnDefinitions>
 							<ToggleButton Style="{StaticResource StarToggleButtonStyle}"
-                                      Width="24" Height="24"
-                                      IsChecked="{Binding IsBookmarked.Value}">
+								Width="24" Height="24"
+								IsChecked="{Binding IsBookmarked.Value, Mode=TwoWay}">
 								<Grid>
-									<TextBlock Text="&#xE735;" FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="Gold"
-                                           Visibility="{Binding IsBookmarked.Value, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-									<TextBlock Text="&#xE734;" FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="Gray"
-                                           Visibility="{Binding IsBookmarked.Value, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+									<TextBlock Text="&#xE735;" FontFamily="Segoe Fluent Icons" Foreground="Gold"
+										Visibility="{Binding IsBookmarked.Value, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+									<TextBlock Text="&#xE734;" FontFamily="Segoe Fluent Icons" Foreground="Gray"
+										Visibility="{Binding IsBookmarked.Value, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 								</Grid>
 							</ToggleButton>
 							<StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4,0,0,0">
 								<TextBlock Text="{Binding FileSystemObjectType, Converter={StaticResource FileSystemObjectTypeToGlyphConverter}}"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}" Margin="0,0,8,0"/>
+									FontFamily="Segoe Fluent Icons" Margin="0,0,8,0"/>
 								<TextBlock Text="{Binding FileName}"/>
 							</StackPanel>
 						</Grid>
@@ -99,12 +99,12 @@
 			<TextBlock Grid.Row="4" Text="Bookmarks" FontWeight="SemiBold" Margin="0,8,0,2"/>
 
 			<ListView Grid.Row="5"
-                  ItemsSource="{Binding Bookmarks}"
-                  MouseDoubleClick="Bookmarks_MouseDoubleClick">
+				ItemsSource="{Binding Bookmarks}"
+				MouseDoubleClick="Bookmarks_MouseDoubleClick">
 				<ListView.ItemTemplate>
 					<DataTemplate DataType="{x:Type comStore:SshBookmarkModel}">
 						<StackPanel Orientation="Horizontal" Margin="0,2">
-							<TextBlock Text="&#xE735;" FontFamily="{StaticResource SymbolThemeFontFamily}" Foreground="Gold"/>
+							<TextBlock Text="&#xE735;" FontFamily="Segoe Fluent Icons" Foreground="Gold"/>
 							<TextBlock Text="{Binding Name.Value}" Margin="4,0,0,0"/>
 							<TextBlock Text="{Binding Path.Value}" Foreground="Gray" Margin="8,0,0,0"/>
 						</StackPanel>
@@ -118,18 +118,17 @@
 
 		<!-- Right file viewer -->
 		<fileViewer:TextFileViewer
-			Grid.Column="2" MinWidth="100"
-			DataContext="{Binding TextFileViewerViewModel}"
-			IsEnabled="{Binding DisconnectedWithException.Value, Converter={StaticResource BooleanNegationConverter}}"/>
+			Grid.Column="2"
+			DataContext="{Binding TextFileViewerViewModel}"/>
 
 		<!-- Bottom bar -->
 		<DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0" LastChildFill="True">
 			<Button DockPanel.Dock="Right" Content="Disconnect"
-                Command="{Binding DisconnectCommand}"
-                Visibility="{Binding DisconnectedWithException.Value, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+				Command="{Binding DisconnectCommand}"
+				Visibility="{Binding DisconnectedWithException.Value, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 			<Button DockPanel.Dock="Right" Content="Reconnect"
-                Command="{Binding ReconnectCommand}"
-                Visibility="{Binding DisconnectedWithException.Value, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+				Command="{Binding ReconnectCommand}"
+				Visibility="{Binding DisconnectedWithException.Value, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 		</DockPanel>
 	</Grid>
-</Page>
+</UserControl>

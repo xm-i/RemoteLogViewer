@@ -26,7 +26,7 @@
 			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
 			<Grid RowDefinitions="Auto,Auto">
 				<TextBlock FontSize="12" Text=" Encoding"/>
-				<AutoSuggestBox Grid.Row="1" Width="160" ItemsSource="{x:Bind ViewModel.AvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
+				<AutoSuggestBox Grid.Row="1" Width="160" ItemsSource="{x:Bind ViewModel.FilteredAvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
 			</Grid>
 			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
 			<Button Content="Tail Start" Command="{x:Bind ViewModel.TailStartCommand}" Visibility="{x:Bind ViewModel.IsTailRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
