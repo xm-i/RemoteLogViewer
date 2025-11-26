@@ -84,7 +84,6 @@
 		</StackPanel>
 
 		<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto">
-
 			<ScrollViewer VerticalScrollBarVisibility="Hidden">
 				<ItemsControl ItemsSource="{Binding LineNumbers.Value, Mode=OneWay}">
 					<ItemsControl.ItemsPanel>
@@ -96,7 +95,9 @@
 						<DataTemplate>
 							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0"
 								Width="{Binding DataContext.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}">
-								<TextBlock Text="{Binding Mode=OneWay}" 
+								<TextBlock Text="{Binding Mode=OneWay}"
+									SizeChanged="TextBlock_SizeChanged"
+									FontSize="12"
 									FontFamily="Consolas"
 									HorizontalAlignment="Right"
 									MouseLeftButtonDown="LineNumber_Click"/>
@@ -109,8 +110,6 @@
 			<ScrollViewer x:Name="ContentViewer"
 				Grid.Column="1"
 				VerticalScrollBarVisibility="Hidden"
-				HorizontalScrollBarVisibility="Auto"
-				Padding="0,8"
 				SizeChanged="ContentViewer_SizeChanged"
 				MouseWheel="ContentViewer_MouseWheel">
 				<RichTextBox x:Name="ContentRichTextBlock"
@@ -120,11 +119,7 @@
 					FlowDirection="LeftToRight"
 					MouseWheel="ContentViewer_MouseWheel"
 					ManipulationDelta="ContentRichTextBlock_ManipulationDelta">
-					<FlowDocument>
-						<Paragraph LineHeight="16">
-							<Run Text="{Binding Content.Value, Mode=OneWay}" />
-						</Paragraph>
-					</FlowDocument>
+					<FlowDocument FontSize="12"/>
 				</RichTextBox>
 			</ScrollViewer>
 
@@ -144,7 +139,6 @@
 			</Button>
 
 			<ScrollViewer x:Name="VirtualScrollViewer"
-				Height="{Binding ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
 				Grid.Column="3"
 				VerticalScrollBarVisibility="Visible"
 				HorizontalScrollBarVisibility="Disabled"
@@ -152,7 +146,7 @@
 				Padding="0"
 				IsTabStop="False"
 				ScrollChanged="VirtualScrollViewer_ViewChanged">
-				<Grid x:Name="Kari" Height="{Binding TotalHeight.Value, Mode=OneWay,Converter={StaticResource LongToDoubleConverter}}" />
+				<Grid x:Name="Kari"/>
 			</ScrollViewer>
 		</Grid>
 
@@ -160,7 +154,8 @@
 			VerticalAlignment="Top"
 			ResizeDirection="Rows"
 			HorizontalAlignment="Stretch"
-			Height="8" Margin="0,5,0,0"/>
+			ResizeBehavior="PreviousAndNext"
+			Height="8" Margin="0,5,0,0" />
 
 		<TabControl Grid.Row="3" x:Name="BottomTabControl">
 			<TabItem Header="Grep">
@@ -184,8 +179,8 @@
 						<ItemsControl ItemsSource="{Binding GrepResults, Mode=OneWay}">
 							<ItemsControl.ItemTemplate>
 								<DataTemplate DataType="models:TextLine">
-									<Grid ColumnDefinitions="Auto,*" MinHeight="16">
-										<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding LineNumberColumnWidth.Value, Mode=OneWay, ElementName=Root}">
+									<Grid ColumnDefinitions="Auto,*" MinHeight="12">
+										<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding DataContext.LineNumberColumnWidth.Value, Mode=OneWay, ElementName=Root}">
 											<TextBlock>
 												<Hyperlink Click="GrepResultLineButton_Click">
 													<TextBlock Text="{Binding LineNumber, Mode=OneWay}" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
@@ -206,8 +201,8 @@
 						 VerticalScrollBarVisibility="Auto"
 						 HorizontalScrollBarVisibility="Disabled"
 						 VerticalAlignment="Stretch">
-						<Grid ColumnDefinitions="Auto,*" MinHeight="16" VerticalAlignment="Stretch">
-							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding LineNumberColumnWidth.Value, Mode=OneWay}">
+						<Grid ColumnDefinitions="Auto,*" MinHeight="12" VerticalAlignment="Stretch">
+							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding DataContext.LineNumberColumnWidth.Value, Mode=OneWay, ElementName=Root}">
 								<TextBlock Text="{Binding PickedupTextLine.Value.LineNumber,Mode=OneWay}" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
 							</Border>
 							<RichTextBox
@@ -215,11 +210,7 @@
 								Grid.Column="1"
 								x:Name="PickedupRichTextBlock"
 								FontFamily="Consolas">
-								<FlowDocument>
-									<Paragraph LineHeight="16">
-										<Run Text="{Binding PickedupTextLine.Value.Content, Mode=OneWay}" />
-									</Paragraph>
-								</FlowDocument>
+								<FlowDocument/>
 							</RichTextBox>
 						</Grid>
 					</ScrollViewer>

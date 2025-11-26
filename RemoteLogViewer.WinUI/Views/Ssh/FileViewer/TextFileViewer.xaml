@@ -67,9 +67,9 @@
 					PointerWheelChanged="ContentViewer_PointerWheelChanged">
 					<ItemsRepeater.ItemTemplate>
 						<DataTemplate x:DataType="sys:Int64">
-							<Grid Height="16">
+							<Grid Height="12">
 								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}" >
-									<HyperlinkButton Content="{x:Bind }" Click="HyperlinkButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
+									<HyperlinkButton Content="{x:Bind }" FontSize="12" Click="HyperlinkButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
 								</Border>
 							</Grid>
 						</DataTemplate>
@@ -90,11 +90,11 @@
 					IsTextSelectionEnabled="True"
 					TextWrapping="NoWrap"
 					FlowDirection="LeftToRight"
-					LineHeight="16"
+					LineHeight="12"
 					LineStackingStrategy="BlockLineHeight"
 					PointerWheelChanged="ContentViewer_PointerWheelChanged"
 					ManipulationDelta="ContentRichTextBlock_ManipulationDelta">
-					<Paragraph LineHeight="16">
+					<Paragraph LineHeight="12">
 						<Run Text="{x:Bind ViewModel.Content.Value, Mode=OneWay}" />
 					</Paragraph>
 				</RichTextBlock>
@@ -115,7 +115,6 @@
 				<TextBlock Text=">"/>
 			</Button>
 			<ScrollViewer x:Name="VirtualScrollViewer"
-				Height="{x:Bind ViewModel.ViewerHeight.Value, Mode=OneWay, Converter={StaticResource LongToDoubleConverter}}"
 				Grid.Column="3"
 				VerticalScrollBarVisibility="Visible"
 				HorizontalScrollBarVisibility="Disabled"
@@ -123,15 +122,15 @@
 				Padding="0"
 				IsTabStop="False"
 				ViewChanged="VirtualScrollViewer_ViewChanged">
-				<Grid x:Name="Kari" Height="{x:Bind ViewModel.TotalHeight.Value, Mode=OneWay,Converter={StaticResource LongToDoubleConverter}}" />
+				<Grid x:Name="Kari"/>
 			</ScrollViewer>
 		</Grid>
 		<controls:GridSplitter Grid.Row="2"
-                               VerticalAlignment="Top"
-						   ResizeDirection="Rows"
-						   ResizeBehavior="PreviousAndNext"
-						   HorizontalAlignment="Stretch"
-						   Margin="0,5,0,0">
+			VerticalAlignment="Top"
+			ResizeDirection="Rows"
+			ResizeBehavior="PreviousAndNext"
+			HorizontalAlignment="Stretch"
+			Margin="0,5,0,0">
 			<controls:GridSplitter.RenderTransform>
 				<TranslateTransform Y="-7" />
 			</controls:GridSplitter.RenderTransform>
@@ -159,11 +158,11 @@
 						<ItemsRepeater ItemsSource="{x:Bind ViewModel.GrepResults}">
 							<ItemsRepeater.ItemTemplate>
 								<DataTemplate x:DataType="models:TextLine">
-									<Grid ColumnDefinitions="Auto,*" MinHeight="16">
+									<Grid ColumnDefinitions="Auto,*" MinHeight="12">
 										<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}">
-											<HyperlinkButton Content="{x:Bind LineNumber}" Click="GrepResultLineButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
+											<HyperlinkButton Content="{x:Bind LineNumber}" FontSize="12"  Click="GrepResultLineButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
 										</Border>
-										<TextBlock Grid.Column="1" Text="{x:Bind Content}" IsTextSelectionEnabled="True" FontFamily="Consolas"/>
+										<TextBlock Grid.Column="1" Text="{x:Bind Content}" FontSize="12"  IsTextSelectionEnabled="True" FontFamily="Consolas"/>
 									</Grid>
 								</DataTemplate>
 							</ItemsRepeater.ItemTemplate>
@@ -177,9 +176,9 @@
 						 VerticalScrollBarVisibility="Auto"
 						 HorizontalScrollBarVisibility="Disabled"
 						 VerticalAlignment="Stretch">
-						<Grid ColumnDefinitions="Auto,*" MinHeight="16" VerticalAlignment="Stretch">
+						<Grid ColumnDefinitions="Auto,*" MinHeight="12" VerticalAlignment="Stretch">
 							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{x:Bind ViewModel.LineNumberColumnWidth.Value, Mode=OneWay}">
-								<TextBlock Text="{x:Bind ViewModel.PickedupTextLine.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+								<TextBlock Text="{x:Bind ViewModel.PickedupTextLine.Value.LineNumber,Mode=OneWay}" IsTextSelectionEnabled="True" FontFamily="Consolas" Foreground="Gray" FontSize="12"  HorizontalAlignment="Right"/>
 							</Border>
 							<RichTextBlock
 								Grid.Column="1"
@@ -187,9 +186,9 @@
 								FontFamily="Consolas"
 								IsTextSelectionEnabled="True"
 								TextWrapping="Wrap"
-								LineHeight="16"
+								LineHeight="12"
 								LineStackingStrategy="BlockLineHeight">
-								<Paragraph LineHeight="16">
+								<Paragraph LineHeight="12">
 									<Run Text="{x:Bind ViewModel.PickedupTextLine.Value.Content, Mode=OneWay}" />
 								</Paragraph>
 							</RichTextBlock>

@@ -15,18 +15,17 @@
 		<Border Background="#EEE" DockPanel.Dock="Top" Padding="8">
 			<DockPanel>
 				<TextBlock Text="RemoteLogViewer"
-                           FontSize="16"
-                           FontWeight="Bold"
-                           VerticalAlignment="Center" />
+					FontSize="16"
+					FontWeight="Bold"
+					VerticalAlignment="Center" />
 
 				<StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Right"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Right"
-                            Margin="8,0,0,0">
+					DockPanel.Dock="Right"
+					VerticalAlignment="Center"
+					HorizontalAlignment="Right"
+					Margin="8,0,0,0">
 					<Button Click="OpenSettings_Click" Content="⚙" Margin="0,0,4,0"/>
 					<Button Click="InfoButton_Click" Content="ℹ"/>
-
 					<Button Content="Add" Command="{Binding AddTabCommand}"/>
 					<Button x:Name="TabCloseButton" Content="Close" Click="TabCloseButton_Click"/>
 				</StackPanel>
@@ -36,14 +35,12 @@
 			ItemsSource="{Binding Tabs}"
 			SelectedItem="{Binding SelectedTab.Value}">
 			<TabControl.ItemTemplate>
-				<!-- Tab Header -->
 				<DataTemplate>
 					<TextBlock Text="{Binding Title.Value}" />
 				</DataTemplate>
 			</TabControl.ItemTemplate>
 
 			<TabControl.ContentTemplate>
-				<!-- Tab Body -->
 				<DataTemplate DataType="{x:Type vm:LogViewerViewModel}">
 					<views:LogViewerControl />
 				</DataTemplate>

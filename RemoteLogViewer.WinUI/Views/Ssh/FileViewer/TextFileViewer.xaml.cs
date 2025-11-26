@@ -1,18 +1,22 @@
 using System.Collections.Concurrent;
 using System.IO;
-using Windows.Storage.Pickers;
-using Windows.UI;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+
 using RemoteLogViewer.Core.Services.Viewer;
-using RemoteLogViewer.Core.Utils.Extensions;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 using RemoteLogViewer.WinUI.Utils;
+
+using Windows.Storage.Pickers;
+using Windows.UI;
+
 using WinRT.Interop;
+
 using TextRange = Microsoft.UI.Xaml.Documents.TextRange;
 
 namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
@@ -45,15 +49,19 @@ public sealed partial class TextFileViewer {
 			if (field == null) {
 				return;
 			}
-			field.WindowStartLine.Subscribe(x => {
+			_ = field.WindowStartLine.Subscribe(x => {
 				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
 			});
-			field.Content.AsObservable().Subscribe(content => {
+			_ = field.Content.AsObservable().Subscribe(content => {
 				this.SetHilight(this.ContentRichTextBlock, content);
 			});
-			field.PickedupTextLine.AsObservable().Where(tl => tl != null).Subscribe(tl => {
+			_ = field.PickedupTextLine.AsObservable().Where(tl => tl != null).Subscribe(tl => {
 				this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
 			});
+			_ = field.TotalLines.AsObservable().Subscribe(tl => {
+				this.Kari.Height = tl * LineHeight;
+			});
+
 		}
 	}
 
@@ -73,7 +81,7 @@ public sealed partial class TextFileViewer {
 	}
 
 
-	private const long LineHeight = 16;
+	private const long LineHeight = 12;
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this.InitializeComponent();

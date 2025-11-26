@@ -11,6 +11,7 @@ using Microsoft.Win32;
 
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
+using RemoteLogViewer.WPF.Utils;
 
 namespace RemoteLogViewer.WPF.Views.Ssh.FileViewer;
 
@@ -26,6 +27,7 @@ public sealed partial class TextFileViewer {
 	private readonly HighlightService _highlightService;
 	private readonly SolidColorBrush _transparentColorBrush = new(Color.FromArgb(0, 0, 0, 0));
 	private readonly ConcurrentDictionary<Color, SolidColorBrush> _brushCache = [];
+	private double _lineHeight = 14.05;
 	private SolidColorBrush GetBrush(Color c) {
 		if (this._brushCache.TryGetValue(c, out var b)) {
 			return b;
@@ -43,7 +45,7 @@ public sealed partial class TextFileViewer {
 				return;
 			}
 			_ = field.WindowStartLine.Subscribe(x => {
-				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
+				this.VirtualScrollViewer.ScrollToVerticalOffset(x * this._lineHeight);
 			});
 			_ = field.Content.AsObservable().Subscribe(content => {
 				this.SetHilight(this.ContentRichTextBlock, content);
@@ -51,26 +53,60 @@ public sealed partial class TextFileViewer {
 			_ = field.PickedupTextLine.AsObservable().Where(tl => tl != null).Subscribe(tl => {
 				this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
 			});
+			_ = field.TotalLines.AsObservable().Subscribe(tl => {
+				this.Kari.Height = tl * this._lineHeight;
+			});
+			_ = field.VisibleLineCount.AsObservable().Subscribe(vlc => {
+				this.VirtualScrollViewer.Height = vlc * this._lineHeight;
+			});
 		}
 	}
 
 	private void SetHilight(RichTextBox richTextBlock, string content) {
-		/*	richTextBlock.TextHighlighters.Clear();
-			var hss = this._highlightService.ComputeHighlightSpans(content);
-			foreach (var hs in hss) {
-				var th = new TextHighlighter() {
-					Foreground = hs.Style.ForeColor is { } fore ? this.GetBrush(fore.ToColor()) : null,
-					Background = hs.Style.BackColor is { } back ? this.GetBrush(back.ToColor()) : this._transparentColorBrush
-				};
-				foreach (var range in hs.Ranges) {
-					th.Ranges.Add(new TextRange(range.StartIndex, range.Length));
+		var paragraph = new Paragraph();
+		paragraph.Inlines.Clear();
+
+		var highlights = this._highlightService.ComputeHighlightSpans(content);
+
+		var index = 0;
+
+		foreach (var hs in highlights) {
+			foreach (var range in hs.Ranges) {
+				// ハイライト前の通常テキスト
+				if (range.StartIndex > index) {
+					var normal = content.Substring(index, range.StartIndex - index);
+					paragraph.Inlines.Add(new Run(normal));
 				}
-				richTextBlock.TextHighlighters.Add(th);
-			}*/
+
+				// ハイライト部分
+				var highlightText = content.Substring(range.StartIndex, range.Length);
+				var run = new Run(highlightText);
+
+				if (hs.Style.ForeColor is { } fore) {
+					run.Foreground = this.GetBrush(fore.ToColor());
+				}
+
+				if (hs.Style.BackColor is { } back) {
+					run.Background = this.GetBrush(back.ToColor());
+				}
+
+				paragraph.Inlines.Add(run);
+
+				index = range.StartIndex + range.Length;
+			}
+		}
+
+		// 残り
+		if (index < content.Length) {
+			var tail = content[index..];
+			paragraph.Inlines.Add(new Run(tail));
+		}
+
+		richTextBlock.Document.Blocks.Clear();
+		richTextBlock.Document.Blocks.Add(paragraph);
 	}
 
 
-	private const long LineHeight = 16;
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this.InitializeComponent();
@@ -81,12 +117,19 @@ public sealed partial class TextFileViewer {
 		};
 	}
 
+	private void TextBlock_SizeChanged(object sender, SizeChangedEventArgs e) {
+		if (this._lineHeight == e.NewSize.Height) {
+			return;
+		}
+		this._lineHeight = e.NewSize.Height;
+	}
+
 	private void ContentViewer_SizeChanged(object sender, SizeChangedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
 		this.logger.LogTrace($"ContentViewer_SizeChanged: {e.NewSize.Height}");
-		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / LineHeight) - 1);
+		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / this._lineHeight));
 		this.ViewModel.VisibleLineCount.Value = visibleLines;
 	}
 
@@ -95,7 +138,7 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		this.logger.LogTrace($"VirtualScrollViewer_ViewChanged: {this.VirtualScrollViewer.VerticalOffset}");
-		this.ViewModel.JumpToLineCommand.Execute((long)this.VirtualScrollViewer.VerticalOffset / LineHeight);
+		this.ViewModel.JumpToLineCommand.Execute((long)Math.Ceiling(this.VirtualScrollViewer.VerticalOffset / this._lineHeight));
 	}
 
 	private void ContentViewer_MouseWheel(object sender, MouseWheelEventArgs e) {

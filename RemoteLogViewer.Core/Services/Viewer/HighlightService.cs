@@ -156,7 +156,7 @@ public class HighlightService {
 			// 残り行
 			foreach (var previousLineStyle in lineStyles.Where(st.IsTargetPredicate).Where(ls => ls.End > cursor)) {
 				var start = Math.Max(cursor + 1, previousLineStyle.Start);
-				var length = previousLineStyle.End - start + 1;
+				var length = previousLineStyle.End - start;
 				var rs = new RangeStyle() {
 					Range = new TextRange(start, length),
 				};

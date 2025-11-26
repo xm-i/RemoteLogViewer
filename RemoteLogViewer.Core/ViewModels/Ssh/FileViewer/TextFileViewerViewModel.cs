@@ -19,7 +19,7 @@ namespace RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 [Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly TextFileViewerModel _textFileViewerModel;
-	private const long LineHeight = 16;
+	private const long LineHeight = 12;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
@@ -64,8 +64,6 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this.IsShowingTruncatedText.Value = true;
 		}).AddTo(this.CompositeDisposable);
 		this.LineNumbers = this._textFileViewerModel.LineNumbers.ToReadOnlyBindableReactiveProperty([]).AddTo(this.CompositeDisposable);
-		this.TotalHeight = this._textFileViewerModel.TotalLines.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.ViewerHeight = this.VisibleLineCount.Select(x => x * LineHeight).ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.IsGrepRunning = this._textFileViewerModel.GrepOperation.IsRunning.ToReadOnlyBindableReactiveProperty(false)
@@ -195,16 +193,6 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 
 	/// <summary>総行数。</summary>
 	public IReadOnlyBindableReactiveProperty<long> TotalLines {
-		get;
-	}
-
-	/// <summary>総高さ。(px)</summary>
-	public IReadOnlyBindableReactiveProperty<long> TotalHeight {
-		get;
-	}
-
-	/// <summary>ビュワー高さ。(px)</summary>
-	public IReadOnlyBindableReactiveProperty<long> ViewerHeight {
 		get;
 	}
 
