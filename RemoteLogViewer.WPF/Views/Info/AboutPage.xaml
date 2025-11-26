@@ -1,0 +1,25 @@
+<UserControl
+    x:Class="RemoteLogViewer.WPF.Views.Info.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:RemoteLogViewer.WPF.Views.Info"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="16">
+                <TextBlock Text="{Binding AppName}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Version}" FontSize="16" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
+                <TextBlock Text="Repository:" FontWeight="SemiBold"/>
+				<TextBlock>
+					<Hyperlink>
+						<TextBlock Text="{Binding Repository}"  TextWrapping="Wrap"/>
+					</Hyperlink>
+				</TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -1,25 +1,19 @@
 using System.Collections.Concurrent;
 using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
+using Microsoft.Win32;
 
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
-using RemoteLogViewer.WinUI.Utils;
+using RemoteLogViewer.WPF.Utils;
 
-using Windows.Storage.Pickers;
-using Windows.UI;
-
-using WinRT.Interop;
-
-using TextRange = Microsoft.UI.Xaml.Documents.TextRange;
-
-namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
+namespace RemoteLogViewer.WPF.Views.Ssh.FileViewer;
 
 /// <summary>
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
@@ -27,12 +21,13 @@ namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 public sealed partial class TextFileViewer {
 	private ILogger<TextFileViewer> logger {
 		get {
-			return field ??= WinUI.App.LoggerFactory.CreateLogger<TextFileViewer>();
+			return field ??= App.LoggerFactory.CreateLogger<TextFileViewer>();
 		}
 	}
 	private readonly HighlightService _highlightService;
 	private readonly SolidColorBrush _transparentColorBrush = new(Color.FromArgb(0, 0, 0, 0));
 	private readonly ConcurrentDictionary<Color, SolidColorBrush> _brushCache = [];
+	private double _lineHeight = 14.05;
 	private SolidColorBrush GetBrush(Color c) {
 		if (this._brushCache.TryGetValue(c, out var b)) {
 			return b;
@@ -50,7 +45,7 @@ public sealed partial class TextFileViewer {
 				return;
 			}
 			_ = field.WindowStartLine.Subscribe(x => {
-				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
+				this.VirtualScrollViewer.ScrollToVerticalOffset(x * this._lineHeight);
 			});
 			_ = field.Content.AsObservable().Subscribe(content => {
 				this.SetHilight(this.ContentRichTextBlock, content);
@@ -59,32 +54,74 @@ public sealed partial class TextFileViewer {
 				this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
 			});
 			_ = field.TotalLines.AsObservable().Subscribe(tl => {
-				this.Kari.Height = tl * LineHeight;
+				this.Kari.Height = tl * this._lineHeight;
 			});
-
+			_ = field.VisibleLineCount.AsObservable().Subscribe(vlc => {
+				this.VirtualScrollViewer.Height = vlc * this._lineHeight;
+			});
 		}
 	}
 
-	private void SetHilight(RichTextBlock richTextBlock, string content) {
-		richTextBlock.TextHighlighters.Clear();
-		var hss = this._highlightService.ComputeHighlightSpans(content);
-		foreach (var hs in hss) {
-			var th = new TextHighlighter() {
-				Foreground = hs.Style.ForeColor is { } fore ? this.GetBrush(fore.ToColor()) : null,
-				Background = hs.Style.BackColor is { } back ? this.GetBrush(back.ToColor()) : this._transparentColorBrush
-			};
+	private void SetHilight(RichTextBox richTextBlock, string content) {
+		var paragraph = new Paragraph();
+		paragraph.Inlines.Clear();
+
+		var highlights = this._highlightService.ComputeHighlightSpans(content);
+
+		var index = 0;
+
+		foreach (var hs in highlights) {
 			foreach (var range in hs.Ranges) {
-				th.Ranges.Add(new TextRange(range.StartIndex, range.Length));
+				// ハイライト前の通常テキスト
+				if (range.StartIndex > index) {
+					var normal = content.Substring(index, range.StartIndex - index);
+					paragraph.Inlines.Add(new Run(normal));
+				}
+
+				// ハイライト部分
+				var highlightText = content.Substring(range.StartIndex, range.Length);
+				var run = new Run(highlightText);
+
+				if (hs.Style.ForeColor is { } fore) {
+					run.Foreground = this.GetBrush(fore.ToColor());
+				}
+
+				if (hs.Style.BackColor is { } back) {
+					run.Background = this.GetBrush(back.ToColor());
+				}
+
+				paragraph.Inlines.Add(run);
+
+				index = range.StartIndex + range.Length;
 			}
-			richTextBlock.TextHighlighters.Add(th);
 		}
+
+		// 残り
+		if (index < content.Length) {
+			var tail = content[index..];
+			paragraph.Inlines.Add(new Run(tail));
+		}
+
+		richTextBlock.Document.Blocks.Clear();
+		richTextBlock.Document.Blocks.Add(paragraph);
 	}
 
 
-	private const long LineHeight = 12;
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this.InitializeComponent();
+		this.DataContextChanged += (_, _2) => {
+			if (this.DataContext is TextFileViewerViewModel vm) {
+				this.ViewModel = vm;
+			}
+		};
+	}
+
+	private void TextBlock_SizeChanged(object sender, SizeChangedEventArgs e) {
+		if (this._lineHeight == e.NewSize.Height) {
+			return;
+		}
+		this._lineHeight = e.NewSize.Height;
 	}
 
 	private void ContentViewer_SizeChanged(object sender, SizeChangedEventArgs e) {
@@ -92,38 +129,27 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		this.logger.LogTrace($"ContentViewer_SizeChanged: {e.NewSize.Height}");
-		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / LineHeight) - 1);
+		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / this._lineHeight));
 		this.ViewModel.VisibleLineCount.Value = visibleLines;
 	}
 
-	private void VirtualScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e) {
+	private void VirtualScrollViewer_ViewChanged(object sender, ScrollChangedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
-		if (e.IsIntermediate) {
-			// スクロール中は無視
-			return;
-		}
 		this.logger.LogTrace($"VirtualScrollViewer_ViewChanged: {this.VirtualScrollViewer.VerticalOffset}");
-		this.ViewModel.JumpToLineCommand.Execute((long)this.VirtualScrollViewer.VerticalOffset / LineHeight);
+		this.ViewModel.JumpToLineCommand.Execute((long)Math.Ceiling(this.VirtualScrollViewer.VerticalOffset / this._lineHeight));
 	}
 
-	private void ContentViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
-		var properties = e.GetCurrentPoint(this.ContentViewer).Properties;
-		if (properties.IsHorizontalMouseWheel) {
-			return;
-		}
-		this.logger.LogTrace($"ContentViewer_PointerWheelChanged: {properties.MouseWheelDelta}");
-		this.ScrollContent(properties.MouseWheelDelta);
+	private void ContentViewer_MouseWheel(object sender, MouseWheelEventArgs e) {
+		this.logger.LogTrace($"ContentViewer_PointerWheelChanged: {e.Delta}");
+		this.ScrollContent(e.Delta);
 
 		e.Handled = true;
 	}
-	private void ContentRichTextBlock_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
-		if (e.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) {
-			return;
-		}
-		this.logger.LogTrace($"ContentRichTextBlock_ManipulationDelta: {e.Delta.Translation.Y}");
-		this.ScrollContent((int)Math.Floor(e.Delta.Translation.Y));
+	private void ContentRichTextBlock_ManipulationDelta(object sender, ManipulationDeltaEventArgs e) {
+		this.logger.LogTrace($"ContentRichTextBlock_ManipulationDelta: {e.DeltaManipulation.Translation.Y}");
+		this.ScrollContent((int)Math.Floor(e.DeltaManipulation.Translation.Y));
 		e.Handled = true;
 	}
 
@@ -142,7 +168,7 @@ public sealed partial class TextFileViewer {
 		if (this.ViewModel == null) {
 			return;
 		}
-		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
+		if (sender is Hyperlink btn && long.TryParse(btn?.ToString(), out var line)) {
 			this.ViewModel.JumpToLineCommand.Execute(line);
 		}
 	}
@@ -160,16 +186,14 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		try {
-			var picker = new FileSavePicker();
-			var hwnd = WindowNative.GetWindowHandle(WinUI.App.MainWindow);
-			InitializeWithWindow.Initialize(picker, hwnd);
-			picker.FileTypeChoices.Add("Text", [".txt"]);
-			picker.SuggestedFileName = $"lines_{start}_{end}";
-			var file = await picker.PickSaveFileAsync();
-			if (file == null) {
+			var sfd = new SaveFileDialog {
+				Filter = ".txt|*.*",
+				FileName = $"lines_{start}_{end}"
+			};
+			if (!(sfd.ShowDialog() ?? false)) {
 				return;
 			}
-			using var stream = await file.OpenStreamForWriteAsync();
+			using var stream = File.OpenWrite(sfd.FileName);
 			using var writer = new StreamWriter(stream);
 			await this.ViewModel.SaveRangeContent(writer, start, end);
 		} catch {
@@ -177,17 +201,17 @@ public sealed partial class TextFileViewer {
 		}
 	}
 
-	private void HyperlinkButton_Click(object sender, RoutedEventArgs e) {
+	private void LineNumber_Click(object sender, MouseButtonEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
-		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
+		if (sender is Hyperlink btn && long.TryParse(btn?.ToString(), out var line)) {
 			this.ViewModel.PickupTextLineCommand.Execute(line);
-			this.BottomTabView.SelectedItem = this.SelectedLineView;
+			this.BottomTabControl.SelectedItem = this.SelectedLineView;
 		}
 	}
 
-	private void AutoSuggestBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) {
+	private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
 		}
@@ -195,33 +219,32 @@ public sealed partial class TextFileViewer {
 
 	}
 
-	private void ContentRichTextBlock_KeyDown(object sender, KeyRoutedEventArgs e) {
+	private void ContentRichTextBlock_KeyDown(object sender, KeyEventArgs e) {
 		switch (e.Key) {
-			case Windows.System.VirtualKey.Down:
+			case Key.Down:
 				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + 1);
 				e.Handled = true;
 				break;
-			case Windows.System.VirtualKey.Up:
+			case Key.Up:
 				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value - 1);
 				e.Handled = true;
 				break;
-			case Windows.System.VirtualKey.PageDown:
+			case Key.PageDown:
 				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + this.ViewModel.VisibleLineCount.Value);
 				e.Handled = true;
 				break;
-			case Windows.System.VirtualKey.PageUp:
+			case Key.PageUp:
 				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value - this.ViewModel.VisibleLineCount.Value);
 				e.Handled = true;
 				break;
-			case Windows.System.VirtualKey.Home:
+			case Key.Home:
 				this.ViewModel?.JumpToLineCommand.Execute(1);
 				e.Handled = true;
 				break;
-			case Windows.System.VirtualKey.End:
+			case Key.End:
 				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.TotalLines.Value - this.ViewModel.VisibleLineCount.Value + 1);
 				e.Handled = true;
 				break;
 		}
 	}
-
 }

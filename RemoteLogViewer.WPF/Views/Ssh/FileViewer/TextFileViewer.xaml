@@ -1,0 +1,222 @@
+<UserControl
+	x:Class="RemoteLogViewer.WPF.Views.Ssh.FileViewer.TextFileViewer"
+	x:Name="Root"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:RemoteLogViewer.WPF.Views.Ssh.FileViewer"
+	xmlns:models="clr-namespace:RemoteLogViewer.Core.Models.Ssh.FileViewer;assembly=RemoteLogViewer.Core"
+	xmlns:ui="http://schemas.lepo.co/wpfui/2022">
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="2*" MinHeight="100"/>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*" MinHeight="100"/>
+		</Grid.RowDefinitions>
+
+		<StackPanel Orientation="Horizontal" Margin="4" VerticalAlignment="Center">
+
+			<TextBlock Width="180" FontSize="14" TextWrapping="Wrap">
+				<Run Text="{Binding OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold"/>
+				<Run Text=" ("/>
+				<Run Text="{Binding TotalBytes.Value, Mode=OneWay}"/>
+				<Run Text=" )"/>
+			</TextBlock>
+
+			<Separator Margin="8,0"/>
+
+			<StackPanel>
+				<TextBlock FontSize="12" Text="Encoding"/>
+				<ComboBox Width="160"
+					SelectionChanged="ComboBox_SelectionChanged"
+					ItemsSource="{Binding AvailableEncodings}"
+					SelectedItem="{Binding SelectedEncoding.Value, Mode=TwoWay}"/>
+			</StackPanel>
+
+			<Separator Margin="8,0"/>
+
+			<!-- Tail Start/Stop -->
+			<Button Content="Tail Start"
+				Command="{Binding TailStartCommand}"
+				Visibility="{Binding IsTailRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+			<Button Content="Tail Stop"
+				Command="{Binding TailStopCommand}"
+				Visibility="{Binding IsTailRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+			<Separator Margin="8,0"/>
+
+			<!-- Download Range -->
+			<StackPanel MinWidth="180">
+				<TextBlock FontSize="12" Text="Download Selected Range"/>
+				<StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+					<TextBox x:Name="StartLineBox" Width="80" />
+					<TextBox x:Name="EndLineBox" Width="80" Margin="4,0"/>
+					<Button Content="Save"
+						Click="SaveRangeButton_Click"
+						Visibility="{Binding IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+					<Button Content="Cancel"
+						Command="{Binding SaveRangeContentCancelCommand}"
+						Visibility="{Binding IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+				</StackPanel>
+				<ProgressBar Height="14"
+					Minimum="0" Maximum="1"
+					Value="{Binding SaveRangeProgress.Value, Mode=OneWay}"/>
+			</StackPanel>
+
+			<Separator Margin="8,0"/>
+
+			<!-- File Information -->
+			<StackPanel MinWidth="150">
+				<TextBlock FontSize="12" Text="File Information"/>
+				<TextBlock>
+					<Run Text="{Binding WindowStartLine.Value, Mode=OneWay}"/>
+					<Run Text=" - ("/>
+					<Run Text="{Binding VisibleLineCount.Value, Mode=OneWay}"/>
+					<Run Text=") / "/>
+					<Run Text="{Binding TotalLines.Value, Mode=OneWay}"/>
+				</TextBlock>
+				<ProgressBar Height="14"
+					Minimum="0" Maximum="1"
+					Value="{Binding FileLoadProgress.Value, Mode=OneWay}"/>
+			</StackPanel>
+
+		</StackPanel>
+
+		<Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto">
+			<ScrollViewer VerticalScrollBarVisibility="Hidden">
+				<ItemsControl ItemsSource="{Binding LineNumbers.Value, Mode=OneWay}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<VirtualizingStackPanel/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0"
+								Width="{Binding DataContext.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}">
+								<TextBlock Text="{Binding Mode=OneWay}"
+									SizeChanged="TextBlock_SizeChanged"
+									FontSize="12"
+									FontFamily="Consolas"
+									HorizontalAlignment="Right"
+									MouseLeftButtonDown="LineNumber_Click"/>
+							</Border>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+
+			<ScrollViewer x:Name="ContentViewer"
+				Grid.Column="1"
+				VerticalScrollBarVisibility="Hidden"
+				SizeChanged="ContentViewer_SizeChanged"
+				MouseWheel="ContentViewer_MouseWheel">
+				<RichTextBox x:Name="ContentRichTextBlock"
+					IsReadOnly="True"
+					KeyDown="ContentRichTextBlock_KeyDown"
+					FontFamily="Consolas"
+					FlowDirection="LeftToRight"
+					MouseWheel="ContentViewer_MouseWheel"
+					ManipulationDelta="ContentRichTextBlock_ManipulationDelta">
+					<FlowDocument FontSize="12"/>
+				</RichTextBox>
+			</ScrollViewer>
+
+			<Button Grid.Column="2"
+				Background="LightPink"
+				VerticalAlignment="Stretch"
+				Command="{Binding ShowMoreCommand}"
+				Visibility="{Binding IsTruncated.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+				<Button.ToolTip>
+					<TextBlock TextWrapping="Wrap">
+						<Run Text="Show more ("/>
+						<Run Text="{Binding TruncatedCharacterCount.Value, Mode=OneWay}"/>
+						<Run Text=" letters)"/>
+					</TextBlock>
+				</Button.ToolTip>
+				<TextBlock Text=">"/>
+			</Button>
+
+			<ScrollViewer x:Name="VirtualScrollViewer"
+				Grid.Column="3"
+				VerticalScrollBarVisibility="Visible"
+				HorizontalScrollBarVisibility="Disabled"
+				Background="Transparent"
+				Padding="0"
+				IsTabStop="False"
+				ScrollChanged="VirtualScrollViewer_ViewChanged">
+				<Grid x:Name="Kari"/>
+			</ScrollViewer>
+		</Grid>
+
+		<GridSplitter Grid.Row="2"
+			VerticalAlignment="Top"
+			ResizeDirection="Rows"
+			HorizontalAlignment="Stretch"
+			ResizeBehavior="PreviousAndNext"
+			Height="8" Margin="0,5,0,0" />
+
+		<TabControl Grid.Row="3" x:Name="BottomTabControl">
+			<TabItem Header="Grep">
+				<Grid RowDefinitions="Auto,*">
+					<StackPanel Orientation="Horizontal" >
+						<TextBox Width="260" Text="{Binding GrepQuery.Value, Mode=TwoWay}"/>
+						<TextBox Width="80" Text="{Binding GrepStartLine.Value, Mode=TwoWay}"/>
+						<Button Content="Search" Command="{Binding GrepCommand}" Visibility="{Binding IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+						<Button Content="Cancel" Command="{Binding GrepCancelCommand}" Visibility="{Binding IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+						<ProgressBar Width="120" Height="14" Minimum="0" Maximum="1" Value="{Binding GrepProgress.Value, Mode=OneWay}" Visibility="{Binding IsGrepRunning.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+						<TextBlock VerticalAlignment="Center">
+							<Run Text="結果:"/>
+							<Run Text="{Binding GrepResults.Count, Mode=OneWay}"/>
+						</TextBlock>
+					</StackPanel>
+					<ScrollViewer
+						Grid.Row="1"
+						VerticalScrollBarVisibility="Auto"
+						Padding="0,8"
+						HorizontalScrollBarVisibility="Auto">
+						<ItemsControl ItemsSource="{Binding GrepResults, Mode=OneWay}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate DataType="models:TextLine">
+									<Grid ColumnDefinitions="Auto,*" MinHeight="12">
+										<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding DataContext.LineNumberColumnWidth.Value, Mode=OneWay, ElementName=Root}">
+											<TextBlock>
+												<Hyperlink Click="GrepResultLineButton_Click">
+													<TextBlock Text="{Binding LineNumber, Mode=OneWay}" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
+												</Hyperlink>
+											</TextBlock>
+										</Border>
+										<TextBox Grid.Column="1" Text="{Binding Content, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" FontFamily="Consolas"/>
+									</Grid>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</ScrollViewer>
+				</Grid>
+			</TabItem>
+			<TabItem x:Name="SelectedLineView" Header="選択行表示">
+				<Grid VerticalAlignment="Stretch">
+					<ScrollViewer
+						 VerticalScrollBarVisibility="Auto"
+						 HorizontalScrollBarVisibility="Disabled"
+						 VerticalAlignment="Stretch">
+						<Grid ColumnDefinitions="Auto,*" MinHeight="12" VerticalAlignment="Stretch">
+							<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding DataContext.LineNumberColumnWidth.Value, Mode=OneWay, ElementName=Root}">
+								<TextBlock Text="{Binding PickedupTextLine.Value.LineNumber,Mode=OneWay}" FontFamily="Consolas" Foreground="Gray" HorizontalAlignment="Right"/>
+							</Border>
+							<RichTextBox
+								IsReadOnly="True"
+								Grid.Column="1"
+								x:Name="PickedupRichTextBlock"
+								FontFamily="Consolas">
+								<FlowDocument/>
+							</RichTextBox>
+						</Grid>
+					</ScrollViewer>
+				</Grid>
+			</TabItem>
+		</TabControl>
+
+	</Grid>
+</UserControl>
