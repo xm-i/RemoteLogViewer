@@ -47,86 +47,16 @@
 			<Grid RowDefinitions="*,Auto,Auto" MinWidth="150">
 				<TextBlock FontSize="12" Text="File Information"/>
 				<TextBlock Grid.Row="1" FontSize="14">
-					<Run Text="{x:Bind ViewModel.WindowStartLine.Value, Mode=OneWay}"/>
-					<Run Text=" - ("/>
-					<Run Text="{x:Bind ViewModel.VisibleLineCount.Value, Mode=OneWay}"/>
-					<Run Text=") / "/>
 					<Run Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
 				</TextBlock>
 				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
 			</Grid>
 		</StackPanel>
 
-		<Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="Auto,*,Auto,Auto">
-			<ScrollViewer x:Name="LineViewer"
-				VerticalScrollBarVisibility="Hidden"
-				HorizontalScrollBarVisibility="Hidden"
-				Padding="0,8"
-				PointerWheelChanged="ContentViewer_PointerWheelChanged">
-				<ItemsRepeater ItemsSource="{x:Bind ViewModel.LineNumbers.Value, Mode=OneWay}"
-					PointerWheelChanged="ContentViewer_PointerWheelChanged">
-					<ItemsRepeater.ItemTemplate>
-						<DataTemplate x:DataType="sys:Int64">
-							<Grid Height="12">
-								<Border Background="#0D000000" Padding="4,0" Margin="0,0,4,0" Width="{Binding ViewModel.LineNumberColumnWidth.Value, ElementName=Root, Mode=OneWay}" >
-									<HyperlinkButton Content="{x:Bind }" FontSize="12" Click="HyperlinkButton_Click" Padding="0" MinWidth="0" HorizontalAlignment="Right" FontFamily="Consolas"/>
-								</Border>
-							</Grid>
-						</DataTemplate>
-					</ItemsRepeater.ItemTemplate>
-				</ItemsRepeater>
-			</ScrollViewer>
-			<ScrollViewer x:Name="ContentViewer"
-				Grid.Column="1"
-				VerticalScrollBarVisibility="Hidden"
-				HorizontalScrollBarVisibility="Auto"
-				Padding="0,8"
-				SizeChanged="ContentViewer_SizeChanged"
-				PointerWheelChanged="ContentViewer_PointerWheelChanged">
-				<RichTextBlock x:Name="ContentRichTextBlock"
-					ManipulationMode="TranslateRailsY"
-					KeyDown="ContentRichTextBlock_KeyDown"
-					FontFamily="Consolas"
-					IsTextSelectionEnabled="True"
-					TextWrapping="NoWrap"
-					FlowDirection="LeftToRight"
-					LineHeight="12"
-					LineStackingStrategy="BlockLineHeight"
-					PointerWheelChanged="ContentViewer_PointerWheelChanged"
-					ManipulationDelta="ContentRichTextBlock_ManipulationDelta">
-					<Paragraph LineHeight="12">
-						<Run Text="{x:Bind ViewModel.Content.Value, Mode=OneWay}" />
-					</Paragraph>
-				</RichTextBlock>
-			</ScrollViewer>
-			<Button
-				Grid.Column="2"
-				Visibility="{x:Bind ViewModel.IsTruncated.Value,Mode=OneWay}"
-				VerticalAlignment="Stretch"
-				Background="LightPink"
-				Command="{x:Bind ViewModel.ShowMoreCommand}">
-				<ToolTipService.ToolTip>
-					<TextBlock TextWrapping="Wrap">
-						<Run Text="Show more ("/>
-							<Run Text="{x:Bind ViewModel.TruncatedCharacterCount.Value,Mode=OneWay}"/>
-						<Run Text=" letters)"/>
-					</TextBlock>
-				</ToolTipService.ToolTip>
-				<TextBlock Text=">"/>
-			</Button>
-			<ScrollViewer x:Name="VirtualScrollViewer"
-				Grid.Column="3"
-				VerticalScrollBarVisibility="Visible"
-				HorizontalScrollBarVisibility="Disabled"
-				Background="Transparent"
-				Padding="0"
-				IsTabStop="False"
-				ViewChanged="VirtualScrollViewer_ViewChanged">
-				<Grid x:Name="Kari"/>
-			</ScrollViewer>
-		</Grid>
+		<WebView2 x:Name="ContentWebViewer" Grid.Row="1"/>
+		
 		<controls:GridSplitter Grid.Row="2"
-			VerticalAlignment="Top"
+			VerticalAlignment="Stretch"
 			ResizeDirection="Rows"
 			ResizeBehavior="PreviousAndNext"
 			HorizontalAlignment="Stretch"

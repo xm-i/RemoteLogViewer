@@ -1,23 +1,19 @@
-using System.Collections.Concurrent;
 using System.IO;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
+using Microsoft.Web.WebView2.Core;
 
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
-using RemoteLogViewer.WinUI.Utils;
 
 using Windows.Storage.Pickers;
-using Windows.UI;
 
 using WinRT.Interop;
-
-using TextRange = Microsoft.UI.Xaml.Documents.TextRange;
 
 namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 
@@ -25,22 +21,13 @@ namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
 /// </summary>
 public sealed partial class TextFileViewer {
+
 	private ILogger<TextFileViewer> logger {
 		get {
-			return field ??= WinUI.App.LoggerFactory.CreateLogger<TextFileViewer>();
+			return field ??= App.LoggerFactory.CreateLogger<TextFileViewer>();
 		}
 	}
 	private readonly HighlightService _highlightService;
-	private readonly SolidColorBrush _transparentColorBrush = new(Color.FromArgb(0, 0, 0, 0));
-	private readonly ConcurrentDictionary<Color, SolidColorBrush> _brushCache = [];
-	private SolidColorBrush GetBrush(Color c) {
-		if (this._brushCache.TryGetValue(c, out var b)) {
-			return b;
-		}
-		b = new SolidColorBrush(c);
-		this._brushCache[c] = b;
-		return b;
-	}
 
 	public TextFileViewerViewModel? ViewModel {
 		get;
@@ -49,93 +36,105 @@ public sealed partial class TextFileViewer {
 			if (field == null) {
 				return;
 			}
-			_ = field.WindowStartLine.Subscribe(x => {
-				this.VirtualScrollViewer.ScrollToVerticalOffset(x * LineHeight);
-			});
-			_ = field.Content.AsObservable().Subscribe(content => {
-				this.SetHilight(this.ContentRichTextBlock, content);
-			});
+
 			_ = field.PickedupTextLine.AsObservable().Where(tl => tl != null).Subscribe(tl => {
-				this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
+				//this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
 			});
-			_ = field.TotalLines.AsObservable().Subscribe(tl => {
-				this.Kari.Height = tl * LineHeight;
-			});
-
 		}
 	}
 
-	private void SetHilight(RichTextBlock richTextBlock, string content) {
-		richTextBlock.TextHighlighters.Clear();
+	private async Task SetHighlight(WebView2 webView, string content) {
+		var htmlBodyContent = this.BuildHtmlBody(content);
+		var js = $"document.getElementById('content').innerHTML = {JsonSerializer.Serialize(htmlBodyContent)};";
+		_ = await webView.ExecuteScriptAsync(js);
+	}
+
+	private string BuildHtmlBody(string content) {
 		var hss = this._highlightService.ComputeHighlightSpans(content);
+		var sb = new StringBuilder();
+
+		var index = 0;
+
 		foreach (var hs in hss) {
-			var th = new TextHighlighter() {
-				Foreground = hs.Style.ForeColor is { } fore ? this.GetBrush(fore.ToColor()) : null,
-				Background = hs.Style.BackColor is { } back ? this.GetBrush(back.ToColor()) : this._transparentColorBrush
-			};
-			foreach (var range in hs.Ranges) {
-				th.Ranges.Add(new TextRange(range.StartIndex, range.Length));
+			foreach (var range in hs.Ranges.OrderBy(r => r.StartIndex)) {
+				if (index < range.StartIndex) {
+					_ = sb.Append(Escape(content.Substring(index, range.StartIndex - index)));
+				}
+
+				var text = content.Substring(range.StartIndex, range.Length);
+
+				_ = sb.Append($"<span style=\"background:{hs.Style.BackColor};color:{hs.Style.ForeColor};\">");
+				_ = sb.Append(Escape(text));
+				_ = sb.Append("</span>");
+
+				index = range.StartIndex + range.Length;
 			}
-			richTextBlock.TextHighlighters.Add(th);
 		}
+
+		if (index < content.Length) {
+			_ = sb.Append(Escape(content.Substring(index)));
+		}
+
+		return sb.ToString();
 	}
 
+	private static string Escape(string s) {
+		return System.Net.WebUtility.HtmlEncode(s);
+	}
 
-	private const long LineHeight = 12;
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this.InitializeComponent();
+		this.ContentWebViewer.Loaded += async (_, _2) => {
+			await this.InitializeWebView();
+		};
 	}
 
-	private void ContentViewer_SizeChanged(object sender, SizeChangedEventArgs e) {
+	/// <summary>
+	/// WebViewの初期化・イベント発生時処理登録
+	/// </summary>
+	private async Task InitializeWebView() {
 		if (this.ViewModel == null) {
 			return;
 		}
-		this.logger.LogTrace($"ContentViewer_SizeChanged: {e.NewSize.Height}");
-		var visibleLines = Math.Max(1, (int)Math.Floor(e.NewSize.Height / LineHeight) - 1);
-		this.ViewModel.VisibleLineCount.Value = visibleLines;
-	}
+		await this.ContentWebViewer.EnsureCoreWebView2Async();
+		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web"), CoreWebView2HostResourceAccessKind.Allow);
+		this.ContentWebViewer.CoreWebView2.Navigate("https://app/index.html");
 
-	private void VirtualScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e) {
-		if (this.ViewModel == null) {
-			return;
-		}
-		if (e.IsIntermediate) {
-			// スクロール中は無視
-			return;
-		}
-		this.logger.LogTrace($"VirtualScrollViewer_ViewChanged: {this.VirtualScrollViewer.VerticalOffset}");
-		this.ViewModel.JumpToLineCommand.Execute((long)this.VirtualScrollViewer.VerticalOffset / LineHeight);
-	}
-
-	private void ContentViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
-		var properties = e.GetCurrentPoint(this.ContentViewer).Properties;
-		if (properties.IsHorizontalMouseWheel) {
-			return;
-		}
-		this.logger.LogTrace($"ContentViewer_PointerWheelChanged: {properties.MouseWheelDelta}");
-		this.ScrollContent(properties.MouseWheelDelta);
-
-		e.Handled = true;
-	}
-	private void ContentRichTextBlock_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e) {
-		if (e.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse) {
-			return;
-		}
-		this.logger.LogTrace($"ContentRichTextBlock_ManipulationDelta: {e.Delta.Translation.Y}");
-		this.ScrollContent((int)Math.Floor(e.Delta.Translation.Y));
-		e.Handled = true;
-	}
-
-	private void ScrollContent(int delta) {
-		if (this.ViewModel == null) {
-			return;
+		void post(string type, dynamic data) {
+			var message = new {
+				type,
+				data
+			};
+			this.ContentWebViewer.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
 		}
 
-		var offsetChange = -delta / 40;
+		this.ContentWebViewer.CoreWebView2.WebMessageReceived += (s, e) => {
+			var message = WebMessage.Create(e.WebMessageAsJson);
 
-		this.ViewModel.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + offsetChange);
+			switch (message) {
+				case RequestWebMessage rwm:
+					this.ViewModel.LoadLogsCommand.Execute(new(rwm.Start, rwm.End));
+					break;
+			}
+		};
 
+		_ = this.ViewModel.Loaded.Subscribe(x => {
+			post("Loaded", x);
+		});
+
+		_ = this.ViewModel.OpenedFilePath.AsObservable().Subscribe(x => {
+			if (x == null) {
+				return;
+			}
+			post("FileChanged", x);
+		});
+		_ = this.ViewModel.ReloadRequested.AsObservable().Subscribe(x => {
+			post("ReloadRequested", x);
+		});
+		_ = this.ViewModel.TotalLines.AsObservable().Subscribe(async x => {
+			post("TotalLinesUpdated", x);
+		});
 	}
 
 	private void GrepResultLineButton_Click(object sender, RoutedEventArgs e) {
@@ -194,34 +193,4 @@ public sealed partial class TextFileViewer {
 		this.ViewModel.ChangeEncodingCommand.Execute(Unit.Default);
 
 	}
-
-	private void ContentRichTextBlock_KeyDown(object sender, KeyRoutedEventArgs e) {
-		switch (e.Key) {
-			case Windows.System.VirtualKey.Down:
-				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + 1);
-				e.Handled = true;
-				break;
-			case Windows.System.VirtualKey.Up:
-				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value - 1);
-				e.Handled = true;
-				break;
-			case Windows.System.VirtualKey.PageDown:
-				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value + this.ViewModel.VisibleLineCount.Value);
-				e.Handled = true;
-				break;
-			case Windows.System.VirtualKey.PageUp:
-				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.WindowStartLine.Value - this.ViewModel.VisibleLineCount.Value);
-				e.Handled = true;
-				break;
-			case Windows.System.VirtualKey.Home:
-				this.ViewModel?.JumpToLineCommand.Execute(1);
-				e.Handled = true;
-				break;
-			case Windows.System.VirtualKey.End:
-				this.ViewModel?.JumpToLineCommand.Execute(this.ViewModel.TotalLines.Value - this.ViewModel.VisibleLineCount.Value + 1);
-				e.Handled = true;
-				break;
-		}
-	}
-
 }

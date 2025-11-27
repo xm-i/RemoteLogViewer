@@ -41,48 +41,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		}).AddTo(this.CompositeDisposable);
 		this.SaveRangeOperation = saveRangeContentOperation.AddTo(this.CompositeDisposable);
 		this.BuildByteOffsetMapOperation = buildByteOffsetMapOperation.AddTo(this.CompositeDisposable);
-		var lineNumbersChangedStream = this.LineNumbers
-			.CombineLatest(this.OpenedFilePath, (lineNumbers, path) => (lineNumbers, path))
-			.Throttle()
-			.Where(x => x.path != null)
-			.ObserveOnCurrentSynchronizationContext();
-
-		// 表示行枠確保
-		lineNumbersChangedStream.Subscribe(x => {
-			logger.LogTrace($"lineNumbersChanged start:{x.lineNumbers.FirstOrDefault()}");
-			var sw = Stopwatch.StartNew();
-			this.UpdateContent();
-			logger.LogTrace($"lineNumbersChanged end [{sw.ElapsedMilliseconds}ms]");
-		}).AddTo(this.CompositeDisposable);
-
-		// 表示行データ取得
-		lineNumbersChangedStream
-			.Where(x => x.lineNumbers.Length > 0)
-			.ThrottleLast(TimeSpan.FromMilliseconds(500))
-			.SubscribeAwait(async (x, ct) => {
-				logger.LogTrace($"PreLoadLines start:{x.lineNumbers.Min()},{x.lineNumbers.Length}");
-				var sw = Stopwatch.StartNew();
-				await this.PreLoadLinesAsync(x.lineNumbers.Min(), x.lineNumbers.Length, ct);
-				logger.LogTrace($"PreLoadLines end [{sw.ElapsedMilliseconds}ms]");
-			}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
-
-		// 表示行内容更新
-		this.LoadedLines
-			.ObserveChanged()
-			.Where(x => x.Action == NotifyCollectionChangedAction.Add || x.Action == NotifyCollectionChangedAction.Replace)
-			.Where(x => this.LineNumbers.Value.Contains(x.NewItem.Value.LineNumber))
-			.ThrottleLast(TimeSpan.FromMilliseconds(100))
-			.Subscribe(x => {
-				logger.LogTrace($"loadedLines updated start:{x.NewItem.Value.LineNumber}");
-				var sw = Stopwatch.StartNew();
-				this.UpdateContent();
-				logger.LogTrace($"loadedLines updated end [{sw.ElapsedMilliseconds}ms]");
-			}).AddTo(this.CompositeDisposable);
 	}
-
-	public ReactiveProperty<long[]> LineNumbers {
-		get;
-	} = new([]);
 
 	/// <summary>開いているファイルのフルパス。</summary>
 	public ReactiveProperty<string?> OpenedFilePath {
@@ -93,13 +52,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	public ReactiveProperty<long> TotalLines {
 		get;
 	} = new();
-
-	/// <summary>
-	/// 表示行。
-	/// </summary>
-	public ReactiveProperty<IEnumerable<string>> Content {
-		get;
-	} = new([]);
 
 	/// <summary>GREP 結果行。</summary>
 	public ObservableList<TextLine> GrepResults {
@@ -128,13 +80,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// 選択中エンコーディング
 	/// </summary>
 	public ReactiveProperty<string?> FileEncoding { get; } = new(null);
-
-	/// <summary>
-	/// 読み込み済みテキスト
-	/// </summary>
-	public ObservableDictionary<long, TextLine> LoadedLines {
-		get;
-	} = [];
 
 	/// ファイルサイズ
 	/// </summary>
@@ -175,62 +120,22 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	}
 
 	/// <summary>
-	/// 指定された範囲のテキストを読み込みます。
-	/// 指定範囲に対して、テキストを事前に多めに読み込んでおき、読み込み量が少ない場合は読み込み処理をスキップします。
+	/// 指定された範囲のテキストを取得します。
 	/// </summary>
 	/// <param name="startLine">開始行</param>
-	/// <param name="visibleCount">表示可能行</param>
+	/// <param name="endLine">終了行</param>
 	/// <param name="ct">キャンセルトークン</param>
-	private async Task PreLoadLinesAsync(long startLine, long visibleCount, CancellationToken ct) {
+	/// <returns>取得した行群</returns>
+	public async Task<TextLine[]> GetLinesAsync(long startLine, long endLine, CancellationToken ct) {
 		using var op = this._operations.Register(ct);
 		try {
 			if (this.OpenedFilePath.Value == null) {
 				throw new InvalidOperationException();
 			}
-
-			// 読み込み行設定
-			var loadStartLine = Math.Max(1, startLine - (int)(visibleCount * loadingBuffer));
-			var loadEndLine = startLine + (int)(visibleCount * loadingBuffer);
-
-			// 読み込み済み範囲は除外 (開始行)
-			for (var i = loadStartLine; i <= loadEndLine; i++) {
-				if (this.LoadedLines.ContainsKey(i)) {
-					if (i == loadStartLine) {
-						loadStartLine++;
-					}
-				}
-			}
-
-			// 読み込み済み範囲は除外 (終了行)
-			for (var i = loadEndLine; i >= loadStartLine; i--) {
-				if (this.LoadedLines.ContainsKey(i)) {
-					if (i == loadEndLine) {
-						loadEndLine--;
-					}
-				}
-			}
-
-			if (
-				loadEndLine < loadStartLine ||
-				((
-					loadStartLine > startLine + visibleCount ||
-					loadEndLine < startLine
-				) &&
-				loadEndLine - loadStartLine < visibleCount)) {
-				// 読み込み対象行がないか、読み込み対象が表示範囲外かつ、読み込み対象が少ない場合は読み込みスキップ
-				return;
-			}
-
-			var byteOffset = this._byteOffsetIndex.Find(loadStartLine);
-			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, loadStartLine, loadEndLine, this.FileEncoding.Value, byteOffset, op.Token);
-			await foreach (var line in lines) {
-				this.LoadedLines[line.LineNumber] = line;
-			}
+			var byteOffset = this._byteOffsetIndex.Find(startLine);
+			var lines = this._sshService.GetLinesAsync(this.OpenedFilePath.Value, startLine, endLine, this.FileEncoding.Value, byteOffset, op.Token);
+			return await lines.ToArrayAsync();
 		} finally { }
-	}
-
-	private void UpdateContent() {
-		this.Content.Value = this.LineNumbers.Value.Select((num, i) => this.LoadedLines.TryGetValue(num, out var val) ? val.Content! : string.Empty);
 	}
 
 	/// <summary>
@@ -295,9 +200,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		if (this.OpenedFilePath.Value == null) {
 			return null;
 		}
-		if (this.LoadedLines.TryGetValue(lineNumber, out var line)) {
-			return line;
-		}
 		var byteOffset = this._byteOffsetIndex.Find(lineNumber);
 		var lines = await this._sshService.GetLinesAsync(this.OpenedFilePath.Value, lineNumber, lineNumber, this.FileEncoding.Value, byteOffset, ct).ToArrayAsync();
 
@@ -307,9 +209,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	public void ChangeEncoding(string encoding) {
 		this.FileEncoding.Value = encoding;
 		this._operations.CancelAll();
-		this.LoadedLines.Clear();
 		this.GrepResults.Clear();
-		this.LineNumbers.Value = [.. this.LineNumbers.Value];
 	}
 
 	/// <summary>
@@ -321,8 +221,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		this.TotalBytes.Value = null;
 		this.OpenedFilePath.Value = null;
 		this.GrepResults.Clear();
-		this.LoadedLines.Clear();
-		this.Content.Value = [];
 		this._byteOffsetIndex.Reset();
 		this.SaveRangeOperation.Reset();
 		this.BuildByteOffsetMapOperation.Reset();
