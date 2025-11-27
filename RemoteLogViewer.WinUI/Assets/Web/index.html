@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>-</title>
+	<link rel="icon" href="data:," />
+	<link rel="stylesheet" href="./style.css">
+	<script src="./vue.global.prod.js"></script>
+	<script src="./app.js" defer></script>
+</head>
+<body>
+	<div id="app">
+		<div id="log-area" ref="logArea" @scroll="onLogAreaScroll">
+			<div v-for="line in logs"
+					 :key="line.LineNumber"
+					 ref="row"
+					 :data-line-number="line.LineNumber"
+					 class="log-line">
+				<span class="line-number">{{ line.LineNumber }}</span>
+				<span class="line-content">{{ line.Content }}</span>
+			</div>
+		</div>
+		<div id="scroll-area" ref="scrollArea" @scroll="onVirtualScroll">
+			<div id="scroll-virtual-content"></div>
+		</div>
+	</div>
+</body>
+</html>

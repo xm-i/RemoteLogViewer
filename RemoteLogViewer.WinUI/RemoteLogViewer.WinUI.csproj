@@ -28,6 +28,9 @@
     <Content Remove="Assets\icon.ico" />
     <Content Remove="Assets\icon128.ico" />
     <Content Remove="Assets\icon256x256.ico" />
+    <Content Remove="assets\index.html" />
+    <Content Remove="Assets\Web\app.js" />
+    <Content Remove="assets\web\style.css" />
   </ItemGroup>
 
   <ItemGroup>
@@ -70,6 +73,22 @@
   <ItemGroup>
     <Resource Include="Assets\icon256x256.ico" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\Web\vue.global.prod.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Web\app.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Web\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Web\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  
+</ItemGroup>
 
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>

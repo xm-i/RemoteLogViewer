@@ -8,6 +8,9 @@ charset=utf-8
 trim_trailing_whitespace=true
 insert_final_newline=false
 
+[*{.html,.js,.css}]
+indent_style=tab
+
 [*{.xaml,.cs}]
 indent_style=tab
 indent_size= 4
