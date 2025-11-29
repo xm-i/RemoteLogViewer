@@ -1,11 +1,12 @@
-const { createApp } = Vue;
 // 追加読み込み行数
 const prefetchLines = 200;
 // 追加読み込みのしきい値行数
 const prefetchThreshold = 50;
 // ログ保持上限行数
 const maxLogLines = 1000;
-createApp({
+
+const App = {
+	components: { TabArea },
 	data() {
 		return {
 			// ログファイル情報
@@ -289,4 +290,4 @@ createApp({
 			}
 		});
 	}
-}).mount("#app");
+}

@@ -1,65 +1,195 @@
-body{
-	margin:0;
-	padding:0;
+body {
+	margin: 0;
+	padding: 0;
 }
+
 #app {
 	margin: 0;
 	overflow: hidden;
 	display: flex;
-	height: 100vh;
-	width: 100vw;
+	flex-direction: column;
+	height: calc(100vh - 10px);
+	width: calc(100vw - 10px);
+	padding: 5px;
 	font-family: monospace;
 }
-
-/* 左：ログ表示 */
-
-#log-area {
-	white-space: pre;
+/* ログ共通 */
+.log-container {
 	display: grid;
 	grid-template-columns: max-content 1fr;
-	border-collapse: collapse;
-	flex: 1;
-	overflow-y: scroll;
+}
 
-	&::-webkit-scrollbar {
-		display: none;
+.log-line {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: span 2;
+}
+
+.line-number {
+	grid-column: 1;
+	white-space: pre;
+	background: #F3F3F3;
+	user-select: none;
+	pointer-events: none;
+	text-align: right;
+	padding: 0 4px 0 4px;
+	font-variant-numeric: tabular-nums;
+	white-space: pre;
+	position: sticky;
+	left: 0;
+}
+
+.line-content {
+	grid-column: 2;
+	white-space: pre;
+	min-width: max-content;
+	word-break: normal;
+	padding: 0 4px 0 0;
+}
+
+
+/* メインエリア */
+#main-area {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	/* 左：ログ表示 */
+	#log-area {
+		white-space: pre;
+		border-collapse: collapse;
+		flex: 1;
+		overflow-y: scroll;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+	/* 右：スクロールバー */
+	#scroll-area {
+		width: 20px;
+		height: 100%;
+		border-radius: 5px;
+		cursor: pointer;
+		overflow: auto;
 	}
 
-	.log-line {
-		display: grid;
-		grid-template-columns: subgrid ;
-		grid-column:span 2;
-	}
-
-	.line-number {
-		grid-column: 1;
-		white-space: pre;
-		background: #DDD;
-		user-select: none;
-		pointer-events: none;
-		text-align: right;
-		padding: 0 4px 0 4px;
-		font-variant-numeric: tabular-nums;
-		white-space: pre;
-		position: sticky;
-		left: 0;
-	}
-
-	.line-content {
-		grid-column: 2;
-		white-space: pre;
-		min-width: max-content;
-		word-break: normal;
-		padding: 0 4px 0 0;
+	#scroll-virtual-content {
+		height: 10000px;
 	}
 }
 
-/* 右：スクロールバー */
-#scroll-area {
-	width: 20px;
-	height: 100vh;
-	border-radius: 5px;
-	cursor: pointer;
-	overflow: auto;
+/* タブエリア */
+#tab-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
-#scroll-virtual-content { height: 10000px; }
+
+/* --- TabArea styles --- */
+#tab-headers {
+	display: flex;
+	gap: 4px;
+	margin: 0;
+	padding: 8px 8px 0 8px;
+	list-style: none;
+	border-bottom: 1px solid #ddd;
+
+	li {
+		cursor: pointer;
+		padding: 8px 12px;
+		border: 1px solid #ddd;
+		border-bottom: none;
+		border-top-left-radius: 6px;
+		border-top-right-radius: 6px;
+		background: #f5f5f5;
+		color: #333;
+		transition: background 0.15s ease, color 0.15s ease;
+
+
+		&:hover {
+			background: #eee;
+		}
+
+		&.active {
+			background: #fff;
+			color: #000;
+			font-weight: 600;
+			box-shadow: 0 -1px 0 #fff inset;
+		}
+	}
+}
+
+#tab-contents {
+	margin: 0;
+	flex-grow: 1;
+	flex-shrink: 1;
+	min-height: 0;
+}
+
+/* GREPタブ */
+#grep-tab {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+
+	#grep-progress-bar-container {
+		background: #ccc;
+		width: 100%;
+		height: 3px;
+
+		#grep-progress-bar {
+			height: 100%;
+			background: linear-gradient(90deg, #0f8a33, #28c76f, #0f8a33 );
+			background-size: 200% 100%;
+			animation: flowing-green 3s linear infinite;
+			transition: width 0.2s ease-out;
+		}
+	}
+
+	#grep-toolbar {
+		display: inline-flex;
+		flex-direction: row;
+		gap: 8px;
+		padding: 8px;
+
+		#grep-start-line {
+			width: 60px;
+		}
+
+		.grep-results-count{
+			display: inline-flex;
+			align-items: center;
+		}
+	}
+
+	#grep-results {
+		flex-grow: 1;
+		overflow: scroll;
+	}
+}
+
+@keyframes flowing-green {
+	0% {
+		background-position: 0% 0%;
+	}
+
+	50% {
+		background-position: 100% 0%;
+	}
+
+	100% {
+		background-position: 0% 0%;
+	}
+}
+/* split.js */
+.gutter {
+	cursor: row-resize;
+	background-color: #f5f5f5;
+}
+
+	.gutter.gutter-vertical {
+		cursor: ns-resize;
+		background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+		background-repeat: no-repeat;
+		background-position: 50%;
+	}

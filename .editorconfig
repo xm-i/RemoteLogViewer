@@ -10,6 +10,7 @@ insert_final_newline=false
 
 [*{.html,.js,.css}]
 indent_style=tab
+indent_size=4
 
 [*{.xaml,.cs}]
 indent_style=tab

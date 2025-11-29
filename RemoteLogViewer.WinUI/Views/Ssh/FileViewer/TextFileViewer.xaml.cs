@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -101,7 +102,7 @@ public sealed partial class TextFileViewer {
 		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web"), CoreWebView2HostResourceAccessKind.Allow);
 		this.ContentWebViewer.CoreWebView2.Navigate("https://app/index.html");
 
-		void post(string type, dynamic data) {
+		void post(string type, dynamic? data) {
 			var message = new {
 				type,
 				data
@@ -116,9 +117,18 @@ public sealed partial class TextFileViewer {
 				case RequestWebMessage rwm:
 					this.ViewModel.LoadLogsCommand.Execute(new(rwm.Start, rwm.End));
 					break;
+				case StartGrepWebMessage sgwm:
+					this.ViewModel.GrepStartLine.Value = sgwm.StartLine;
+					this.ViewModel.GrepQuery.Value = sgwm.Keyword;
+					this.ViewModel.GrepCommand.Execute(Unit.Default);
+					break;
+				case CancelGrepWebMessage cgwm:
+					this.ViewModel.GrepCancelCommand.Execute(Unit.Default);
+					break;
 			}
 		};
 
+		// メインログビューイベント
 		_ = this.ViewModel.Loaded.Subscribe(x => {
 			post("Loaded", x);
 		});
@@ -135,6 +145,34 @@ public sealed partial class TextFileViewer {
 		_ = this.ViewModel.TotalLines.AsObservable().Subscribe(async x => {
 			post("TotalLinesUpdated", x);
 		});
+
+		// GREPタブイベント
+		_ = this.ViewModel.GrepProgress.AsObservable().Subscribe(x => {
+			post("GrepProgressUpdated", x * 100);
+		});
+
+		_ = this.ViewModel.GrepStartLine.AsObservable().Subscribe(x => {
+			post("GrepStartLineUpdated", x);
+		});
+
+		_ = this.ViewModel.IsGrepRunning.AsObservable().Subscribe(x => {
+			post("IsGrepRunningUpdated", x);
+		});
+
+		this.ViewModel.GrepResults.CollectionChanged += (s,e) =>  {
+			switch (e.Action) {
+				case NotifyCollectionChangedAction.Add:
+					if(e.NewItems == null) {
+						break;
+					}
+					post("GrepResultAdded", e.NewItems);
+					break;
+				case NotifyCollectionChangedAction.Reset:
+					post("GrepResultReset", null);
+					break;
+			}
+		};
+
 	}
 
 	private void GrepResultLineButton_Click(object sender, RoutedEventArgs e) {

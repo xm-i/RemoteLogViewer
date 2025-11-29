@@ -11,6 +11,8 @@ public class WebMessage {
 	private static readonly Dictionary<string, Type> TypeMap = new()
 	{
 		{ "Request", typeof(RequestWebMessage) },
+		{ "StartGrep", typeof(StartGrepWebMessage) },
+		{ "CancelGrep", typeof(CancelGrepWebMessage) },
 	};
 
 	public static WebMessage Create(string json) {
@@ -33,3 +35,19 @@ public class RequestWebMessage : WebMessage {
 		set;
 	}
 }
+
+public class StartGrepWebMessage : WebMessage {
+	public required string Keyword {
+		get;
+		set;
+	}
+	public required long StartLine {
+		get;
+		set;
+	}
+}
+
+
+public class CancelGrepWebMessage : WebMessage {
+}
+

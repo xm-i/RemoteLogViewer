@@ -29,8 +29,12 @@
     <Content Remove="Assets\icon128.ico" />
     <Content Remove="Assets\icon256x256.ico" />
     <Content Remove="assets\index.html" />
-    <Content Remove="Assets\Web\app.js" />
-    <Content Remove="assets\web\style.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Web\app.js" />
+    <None Remove="Assets\Web\style.css" />
+    <None Remove="Assets\Web\tabArea.js" />
   </ItemGroup>
 
   <ItemGroup>
@@ -75,20 +79,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\Web\vue.global.prod.js">
+    <Content Update="Assets\Web\script.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Web\app.js">
+    </Content>
+    <Content Update="Assets\Web\grepTab.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Web\index.html">
+    </Content>
+    <Content Update="Assets\Web\index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\Web\style.css">
+    </Content>
+    <Content Update="Assets\Web\Libs\split.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  
-</ItemGroup>
+    </Content>
+    <Content Update="Assets\Web\Libs\vue.global.prod.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Web\lineViewTab.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Web\app.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Web\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Web\tabArea.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
