@@ -13,6 +13,7 @@
 	<script src="./tabArea.js"></script>
 	<script src="./app.js" defer></script>
 	<script src="./script.js" defer></script>
+	<style id="dynamic-style"></style>
 </head>
 <body>
 	<div id="app">
@@ -24,7 +25,7 @@
 					:data-line-number="line.LineNumber"
 					class="log-line">
 					<span class="line-number" @click="onLineNumberClick(line)">{{ line.LineNumber }}</span>
-					<span class="line-content">{{ line.Content }}</span>
+					<span class="line-content" v-html="line.Content"></span>
 				</div>
 			</div>
 			<div id="scroll-area" ref="scrollArea" @scroll="onVirtualScroll">

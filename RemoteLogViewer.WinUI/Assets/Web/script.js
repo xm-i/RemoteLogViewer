@@ -7,3 +7,7 @@ Split(['#main-area', '#tab-area'], {
 	sizes: [70, 30],
 	direction: 'vertical'
 });
+
+window.chrome.webview.postMessage({
+	Type: "Ready"
+});

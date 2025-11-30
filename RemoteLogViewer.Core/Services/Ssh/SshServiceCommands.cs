@@ -300,7 +300,7 @@ public partial class SshService {
 				yield break;
 			}
 			var ln = nextLine++;
-			yield return new TextLine(ln, line, true);
+			yield return new TextLine(ln, line);
 		}
 	}
 

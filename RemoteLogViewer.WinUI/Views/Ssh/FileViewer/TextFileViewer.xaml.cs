@@ -1,14 +1,14 @@
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 
+using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 
@@ -22,65 +22,11 @@ namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
 /// </summary>
 public sealed partial class TextFileViewer {
-
-	private ILogger<TextFileViewer> logger {
-		get {
-			return field ??= App.LoggerFactory.CreateLogger<TextFileViewer>();
-		}
-	}
 	private readonly HighlightService _highlightService;
 
 	public TextFileViewerViewModel? ViewModel {
 		get;
-		set {
-			field = value;
-			if (field == null) {
-				return;
-			}
-
-			_ = field.PickedupTextLine.AsObservable().Where(tl => tl != null).Subscribe(tl => {
-				//this.SetHilight(this.PickedupRichTextBlock, tl!.Content!);
-			});
-		}
-	}
-
-	private async Task SetHighlight(WebView2 webView, string content) {
-		var htmlBodyContent = this.BuildHtmlBody(content);
-		var js = $"document.getElementById('content').innerHTML = {JsonSerializer.Serialize(htmlBodyContent)};";
-		_ = await webView.ExecuteScriptAsync(js);
-	}
-
-	private string BuildHtmlBody(string content) {
-		var hss = this._highlightService.ComputeHighlightSpans(content);
-		var sb = new StringBuilder();
-
-		var index = 0;
-
-		foreach (var hs in hss) {
-			foreach (var range in hs.Ranges.OrderBy(r => r.StartIndex)) {
-				if (index < range.StartIndex) {
-					_ = sb.Append(Escape(content.Substring(index, range.StartIndex - index)));
-				}
-
-				var text = content.Substring(range.StartIndex, range.Length);
-
-				_ = sb.Append($"<span style=\"background:{hs.Style.BackColor};color:{hs.Style.ForeColor};\">");
-				_ = sb.Append(Escape(text));
-				_ = sb.Append("</span>");
-
-				index = range.StartIndex + range.Length;
-			}
-		}
-
-		if (index < content.Length) {
-			_ = sb.Append(Escape(content.Substring(index)));
-		}
-
-		return sb.ToString();
-	}
-
-	private static string Escape(string s) {
-		return System.Net.WebUtility.HtmlEncode(s);
+		set;
 	}
 
 	public TextFileViewer() {
@@ -122,15 +68,18 @@ public sealed partial class TextFileViewer {
 					this.ViewModel.GrepQuery.Value = sgwm.Keyword;
 					this.ViewModel.GrepCommand.Execute(Unit.Default);
 					break;
-				case CancelGrepWebMessage cgwm:
+				case CancelGrepWebMessage _:
 					this.ViewModel.GrepCancelCommand.Execute(Unit.Default);
+					break;
+				case ReadyWebMessage _:
+					post("LineStyleChanged", this._highlightService.CreateCss());
 					break;
 			}
 		};
 
 		// メインログビューイベント
 		_ = this.ViewModel.Loaded.Subscribe(x => {
-			post("Loaded", x);
+			post("Loaded", x.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
 		});
 
 		_ = this.ViewModel.OpenedFilePath.AsObservable().Subscribe(x => {
@@ -162,10 +111,10 @@ public sealed partial class TextFileViewer {
 		this.ViewModel.GrepResults.CollectionChanged += (s,e) =>  {
 			switch (e.Action) {
 				case NotifyCollectionChangedAction.Add:
-					if(e.NewItems == null) {
+					if(e.NewItems is not IEnumerable<TextLine> items) {
 						break;
 					}
-					post("GrepResultAdded", e.NewItems);
+					post("GrepResultAdded", items.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
 					break;
 				case NotifyCollectionChangedAction.Reset:
 					post("GrepResultReset", null);

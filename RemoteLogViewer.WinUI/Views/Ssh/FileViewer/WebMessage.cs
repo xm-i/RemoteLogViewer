@@ -13,6 +13,7 @@ public class WebMessage {
 		{ "Request", typeof(RequestWebMessage) },
 		{ "StartGrep", typeof(StartGrepWebMessage) },
 		{ "CancelGrep", typeof(CancelGrepWebMessage) },
+		{ "Ready", typeof(ReadyWebMessage) },
 	};
 
 	public static WebMessage Create(string json) {
@@ -49,5 +50,8 @@ public class StartGrepWebMessage : WebMessage {
 
 
 public class CancelGrepWebMessage : WebMessage {
+}
+
+public class ReadyWebMessage : WebMessage {
 }
 

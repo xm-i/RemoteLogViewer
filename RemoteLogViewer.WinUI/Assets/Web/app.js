@@ -27,6 +27,8 @@ const App = {
 			virtualScrollTop: 0,
 			// 行指定スクロール
 			jumpStartLine: null,
+			// 行スタイル
+			lineStyle: ""
 		}
 	},
 	computed: {
@@ -295,6 +297,9 @@ const App = {
 				case "ReloadRequested":
 					this.jumpLine(this.startLine);
 					break;
+				case "LineStyleChanged":
+					let styleTag = document.getElementById("dynamic-style");
+					styleTag.textContent = message.data;
 			}
 		});
 	}
