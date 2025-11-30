@@ -135,8 +135,7 @@ const App = {
 					this.loadNextChunk();
 				}
 			}, {
-				root: this.$refs.logArea,
-				threshold: 0.1
+				root: this.$refs.logArea
 			});
 
 			this.$nextTick(() => {
@@ -176,8 +175,7 @@ const App = {
 					this.loadPreviousChunk();
 				}
 			}, {
-				root: this.$refs.logArea,
-				threshold: 0.1
+				root: this.$refs.logArea
 			});
 
 			this.$nextTick(() => {
@@ -236,8 +234,7 @@ const App = {
 				this.virtualScrollTop = Math.floor(scrollRatio * (this.$refs.scrollArea.scrollHeight - this.$refs.scrollArea.clientHeight));
 				this.$refs.scrollArea.scrollTop = this.virtualScrollTop;
 			}, {
-				root: this.$refs.logArea,
-				threshold: 0.1
+				root: this.$refs.logArea
 			});
 			this.$nextTick(() => {
 				const rowRefs = this.$refs.row || [];
