@@ -175,15 +175,6 @@ public sealed partial class TextFileViewer {
 
 	}
 
-	private void GrepResultLineButton_Click(object sender, RoutedEventArgs e) {
-		if (this.ViewModel == null) {
-			return;
-		}
-		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
-			this.ViewModel.JumpToLineCommand.Execute(line);
-		}
-	}
-
 	private async void SaveRangeButton_Click(object sender, RoutedEventArgs e) {
 		if (this.ViewModel == null) {
 			return;
@@ -211,16 +202,6 @@ public sealed partial class TextFileViewer {
 			await this.ViewModel.SaveRangeContent(writer, start, end);
 		} catch {
 			// TODO: エラー通知
-		}
-	}
-
-	private void HyperlinkButton_Click(object sender, RoutedEventArgs e) {
-		if (this.ViewModel == null) {
-			return;
-		}
-		if (sender is HyperlinkButton btn && long.TryParse(btn.Content?.ToString(), out var line)) {
-			this.ViewModel.PickupTextLineCommand.Execute(line);
-			this.BottomTabView.SelectedItem = this.SelectedLineView;
 		}
 	}
 

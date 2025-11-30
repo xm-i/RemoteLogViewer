@@ -23,7 +23,7 @@
 					ref="row"
 					:data-line-number="line.LineNumber"
 					class="log-line">
-					<span class="line-number">{{ line.LineNumber }}</span>
+					<span class="line-number" @click="onLineNumberClick(line)">{{ line.LineNumber }}</span>
 					<span class="line-content">{{ line.Content }}</span>
 				</div>
 			</div>
@@ -32,7 +32,7 @@
 			</div>
 		</div>
 		<div id="tab-area">
-			<tab-area></tab-area>
+			<tab-area ref="tabArea" @grep-line-clicked="grepLineClicked"></tab-area>
 		</div>
 	</div>
 </body>

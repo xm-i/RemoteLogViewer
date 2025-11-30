@@ -22,10 +22,11 @@ const App = {
 			previousObserver: null,
 			// 仮想スクロール
 			virtualScrollTimeout: null,
-			virtualScrollJumpStartLine: null,
 			logScrollObserver: null,
 			visibleLines: [],
-			virtualScrollTop: 0
+			virtualScrollTop: 0,
+			// 行指定スクロール
+			jumpStartLine: null,
 		}
 	},
 	computed: {
@@ -103,9 +104,9 @@ const App = {
 				this.logs = newLogs;
 			}
 
-			if (this.virtualScrollJumpStartLine !== null) {
-				const startLine = this.virtualScrollJumpStartLine;
-				this.virtualScrollJumpStartLine = null;
+			if (this.jumpStartLine !== null) {
+				const startLine = this.jumpStartLine;
+				this.jumpStartLine = null;
 				this.$nextTick(() => {
 					var target = this.$refs.row.find(x => Number(x.dataset.lineNumber) === startLine);
 					if (!target) {
@@ -261,10 +262,19 @@ const App = {
 
 				const endLine = startLine + this.visibleLines.length;
 				// 読み込み済みじゃない場合、追加読み込みする
-				this.virtualScrollJumpStartLine = startLine;
-				this.reset();
-				this.requestLogs(startLine - prefetchLines, endLine + prefetchLines);
+				this.jumpLine(startLine);
 			}, 100);
+		},
+		jumpLine(startLineNumber) {
+			this.reset();
+			this.jumpStartLine = startLineNumber;
+			this.requestLogs(startLineNumber - prefetchLines, startLineNumber + prefetchLines);
+		},
+		onLineNumberClick(line) {
+			this.$refs.tabArea.setLine(line);
+		},
+		grepLineClicked(lineNumber) {
+			this.jumpLine(lineNumber);
 		}
 	},
 	mounted() {
@@ -283,9 +293,7 @@ const App = {
 					this.requestLogs(1, prefetchLines * 2);
 					break;
 				case "ReloadRequested":
-					this.reset();
-					this.virtualScrollJumpStartLine = this.startLine;
-					this.requestLogs(this.startLine - prefetchLines, this.startLine + prefetchLines);
+					this.jumpLine(this.startLine);
 					break;
 			}
 		});

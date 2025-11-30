@@ -8,8 +8,8 @@ const TabArea = {
 	</ul>
 
 	<div id="tab-contents">
-		<grep-tab v-show="isActive === 'Grep'"></grep-tab>
-		<line-view-tab v-show="isActive === 'LineView'"></line-view-tab>
+		<grep-tab v-show="isActive === 'Grep'" @line-clicked="grepLineClicked"></grep-tab>
+		<line-view-tab ref="lineViewTab" v-show="isActive === 'LineView'"></line-view-tab>
 	</div>
 </div>
 	`,
@@ -21,6 +21,13 @@ const TabArea = {
 	methods: {
 		change: function (target) {
 			this.isActive = target;
+		},
+		setLine(line) {
+			this.isActive = "LineView";
+			this.$refs.lineViewTab.setLine(line);
+		},
+		grepLineClicked(lineNumber) {
+			this.$emit('grep-line-clicked', lineNumber);
 		}
 	}
 };

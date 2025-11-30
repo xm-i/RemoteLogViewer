@@ -1,11 +1,22 @@
 const LineViewTab = {
-  template: `
-<div>
-line view line view line view
+	template: `
+<div id="line-view-tab">
+	<div id="line-view-results" class="log-container">
+		<div v-if="line !== null" class="log-line">
+			<span class="line-number">{{ line.LineNumber }}</span>
+			<span class="line-content">{{ line.Content }}</span>
+		</div>
+	</div>
 </div>
 	`,
 	data() {
+		return {
+			line: null
+		};
 	},
 	methods: {
+		setLine(line) {
+			this.line = line;
+		},
 	}
 };

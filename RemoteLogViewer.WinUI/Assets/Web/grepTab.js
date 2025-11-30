@@ -46,7 +46,7 @@ const GrepTab = {
 			ref="row"
 			:data-line-number="line.LineNumber"
 			class="log-line">
-			<span class="line-number">{{ line.LineNumber }}</span>
+			<span class="line-number" @click="lineClick(line.LineNumber)">{{ line.LineNumber }}</span>
 			<span class="line-content">{{ line.Content }}</span>
 		</div>
 	</div>
@@ -96,6 +96,9 @@ const GrepTab = {
 			this.progress = 0;
 			this.clientOperationg = true;
 			window.chrome.webview.postMessage({ Type: "CancelGrep" });
+		},
+		lineClick(lineNumber) {
+			this.$emit("line-clicked", lineNumber);
 		}
 	},
 	mounted() {
