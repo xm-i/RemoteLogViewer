@@ -46,6 +46,10 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		await this.ContentWebViewer.EnsureCoreWebView2Async();
+#if !DEBUG_UNPACKAGED
+		this.ContentWebViewer.CoreWebView2.Settings.AreDevToolsEnabled = false;
+		this.ContentWebViewer.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+#endif
 		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web"), CoreWebView2HostResourceAccessKind.Allow);
 		this.ContentWebViewer.CoreWebView2.Navigate("https://app/index.html");
 
