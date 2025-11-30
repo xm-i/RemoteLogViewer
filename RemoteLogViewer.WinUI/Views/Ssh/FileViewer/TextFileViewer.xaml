@@ -51,6 +51,17 @@
 			</Grid>
 		</StackPanel>
 
-		<WebView2 x:Name="ContentWebViewer" Grid.Row="1"/>
+		<WebView2 x:Name="ContentWebViewer" Grid.Row="1" />
+		<Border x:Name="LoadingOverlay"
+			Grid.Row="1"
+            Background="#AAFFFFFF"
+			Visibility="{x:Bind ViewModel.IsViewerReady.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+				<ProgressRing IsActive="True" Width="60" Height="60"/>
+				<TextBlock Text="Loading..." Margin="8" FontSize="14" HorizontalAlignment="Center"/>
+			</StackPanel>
+		</Border>
 	</Grid>
 </UserControl>

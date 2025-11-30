@@ -6,6 +6,7 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
+using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.Services.Ssh;
 using RemoteLogViewer.Core.Stores.Settings;
 using RemoteLogViewer.Core.Utils;
@@ -19,12 +20,14 @@ namespace RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 [Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly TextFileViewerModel _textFileViewerModel;
+	private readonly NotificationService _notificationService;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
-
-	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, ILogger<TextFileViewerViewModel> logger) : base(logger) {
+	
+	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, NotificationService notificationService, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this._textFileViewerModel = textFileViewerModel;
+		this._notificationService = notificationService;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.TotalBytes = this._textFileViewerModel.TotalBytes.Select(x => x is { } ul ? (long?)ul : null).ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.Progress
@@ -119,6 +122,10 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._reloadRequestedSubject.OnNext(Unit.Default);
 		}).AddTo(this.CompositeDisposable);
 	}
+
+	public BindableReactiveProperty<bool> IsViewerReady {
+		get;
+	} = new(false);
 
 	/// <summary>開いているファイルのパス。</summary>
 	public IReadOnlyBindableReactiveProperty<string?> OpenedFilePath {
@@ -279,6 +286,10 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	///     ファイルを開きます。
 	/// </summary>
 	public async Task OpenFileAsync(string path, FileSystemObject fso, CancellationToken ct) {
+		if (!this.IsViewerReady.Value) {
+			this._notificationService.Publish("TextFileViewer", "The viewer is initializing. Please wait.", NotificationSeverity.Warning);
+			return;
+		}
 		await this._textFileViewerModel.OpenFileAsync(path, fso, this.SelectedEncoding.Value, ct);
 	}
 

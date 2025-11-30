@@ -74,6 +74,7 @@ public sealed partial class TextFileViewer {
 					break;
 				case ReadyWebMessage _:
 					post("LineStyleChanged", this._highlightService.CreateCss());
+					this.ViewModel.IsViewerReady.Value = true;
 					break;
 			}
 		};
