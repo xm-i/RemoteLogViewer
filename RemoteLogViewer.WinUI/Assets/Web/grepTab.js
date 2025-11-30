@@ -84,6 +84,10 @@ const GrepTab = {
 			this.progress = 0;
 		},
 		startGrep() {
+			if (!Number.isInteger(this.grepStartLine)) {
+				alert("Start Line must be an integer.");
+				return;
+			}
 			this.progress = 0;
 			this.clientOperationg = true;
 			window.chrome.webview.postMessage({

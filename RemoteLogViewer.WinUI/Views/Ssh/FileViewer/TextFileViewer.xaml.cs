@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Text.Json;
@@ -111,10 +110,10 @@ public sealed partial class TextFileViewer {
 		this.ViewModel.GrepResults.CollectionChanged += (s,e) =>  {
 			switch (e.Action) {
 				case NotifyCollectionChangedAction.Add:
-					if(e.NewItems is not IEnumerable<TextLine> items) {
-						break;
+					if (e.NewItems is null) {
+						return;
 					}
-					post("GrepResultAdded", items.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
+					post("GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
 					break;
 				case NotifyCollectionChangedAction.Reset:
 					post("GrepResultReset", null);
