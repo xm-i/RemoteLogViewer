@@ -9,6 +9,7 @@ using Microsoft.Web.WebView2.Core;
 
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Services.Viewer;
+using RemoteLogViewer.Core.Stores.Settings;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 
 using Windows.Storage.Pickers;
@@ -22,7 +23,7 @@ namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 /// </summary>
 public sealed partial class TextFileViewer {
 	private readonly HighlightService _highlightService;
-
+	private readonly SettingsStoreModel _settingsStoreModel;
 	public TextFileViewerViewModel? ViewModel {
 		get;
 		set;
@@ -30,6 +31,7 @@ public sealed partial class TextFileViewer {
 
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
+		this._settingsStoreModel = Ioc.Default.GetRequiredService<SettingsStoreModel>();
 		this.InitializeComponent();
 		this.ContentWebViewer.Loaded += async (_, _2) => {
 			await this.InitializeWebView();
@@ -76,6 +78,12 @@ public sealed partial class TextFileViewer {
 			}
 		};
 
+		this._settingsStoreModel.SettingsUpdated.Subscribe(x => {
+			post("LineStyleChanged", this._highlightService.CreateCss());
+			post("ReloadRequested", null);
+			post("GrepResultReset", null);
+		});
+
 		// メインログビューイベント
 		_ = this.ViewModel.Loaded.Subscribe(x => {
 			post("Loaded", x.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
@@ -88,7 +96,7 @@ public sealed partial class TextFileViewer {
 			post("FileChanged", x);
 		});
 		_ = this.ViewModel.ReloadRequested.AsObservable().Subscribe(x => {
-			post("ReloadRequested", x);
+			post("ReloadRequested", null);
 		});
 		_ = this.ViewModel.TotalLines.AsObservable().Subscribe(async x => {
 			post("TotalLinesUpdated", x);

@@ -16,12 +16,20 @@ namespace RemoteLogViewer.Core.Stores.Settings;
 public class SettingsStoreModel {
 	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;
+	private readonly Subject<Unit> _settingsUpdatedSubject = new();
+	
 	public IServiceProvider ScopedService {
 		get;
 	}
 	private string FilePath {
 		get {
 			return this._workspaceService.GetConfigFilePath("settings.json");
+		}
+	}
+
+	public Observable<Unit> SettingsUpdated {
+		get {
+			return field ??= this._settingsUpdatedSubject.AsObservable();
 		}
 	}
 
@@ -70,6 +78,7 @@ public class SettingsStoreModel {
 			Directory.CreateDirectory(Path.GetDirectoryName(this.FilePath)!);
 			var json = JsonSerializer.Serialize(SettingsModelForJson.CreateJson(this.SettingsModel), SettingsJsonSerializerContext.Default.SettingsModelForJson);
 			File.WriteAllText(this.FilePath, json);
+			this._settingsUpdatedSubject.OnNext(Unit.Default);
 		} catch (Exception ex) {
 			// TODO: 失敗通知
 			this._logger.LogWarning(ex, "Failed to save settings to {FilePath}", this.FilePath);
