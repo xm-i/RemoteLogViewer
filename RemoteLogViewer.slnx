@@ -55,8 +55,4 @@
     <Deploy Solution="Debug|*" />
     <Deploy Solution="Release|*" />
   </Project>
-  <Project Path="RemoteLogViewer.WPF/RemoteLogViewer.WPF.csproj">
-    <BuildType Solution="Debug-Unpackaged|*" Project="Debug" />
-    <BuildType Solution="Release-Unpackaged|*" Project="Release" />
-  </Project>
 </Solution>
