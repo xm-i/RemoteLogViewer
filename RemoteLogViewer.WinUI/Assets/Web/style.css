@@ -1,6 +1,7 @@
 body {
 	margin: 0;
 	padding: 0;
+	user-select: none;
 }
 
 #app {
@@ -16,6 +17,7 @@ body {
 .log-container {
 	display: grid;
 	grid-template-columns: max-content 1fr;
+	user-select: text;
 }
 
 .log-line {
