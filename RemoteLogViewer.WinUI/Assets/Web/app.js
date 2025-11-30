@@ -110,11 +110,11 @@ const App = {
 				const startLine = this.jumpStartLine;
 				this.jumpStartLine = null;
 				this.$nextTick(() => {
-					var target = this.$refs.row.find(x => Number(x.dataset.lineNumber) === startLine);
+					const target = this.$refs.row.find(x => Number(x.dataset.lineNumber) === startLine);
 					if (!target) {
 						return;
 					}
-					this.$refs.logArea.scrollTop = target.offsetTop;
+					this.$refs.logInner.scrollTop = target.offsetTop;
 				});
 			}
 			this.log(() => `addLogs end`);
@@ -259,12 +259,17 @@ const App = {
 			this.virtualScrollTimeout = setTimeout(() => {
 				const scrollArea = e.target;
 				const scrollRatio = scrollArea.scrollTop / (scrollArea.scrollHeight - scrollArea.clientHeight);
-				// 表示開始行を計算
-				const startLine = Math.floor(scrollRatio * (this.totalLines - this.visibleLines.length)) + 1;
+				if (scrollRatio === 1) {
+					// スクロール割合が100％の場合は、最終行へジャンプ
+					this.jumpLine(this.totalLines);
+				} else {
+					// 表示開始行を計算
+					const startLine = Math.floor(scrollRatio * (this.totalLines - this.visibleLines.length)) + 1;
 
-				const endLine = startLine + this.visibleLines.length;
-				// 読み込み済みじゃない場合、追加読み込みする
-				this.jumpLine(startLine);
+					const endLine = startLine + this.visibleLines.length;
+					// ジャンプ
+					this.jumpLine(startLine);
+				}
 			}, 100);
 		},
 		jumpLine(startLineNumber) {

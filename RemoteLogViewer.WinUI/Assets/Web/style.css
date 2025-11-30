@@ -58,10 +58,16 @@ body {
 		white-space: pre;
 		border-collapse: collapse;
 		flex: 1;
-		overflow-y: scroll;
+		overflow-x: scroll;
 
-		&::-webkit-scrollbar {
-			display: none;
+		#log-inner {
+			height: 100%;
+			width: fit-content;
+			overflow-y: scroll;
+
+			&::-webkit-scrollbar {
+				display: none;
+			}
 		}
 	}
 	/* 右：スクロールバー */
