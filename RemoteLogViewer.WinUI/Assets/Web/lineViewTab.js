@@ -4,7 +4,7 @@ const LineViewTab = {
 	<div id="line-view-results" class="log-container">
 		<div v-if="line !== null" class="log-line">
 			<span class="line-number">{{ line.LineNumber }}</span>
-			<span class="line-content">{{ line.Content }}</span>
+			<span class="line-content wrap" v-html="line.Content"></span>
 		</div>
 	</div>
 </div>

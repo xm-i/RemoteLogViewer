@@ -47,7 +47,7 @@ const GrepTab = {
 			:data-line-number="line.LineNumber"
 			class="log-line">
 			<span class="line-number" @click="lineClick(line.LineNumber)">{{ line.LineNumber }}</span>
-			<span class="line-content">{{ line.Content }}</span>
+			<span class="line-content" v-html="line.Content"></span>
 		</div>
 	</div>
 
