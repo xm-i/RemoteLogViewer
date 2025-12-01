@@ -15,11 +15,8 @@
 			<RowDefinition Height="2*" MinHeight="100"/>
 		</Grid.RowDefinitions>
 		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4" VerticalAlignment="Center">
-			<TextBlock Width="180" FontSize="14" MaxHeight="50" TextWrapping="Wrap" >
-				<Run Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" FontWeight="SemiBold" />
-				<Run Text=" ("/>
-				<Run Text="{x:Bind ViewModel.TotalBytes.Value,Mode=OneWay, Converter={StaticResource FileSizeToFriendlyStringConverter}}"/>
-				<Run Text=" )"/>
+			<TextBlock Width="180" FontSize="10" MaxHeight="50" TextWrapping="Wrap" >
+				<Run Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" />
 			</TextBlock>
 			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
 			<Grid RowDefinitions="Auto,Auto">
@@ -46,6 +43,9 @@
 				<TextBlock FontSize="12" Text="File Information"/>
 				<TextBlock Grid.Row="1" FontSize="14">
 					<Run Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
+					<Run Text=" ("/>
+					<Run Text="{x:Bind ViewModel.TotalBytes.Value,Mode=OneWay, Converter={StaticResource FileSizeToFriendlyStringConverter}}"/>
+					<Run Text=" )"/>
 				</TextBlock>
 				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
 			</Grid>

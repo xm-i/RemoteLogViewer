@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using RemoteLogViewer.Core.ViewModels;
 using RemoteLogViewer.WinUI.Views.Info;
 using RemoteLogViewer.WinUI.Views.Settings;
@@ -22,9 +23,8 @@ public sealed partial class MainWindow : Window {
 		this.ExtendsContentIntoTitleBar = true;
 		this.AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
 		this.SetTitleBar(this.titleBar);
-		this.AppWindow.SetIcon("Assets/icon256x256.ico");
 		this.ViewModel = mainWindowViewModel;
-		this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
+		_ = this.ViewModel.Notifications.SubscribeAwait(async (notification, ct) => {
 			var dialog = new ContentDialog {
 				XamlRoot = this.Content.XamlRoot,
 				Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
@@ -33,9 +33,9 @@ public sealed partial class MainWindow : Window {
 				DefaultButton = ContentDialogButton.Primary,
 				Content = new ContentDialogContent(notification.Message, notification.Severity)
 			};
-			await dialog.ShowAsync();
+			_ = await dialog.ShowAsync();
 		});
-		this.ViewModel.NotificationWithActions.SubscribeAwait(async (notification, ct) => {
+		_ = this.ViewModel.NotificationWithActions.SubscribeAwait(async (notification, ct) => {
 			var dialog = new ContentDialog {
 				XamlRoot = this.Content.XamlRoot,
 				Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
@@ -47,7 +47,7 @@ public sealed partial class MainWindow : Window {
 				DefaultButton = ContentDialogButton.Primary,
 				Content = new ContentDialogContent(notification.Message, notification.Severity)
 			};
-			await dialog.ShowAsync();
+			_ = await dialog.ShowAsync();
 		});
 	}
 

@@ -3,8 +3,11 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Utils;
+
 using Renci.SshNet;
 using Renci.SshNet.Common;
 
@@ -73,13 +76,15 @@ public partial class SshService : ISshService {
 				if (!string.IsNullOrWhiteSpace(password)) {
 					methods.Add(new PasswordAuthenticationMethod(user, password));
 				}
-				var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]);
-				connectionInfo.Encoding = Encoding.GetEncoding(encoding);
+				var connectionInfo = new ConnectionInfo(host, port, user, [.. methods]) {
+					Encoding = Encoding.GetEncoding(encoding)
+				};
 				this._client = new SshClient(connectionInfo);
 			} else {
 				// 従来のパスワード専用
-				var connectionInfo = new ConnectionInfo(host, port, user, [new PasswordAuthenticationMethod(user, password ?? string.Empty)]);
-				connectionInfo.Encoding = Encoding.GetEncoding(encoding);
+				var connectionInfo = new ConnectionInfo(host, port, user, [new PasswordAuthenticationMethod(user, password ?? string.Empty)]) {
+					Encoding = Encoding.GetEncoding(encoding)
+				};
 				this._client = new SshClient(connectionInfo);
 			}
 			this._client.ErrorOccurred += this.SshClientErrorOccurred;

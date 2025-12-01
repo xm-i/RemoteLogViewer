@@ -31,11 +31,6 @@ const App = {
 			lineStyle: ""
 		}
 	},
-	computed: {
-		virtualHeight() {
-			return this.totalLines * this.rowHeight;
-		}
-	},
 	watch: {
 		logs: {
 			handler() {
@@ -114,7 +109,7 @@ const App = {
 					if (!target) {
 						return;
 					}
-					this.$refs.logInner.scrollTop = target.offsetTop;
+					this.$refs.logArea.scrollTop = target.offsetTop;
 				});
 			}
 			this.log(() => `addLogs end`);
@@ -262,17 +257,23 @@ const App = {
 				} else {
 					// 表示開始行を計算
 					const startLine = Math.floor(scrollRatio * (this.totalLines - this.visibleLines.length)) + 1;
-
-					const endLine = startLine + this.visibleLines.length;
 					// ジャンプ
 					this.jumpLine(startLine);
 				}
 			}, 100);
 		},
 		jumpLine(startLineNumber) {
-			this.reset();
-			this.jumpStartLine = startLineNumber;
-			this.requestLogs(startLineNumber - prefetchLines, startLineNumber + prefetchLines);
+			if (this.logs.find(x => x.LineNumber == startLineNumber)) {
+				const target = this.$refs.row.find(x => Number(x.dataset.lineNumber) === startLineNumber);
+				if (!target) {
+					return;
+				}
+				this.$refs.logArea.scrollTop = target.offsetTop;
+			} else {
+				this.reset();
+				this.jumpStartLine = startLineNumber;
+				this.requestLogs(startLineNumber - prefetchLines, startLineNumber + prefetchLines);
+			}
 		},
 		onLineNumberClick(line) {
 			this.$refs.tabArea.setLine(line);
@@ -282,6 +283,16 @@ const App = {
 		}
 	},
 	mounted() {
+		// テスト用
+		if (!window.chrome.webview) {
+			this.addLogs([...Array(100)].map((_, i) => i).map(i => {
+				return {
+					LineNumber: i + 1, Content: "I have a dream that one day on the red hills of Georgia, the sons of former slaves and the sons of former slave owners will be able to sit down together at the table of brotherhood." };
+			}));
+			this.totalLines = this.logs.length;
+			return;
+		}
+
 		// C# → JS 通信
 		window.chrome.webview.addEventListener("message", e => {
 			const message = e.data;

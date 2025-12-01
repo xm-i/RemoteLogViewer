@@ -129,5 +129,19 @@
     <DefaultLanguage>ja-jp</DefaultLanguage>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyTitle>RemoteLogViewer</AssemblyTitle>
+    <AssemblyName>RemoteLogViewer</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Unpackaged|x86'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Unpackaged|x64'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Unpackaged|ARM64'">
+    <Optimize>True</Optimize>
   </PropertyGroup>
 </Project>

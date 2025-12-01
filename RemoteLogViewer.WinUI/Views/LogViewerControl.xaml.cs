@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
+
 using RemoteLogViewer.Core.ViewModels;
 using RemoteLogViewer.Core.ViewModels.Ssh;
 using RemoteLogViewer.WinUI.Views.Ssh;
@@ -11,7 +12,7 @@ public sealed partial class LogViewerControl : UserControl {
 			return field ?? throw new InvalidOperationException();
 		}
 		set {
-			value.CurrentPageViewModel.Subscribe(vm => this.Navigate(vm));
+			_ = value.CurrentPageViewModel.Subscribe(vm => this.Navigate(vm));
 			this.Navigate(value.CurrentPageViewModel.Value);
 			field = value;
 		}
@@ -23,9 +24,9 @@ public sealed partial class LogViewerControl : UserControl {
 
 	private void Navigate(IBaseSshPageViewModel? vm) {
 		if (vm is SshServerSelectorViewModel selector) {
-			this.SshFrame.Navigate(typeof(SshServerSelectorPage), selector);
+			_ = this.SshFrame.Navigate(typeof(SshServerSelectorPage), selector);
 		} else if (vm is SshBrowserViewModel browser) {
-			this.SshFrame.Navigate(typeof(SshBrowserPage), browser);
+			_ = this.SshFrame.Navigate(typeof(SshBrowserPage), browser);
 		}
 	}
 }

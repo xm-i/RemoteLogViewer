@@ -18,16 +18,14 @@
 <body>
 	<div id="app">
 		<div id="main-area">
-			<div id="log-area" ref="logArea">
-				<div id="log-inner" ref="logInner" class="log-container" @scroll="onLogAreaScroll">
-					<div v-for="line in logs"
-						 :key="line.LineNumber"
-						 ref="row"
-						 :data-line-number="line.LineNumber"
-						 class="log-line">
-						<span class="line-number" @click="onLineNumberClick(line)">{{ line.LineNumber }}</span>
-						<span class="line-content" v-html="line.Content"></span>
-					</div>
+			<div id="log-area" ref="logArea" class="log-container" @scroll="onLogAreaScroll">
+				<div v-for="line in logs"
+						:key="line.LineNumber"
+						ref="row"
+						:data-line-number="line.LineNumber"
+						class="log-line">
+					<span class="line-number" @click="onLineNumberClick(line)">{{ line.LineNumber }}</span>
+					<span class="line-content" v-html="line.Content"></span>
 				</div>
 			</div>
 			<div id="scroll-area" ref="scrollArea" @scroll="onVirtualScroll">

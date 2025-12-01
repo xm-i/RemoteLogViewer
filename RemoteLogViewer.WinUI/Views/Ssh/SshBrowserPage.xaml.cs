@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+
 using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Core.ViewModels.Ssh;
 
@@ -35,6 +36,7 @@ public sealed partial class SshBrowserPage : Page {
 		} else {
 			throw new InvalidOperationException("ViewModel is not passed.");
 		}
+		this.TextFileViewer.Reset();
 		base.OnNavigatedTo(e);
 	}
 

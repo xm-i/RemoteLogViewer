@@ -2,6 +2,7 @@ body {
 	margin: 0;
 	padding: 0;
 	user-select: none;
+	scrollbar-width: thin;
 }
 
 #app {
@@ -58,27 +59,21 @@ body {
 /* メインエリア */
 #main-area {
 	width: 100%;
-	display: flex;
 	flex-direction: row;
+	display:flex;
+	position: relative;
 	/* 左：ログ表示 */
 	#log-area {
 		white-space: pre;
 		border-collapse: collapse;
 		flex: 1;
-		overflow-x: scroll;
-
-		#log-inner {
-			height: 100%;
-			width: fit-content;
-			overflow-y: scroll;
-
-			&::-webkit-scrollbar {
-				display: none;
-			}
-		}
+		overflow: scroll;
+		width:100%;
 	}
 	/* 右：スクロールバー */
 	#scroll-area {
+		position: absolute;
+		right: 0;
 		width: 20px;
 		height: 100%;
 		border-radius: 5px;

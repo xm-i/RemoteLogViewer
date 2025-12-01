@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
+using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.Stores.Settings;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
@@ -24,18 +25,32 @@ namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 public sealed partial class TextFileViewer {
 	private readonly HighlightService _highlightService;
 	private readonly SettingsStoreModel _settingsStoreModel;
+	private readonly NotificationService _notificationService;
+	private bool isInitialized = false;
 	public TextFileViewerViewModel? ViewModel {
 		get;
-		set;
+		set {
+			field = value;
+			if (field == null) {
+				return;
+			}
+			field.IsViewerReady.Value = false;
+			var initializeWebViewTask = this.InitializeWebView();
+			_ = initializeWebViewTask.ContinueWith(t => {
+				if (t.IsFaulted) {
+					this._notificationService.Publish("TextFileViewer", "TextFileViewer WebView2 initialization failed.", NotificationSeverity.Error, t.Exception);
+					return;
+				}
+				this.isInitialized = true;
+			});
+		}
 	}
 
 	public TextFileViewer() {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this._settingsStoreModel = Ioc.Default.GetRequiredService<SettingsStoreModel>();
+		this._notificationService = Ioc.Default.GetRequiredService<NotificationService>();
 		this.InitializeComponent();
-		this.ContentWebViewer.Loaded += async (_, _2) => {
-			await this.InitializeWebView();
-		};
 	}
 
 	/// <summary>
@@ -120,7 +135,7 @@ public sealed partial class TextFileViewer {
 			post("IsGrepRunningUpdated", x);
 		});
 
-		this.ViewModel.GrepResults.CollectionChanged += (s,e) =>  {
+		this.ViewModel.GrepResults.CollectionChanged += (s, e) => {
 			switch (e.Action) {
 				case NotifyCollectionChangedAction.Add:
 					if (e.NewItems is null) {
@@ -171,6 +186,13 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		this.ViewModel.ChangeEncodingCommand.Execute(Unit.Default);
+	}
 
+	public void Reset() {
+		if (!this.isInitialized || this.ViewModel is null) {
+			return;
+		}
+		this.ViewModel.IsViewerReady.Value = false;
+		this.ContentWebViewer.CoreWebView2.Reload();
 	}
 }

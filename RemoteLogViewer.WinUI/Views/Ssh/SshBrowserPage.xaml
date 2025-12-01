@@ -3,14 +3,11 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-	xmlns:fileViewer="using:RemoteLogViewer.Views.Ssh.FileViewer"
-    xmlns:ssh="using:RemoteLogViewer.Services.Ssh"
     xmlns:comStore="using:RemoteLogViewer.Composition.Stores.Ssh"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sshVm="using:RemoteLogViewer.Core.ViewModels.Ssh"
-    xmlns:fileViewer1="using:RemoteLogViewer.Core.Views.Ssh.FileViewer"
-    xmlns:fileViewer2="using:RemoteLogViewer.WinUI.Views.Ssh.FileViewer"
+    xmlns:fileViewer="using:RemoteLogViewer.WinUI.Views.Ssh.FileViewer"
     mc:Ignorable="d">
 
 	<Page.Resources>
@@ -89,10 +86,10 @@
 				<TranslateTransform Y="-7" />
 			</controls:GridSplitter.RenderTransform>
 		</controls:GridSplitter>
-		<fileViewer2:TextFileViewer Grid.Column="2" MinWidth="100" ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay,Converter={StaticResource BooleanNegationConverter}}" />
+		<fileViewer:TextFileViewer x:Name="TextFileViewer" Grid.Column="2" MinWidth="100" ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay,Converter={StaticResource BooleanNegationConverter}}" />
 		<controls:DockPanel Grid.Row="1" Grid.ColumnSpan="3" controls:DockPanel.Dock="Bottom" >
-			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" Visibility="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-			<Button controls:DockPanel.Dock="Right" Content="Reconnect" Command="{x:Bind ViewModel.ReconnectCommand,Mode=OneWay}" Visibility="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}" />
+			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}" />
+			<Button controls:DockPanel.Dock="Right" Content="Reconnect" Command="{x:Bind ViewModel.ReconnectCommand,Mode=OneWay}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay}" />
 			<Grid/>
 		</controls:DockPanel>
 	</Grid>
