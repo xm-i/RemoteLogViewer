@@ -19,18 +19,21 @@ const GrepTab = {
 				id="grep-keyword"
 			/>
 		</span>
+
+		<button @click="startGrepFirst" :disabled="isGrepRunning || clientOperationg">Search</button>
+
 		<span>
-			Start Line:<br>
+			Next Start Line:<br>
 			<input
 				type="number"
-				v-model="grepStartLine"
-				placeholder="Grep start line"
-				id="grep-start-line"
+				v-model="grepNextStartLine"
+				placeholder="100"
+				id="grep-next-start-line"
 				min="1"
 			/>
 		</span>
 
-		<button @click="startGrep" :disabled="isGrepRunning || clientOperationg">Search</button>
+		<button @click="startGrepNext" :disabled="isGrepRunning || clientOperationg">Next</button>
 
 		<button @click="cancelGrep" :disabled="!isGrepRunning || clientOperationg">Cancel</button>
 
@@ -58,7 +61,7 @@ const GrepTab = {
 			keyword: "",
 			progress: 0,
 			isGrepRunning: false,
-			grepStartLine: 1,
+			grepNextStartLine: 1,
 			logs: [],
 			clientOperationg: false
 		};
@@ -83,17 +86,23 @@ const GrepTab = {
 			this.logs.splice(0);
 			this.progress = 0;
 		},
-		startGrep() {
-			if (!Number.isInteger(this.grepStartLine)) {
+		startGrepNext() {
+			if (!Number.isInteger(this.grepNextStartLine)) {
 				alert("Start Line must be an integer.");
 				return;
 			}
+			this.startGrep(this.grepNextStartLine);
+		},
+		startGrepFirst() {
+			this.startGrep(1);
+		},
+		startGrep(startLine) {
 			this.progress = 0;
 			this.clientOperationg = true;
 			window.chrome.webview.postMessage({
 				Type: "StartGrep",
 				Keyword: this.keyword,
-				StartLine: this.grepStartLine
+				StartLine: startLine
 			});
 		},
 		cancelGrep() {
@@ -120,7 +129,7 @@ const GrepTab = {
 					this.progress = message.data;
 					break;
 				case "GrepStartLineUpdated":
-					this.grepStartLine = message.data;
+					this.grepNextStartLine = message.data;
 					break;
 				case "IsGrepRunningUpdated":
 					this.isGrepRunning = message.data;
