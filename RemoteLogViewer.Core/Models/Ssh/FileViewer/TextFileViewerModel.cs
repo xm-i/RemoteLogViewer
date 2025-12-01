@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -16,7 +14,6 @@ namespace RemoteLogViewer.Core.Models.Ssh.FileViewer;
 public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	private readonly ISshService _sshService;
 	private readonly SettingsStoreModel _settingsStore;
-	private const double loadingBuffer = 5;
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;
 
@@ -26,7 +23,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		IOperationRegistry operations,
 		IByteOffsetIndex byteOffsetIndex,
 		IGrepOperation grepOperation,
-		ITailFollowOperation tailFollowOperation,
 		ISaveRangeContentOperation saveRangeContentOperation,
 		IBuildByteOffsetMapOperation buildByteOffsetMapOperation,
 		ILogger<TextFileViewerModel> logger) : base(logger) {
@@ -35,7 +31,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		this._operations = operations.AddTo(this.CompositeDisposable);
 		this._byteOffsetIndex = byteOffsetIndex;
 		this.GrepOperation = grepOperation.AddTo(this.CompositeDisposable);
-		this.TailOperation = tailFollowOperation.AddTo(this.CompositeDisposable);
 		this.TotalLines.Subscribe(x => {
 			this.GrepOperation.TotalLineCount.Value = x;
 		}).AddTo(this.CompositeDisposable);
@@ -59,10 +54,6 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	} = new();
 
 	public IGrepOperation GrepOperation {
-		get;
-	}
-
-	public ITailFollowOperation TailOperation {
 		get;
 	}
 
@@ -104,7 +95,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		this.FileEncoding.Value = encoding;
 		this.TotalBytes.Value = fso.FileSize;
 		this._byteOffsetIndex.Reset();
-		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, fso.FileSize, ct);
+		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, fso.FileSize, null, ct);
 		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
 			this._byteOffsetIndex.AddRange(entry);
 			this.TotalLines.Value = entry.Max(x => x.LineNumber);
@@ -163,7 +154,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	///監視開始時点の末尾行の次の行から取得します。
 	/// </summary>
 	/// <param name="ct">キャンセルトークン。</param>
-	public async Task TailFollowAsync(CancellationToken ct) {
+	public async Task UpdateTotalLines(CancellationToken ct) {
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
@@ -171,18 +162,20 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 			// バイトオフセットマップ作成中は待機
 			await this.BuildByteOffsetMapOperation.IsRunning.Where(x => !x).FirstAsync(ct);
 		}
-		var currentLastLine = this.TotalLines.Value;
-		var lines = this.TailOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this.FileEncoding.Value, currentLastLine, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, ct);
-		await foreach (var line in lines) {
-			this.TotalLines.Value = line;
-			if (ct.IsCancellationRequested) {
-				break;
-			}
+
+		var lsResult = this._sshService.ListDirectory(this.OpenedFilePath.Value);
+
+		if (lsResult.Length != 1) {
+			throw new InvalidOperationException();
 		}
 
-		var lastLine = this.TotalLines.Value;
-		var finalOffset = this._byteOffsetIndex.Find(lastLine);
-		this.TotalBytes.Value = finalOffset.Bytes;
+		this.TotalBytes.Value = lsResult[0].FileSize;
+
+		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, lsResult[0].FileSize, this._byteOffsetIndex.FindLast(), ct);
+		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
+			this._byteOffsetIndex.AddRange(entry);
+			this.TotalLines.Value = entry.Max(x => x.LineNumber);
+		}
 	}
 
 	/// <summary>

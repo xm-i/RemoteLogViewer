@@ -90,36 +90,7 @@ public interface ISshService : IDisposable {
 	/// <param name="remoteFilePath">対象ファイル 。</param>
 	/// <param name="interval">インデックス間隔行数。1 以上。</param>
 	/// <param name="ct">キャンセルトークン</param>
+	/// <param name="byteOffset">検索開始に利用するバイトオフセット。</param>
 	/// <returns>インデックス列挙。</returns>
-	public IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(string remoteFilePath, int interval, CancellationToken ct);
-
-	/// <summary>
-	///既存のバイトオフセット (<paramref name="startOffset"/>)から指定行番号 (<paramref name="targetLine"/>)まで追加で読み込まれるバイト数を AWKで算出し、新しい <see cref="ByteOffset"/> を返します。
-	/// startOffset.LineNumber 行までの内容が既に取得済みである前提で、tail -c +{startOffset.Bytes+1}で残りを読み進めます。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイルパス。</param>
-	/// <param name="startOffset">開始バイトオフセット。</param>
-	/// <param name="targetLine">新規に算出したい行番号 (startOffset.LineNumber以上)。</param>
-	/// <param name="ct">キャンセルトークン。</param>
-	/// <returns>対象行までの累積バイトオフセット。</returns>
-	public Task<ByteOffset> CreateByteOffsetUntilLineAsync(string remoteFilePath, ByteOffset startOffset, long targetLine, CancellationToken ct);
-
-	/// <summary>
-	/// ファイル末尾の新規追記行を取得します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイル。</param>
-	/// <param name="fileEncoding">ファイルエンコーディング。</param>
-	/// <param name="startOffset">開始オフセット。</param>
-	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
-	/// <param name="ct">キャンセルトークン。</param>
-	public IAsyncEnumerable<TextLine> TailFollowAsync(string remoteFilePath, string? fileEncoding, ByteOffset startOffset, long currentLastLine, CancellationToken ct);
-
-	/// <summary>
-	/// ファイル末尾の新規追記行を取得し、行数のみを返却します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイル。</param>
-	/// <param name="startOffset">開始オフセット。</param>
-	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
-	/// <param name="ct">キャンセルトークン。</param>
-	public IAsyncEnumerable<long> TailFollowAsyncOnlyLineNumber(string remoteFilePath, ByteOffset startOffset, long currentLastLine, CancellationToken ct);
+	public IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(string remoteFilePath, int interval, ByteOffset? byteOffset, CancellationToken ct);
 }

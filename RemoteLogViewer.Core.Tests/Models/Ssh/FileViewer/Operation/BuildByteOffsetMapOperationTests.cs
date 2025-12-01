@@ -14,13 +14,13 @@ public class BuildByteOffsetMapOperationTests {
 		var subject = new Subject<ByteOffset>();
 
 		var sshMock = new Mock<ISshService>();
-		sshMock.Setup(s => s.CreateByteOffsetMap("file.log", 100, It.IsAny<CancellationToken>())).Returns((string _, int _, CancellationToken t) => subject.ToAsyncEnumerable(t));
+		sshMock.Setup(s => s.CreateByteOffsetMap("file.log", 100, null, It.IsAny<CancellationToken>())).Returns((string _, int _, CancellationToken t) => subject.ToAsyncEnumerable(t));
 
 		using var opRegistry = new OperationRegistry();
 		var loggerMock = new Mock<ILogger<BuildByteOffsetMapOperation>>();
 		var op = new BuildByteOffsetMapOperation(opRegistry, loggerMock.Object);
 
-		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", 100, 10000, CancellationToken.None)).ToLiveList();
+		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", 100, 10000, null, CancellationToken.None)).ToLiveList();
 
 		var line100 = new ByteOffset(100, 1000);
 		var line200 = new ByteOffset(200, 4000);
@@ -89,13 +89,13 @@ public class BuildByteOffsetMapOperationTests {
 		var subject = new Subject<ByteOffset>();
 
 		var sshMock = new Mock<ISshService>();
-		sshMock.Setup(s => s.CreateByteOffsetMap("file.log", 100, It.IsAny<CancellationToken>())).Returns((string _, int _, CancellationToken t) => subject.ToAsyncEnumerable(t));
+		sshMock.Setup(s => s.CreateByteOffsetMap("file.log", 100, null, It.IsAny<CancellationToken>())).Returns((string _, int _, CancellationToken t) => subject.ToAsyncEnumerable(t));
 
 		using var opRegistry = new OperationRegistry();
 		var loggerMock = new Mock<ILogger<BuildByteOffsetMapOperation>>();
 		var op = new BuildByteOffsetMapOperation(opRegistry, loggerMock.Object);
 
-		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", 100, 10000, cts.Token)).ToLiveList();
+		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", 100, 10000, null, cts.Token)).ToLiveList();
 
 		var line100 = new ByteOffset(100, 1000);
 		var line200 = new ByteOffset(200, 4000);

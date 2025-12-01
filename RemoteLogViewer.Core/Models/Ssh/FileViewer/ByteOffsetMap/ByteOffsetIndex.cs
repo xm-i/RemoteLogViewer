@@ -36,4 +36,8 @@ public class ByteOffsetIndex : IByteOffsetIndex {
 		}
 		return result;
 	}
+
+	public ByteOffset FindLast() {
+		return this._entries.Last();
+	}
 }

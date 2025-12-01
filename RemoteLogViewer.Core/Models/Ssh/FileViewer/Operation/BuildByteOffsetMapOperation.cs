@@ -41,7 +41,7 @@ public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOp
 		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 
-	public async IAsyncEnumerable<ByteOffset> RunAsync(ISshService sshService, string? filePath, int chunkSize, ulong totalBytes, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<ByteOffset> RunAsync(ISshService sshService, string? filePath, int chunkSize, ulong totalBytes, ByteOffset? startByteOffset, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;
 		}
@@ -50,7 +50,7 @@ public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOp
 		this._processedBytes.Value = 0;
 		this._totalBytes.Value = totalBytes;
 		try {
-			var offsets = sshService.CreateByteOffsetMap(filePath, chunkSize, op.Token);
+			var offsets = sshService.CreateByteOffsetMap(filePath, chunkSize, startByteOffset, op.Token);
 			await foreach (var entry in offsets.WithCancellation(op.Token)) {
 				this._processedBytes.Value = entry.Bytes;
 				yield return entry;

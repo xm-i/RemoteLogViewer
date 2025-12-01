@@ -23,7 +23,6 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly NotificationService _notificationService;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
-	private CancellationTokenSource? _tailCts; // tail-f 用 CTS
 	
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, NotificationService notificationService, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this._textFileViewerModel = textFileViewerModel;
@@ -46,26 +45,8 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		this.FilteredAvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = this._textFileViewerModel.AvailableEncodings.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
-		// Tail 実行状態
-		this.IsTailRunning = this._textFileViewerModel.TailOperation.IsRunning.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.TailStartCommand =
-			this._textFileViewerModel
-				.TailOperation
-				.IsRunning
-				.Select(x => !x)
-				.ToReactiveCommand().AddTo(this.CompositeDisposable);
-		_ = this.TailStartCommand.SubscribeAwait(async (_, ct) => {
-			this._tailCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-			try {
-				await this._textFileViewerModel.TailFollowAsync(this._tailCts.Token);
-			} finally {
-				this._tailCts?.Dispose();
-				this._tailCts = null;
-			}
-		});
-
-		this.TailStopCommand = this._textFileViewerModel.TailOperation.IsRunning.ToReactiveCommand(_ => {
-			this._tailCts?.Cancel();
+		this.UpdateTotalLineCommand.SubscribeAwait(async (_,ct) => {
+			await this._textFileViewerModel.UpdateTotalLines(ct);
 		}).AddTo(this.CompositeDisposable);
 
 		_ = this.SelectedEncoding.Subscribe(x => {
@@ -244,28 +225,11 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		get;
 	}
 
-	/// <summary>
-	/// tail 実行中。
-	/// </summary>
-	public IReadOnlyBindableReactiveProperty<bool> IsTailRunning {
-		get;
-	}
-
-	/// <summary>
-	/// tail 開始コマンド。
-	/// </summary>
-	public ReactiveCommand TailStartCommand {
-		get;
-	}
-
-	/// <summary>
-	/// tail 停止コマンド。
-	/// </summary>
-	public ReactiveCommand TailStopCommand {
-		get;
-	}
-
 	public ReactiveCommand ChangeEncodingCommand {
+		get;
+	} = new();
+
+	public ReactiveCommand UpdateTotalLineCommand {
 		get;
 	} = new();
 

@@ -210,8 +210,9 @@ public partial class SshService {
 	/// <param name="remoteFilePath">対象ファイル 。</param>
 	/// <param name="interval">インデックス間隔行数。1 以上。</param>
 	/// <param name="ct">キャンセルトークン</param>
+	/// <param name="startByteOffset">作成開始バイトオフセット。</param>
 	/// <returns>インデックス列挙。</returns>
-	public async IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(string remoteFilePath, int interval, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<ByteOffset> CreateByteOffsetMap(string remoteFilePath, int interval, ByteOffset? startByteOffset, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -220,7 +221,11 @@ public partial class SshService {
 			throw new ArgumentException("interval must be >=1", nameof(interval));
 		}
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
-		var cmd = $"LC_ALL=C awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR, offset }} END {{ if (NR%{interval} != 0) print NR, offset }}' '{escapedPath}' 2>/dev/null";
+
+		var inputCmd = $"tail -c +{startByteOffset?.Bytes ?? 0} '{escapedPath}' 2>/dev/null";
+
+		var cmd = $"LC_ALL=C {inputCmd} | awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR+{startByteOffset?.LineNumber ?? 0}, offset+{startByteOffset?.Bytes ?? 0} }} END {{ if (NR%{interval} != 0) print NR+{startByteOffset?.LineNumber ?? 0}, offset+{startByteOffset?.Bytes ?? 0} }}' 2>/dev/null";
+
 		var lines = this.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {
@@ -238,95 +243,6 @@ public partial class SshService {
 				continue;
 			}
 			yield return new ByteOffset(ln, off);
-		}
-	}
-
-	/// <summary>
-	///既存のバイトオフセット (<paramref name="startOffset"/>)から指定行番号 (<paramref name="targetLine"/>)まで追加で読み込まれるバイト数を AWKで算出し、新しい <see cref="ByteOffset"/> を返します。
-	/// startOffset.LineNumber 行までの内容が既に取得済みである前提で、tail -c +{startOffset.Bytes+1}で残りを読み進めます。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイルパス。</param>
-	/// <param name="startOffset">開始バイトオフセット。</param>
-	/// <param name="targetLine">新規に算出したい行番号 (startOffset.LineNumber以上)。</param>
-	/// <param name="ct">キャンセルトークン。</param>
-	/// <returns>対象行までの累積バイトオフセット。</returns>
-	public async Task<ByteOffset> CreateByteOffsetUntilLineAsync(string remoteFilePath, ByteOffset startOffset, long targetLine, CancellationToken ct) {
-		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
-			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
-		}
-		if (targetLine < startOffset.LineNumber) {
-			throw new ArgumentException("targetLine must be >= startOffset.LineNumber", nameof(targetLine));
-		}
-		if (targetLine == startOffset.LineNumber) {
-			return startOffset;
-		}
-		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var relativeLines = targetLine - startOffset.LineNumber;
-		var startBytes = startOffset.Bytes + 1;
-		var cmd = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | awk -v base={startOffset.Bytes} -v maxLines={relativeLines} '{{ base+=length($0)+1; if (NR==maxLines) {{ print base; exit }} }} END {{ if (NR<maxLines) print base }}' 2>/dev/null";
-		var lines = await this.RunAsync(cmd, ct).ToArrayAsync();
-		if (lines.Length != 1) {
-			throw new InvalidOperationException("Failed to calculate byte offset.");
-		}
-		if (!ulong.TryParse(lines[0].Trim(), out var parsed)) {
-			throw new InvalidCastException("Failed to parse byte offset.");
-		}
-
-		return new ByteOffset(targetLine, parsed);
-	}
-
-	/// <summary>
-	/// ファイル末尾の新規追記行を取得します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイル。</param>
-	/// <param name="fileEncoding">ファイルエンコーディング。</param>
-	/// <param name="startOffset">開始オフセット。</param>
-	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
-	/// <param name="ct">キャンセルトークン。</param>
-	public async IAsyncEnumerable<TextLine> TailFollowAsync(string remoteFilePath, string? fileEncoding, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
-		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
-			yield break;
-		}
-		if (this.IconvEncoding == null) {
-			yield break;
-		}
-		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var convertPipe = NeedsConversion(fileEncoding, this.IconvEncoding) ? $" | while read L ; do echo $L | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {this.IconvEncoding}//IGNORE ; done" : string.Empty;
-		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
-		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null" + convertPipe;
-		var nextLine = startOffset.LineNumber + 1;
-		await foreach (var line in this.RunAsync(cmd, ct)) {
-			if (ct.IsCancellationRequested) {
-				yield break;
-			}
-			var ln = nextLine++;
-			yield return new TextLine(ln, line);
-		}
-	}
-
-	/// <summary>
-	/// ファイル末尾の新規追記行を取得し、行数のみを返却します。起点バイトオフセット以降の内容をtail -fで追跡し、既存最終行番号以前の行はスキップします。
-	/// </summary>
-	/// <param name="remoteFilePath">対象ファイル。</param>
-	/// <param name="startOffset">開始オフセット。</param>
-	/// <param name="currentLastLine">現在取得済み最終行番号。</param>
-	/// <param name="ct">キャンセルトークン。</param>
-	public async IAsyncEnumerable<long> TailFollowAsyncOnlyLineNumber(string remoteFilePath, ByteOffset startOffset, long currentLastLine, [EnumeratorCancellation] CancellationToken ct) {
-		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
-			yield break;
-		}
-		var escaped = EscapeSingleQuotes(remoteFilePath);
-		var startBytes = startOffset.Bytes + 1; // startOffset.LineNumberまで読み込まれている前提
-		var cmd = $"tail -c +{startBytes} -f '{escaped}' 2>/dev/null | awk '{{print NR}}'";
-		var nextLine = startOffset.LineNumber + 1;
-		await foreach (var line in this.RunAsync(cmd, ct)) {
-			if (ct.IsCancellationRequested) {
-				yield break;
-			}
-			if (!long.TryParse(line, out var ln)) {
-				yield break;
-			}
-			yield return ln;
 		}
 	}
 
