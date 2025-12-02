@@ -1,9 +1,9 @@
 const GrepTab = {
 	template: `
-<div id="grep-tab">
-	<div id="grep-progress-bar-container">
+<div class="grep-tab">
+	<div class="grep-progress-bar-container">
 		<div
-			id="grep-progress-bar"
+			class="grep-progress-bar"
 			:style="{ width: progress + '%' }"
 		></div>
 	</div>
@@ -16,7 +16,7 @@ const GrepTab = {
 				type="text"
 				v-model="keyword"
 				placeholder="word"
-				id="grep-keyword"
+				class="grep-keyword"
 			/>
 		</span>
 
@@ -28,7 +28,7 @@ const GrepTab = {
 				type="number"
 				v-model="grepNextStartLine"
 				placeholder="100"
-				id="grep-next-start-line"
+				class="grep-next-start-line"
 				min="1"
 			/>
 		</span>
@@ -42,7 +42,7 @@ const GrepTab = {
 		</span>
 	</div>
 
-	<div id="grep-results" class="log-container">
+	<div class="grep-results log-container">
 		<div
 			v-for="line in logs"
 			:key="line.LineNumber"

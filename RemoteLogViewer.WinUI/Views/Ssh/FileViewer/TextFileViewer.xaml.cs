@@ -3,17 +3,16 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.Services.Viewer;
 using RemoteLogViewer.Core.Stores.Settings;
+using RemoteLogViewer.Core.ViewModels.Ssh;
 using RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 
-using Windows.Storage.Pickers;
+using Windows.Foundation;
 
 using WinRT.Interop;
 
@@ -27,7 +26,8 @@ public sealed partial class TextFileViewer {
 	private readonly SettingsStoreModel _settingsStoreModel;
 	private readonly NotificationService _notificationService;
 	private bool isInitialized = false;
-	public TextFileViewerViewModel? ViewModel {
+
+	public SshBrowserViewModel? ViewModel {
 		get;
 		set {
 			field = value;
@@ -68,127 +68,167 @@ public sealed partial class TextFileViewer {
 		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web"), CoreWebView2HostResourceAccessKind.Allow);
 		this.ContentWebViewer.CoreWebView2.Navigate("https://app/index.html");
 
-		void post(string type, dynamic? data) {
-			var message = new {
-				type,
-				data
-			};
-			this.ContentWebViewer.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
-		}
 
-		this.ContentWebViewer.CoreWebView2.WebMessageReceived += (s, e) => {
-			var message = WebMessage.Create(e.WebMessageAsJson);
+		Observable.FromEvent<TypedEventHandler<CoreWebView2, CoreWebView2WebMessageReceivedEventArgs>, CoreWebView2WebMessageReceivedEventArgs>(h => (sender, e) => h(e),
+			h => this.ContentWebViewer.CoreWebView2.WebMessageReceived += h,
+			h => this.ContentWebViewer.CoreWebView2.WebMessageReceived -= h)
+			.SubscribeAwait(async (e, ct) => {
+				var message = WebMessage.Create(e.WebMessageAsJson);
+				switch (message) {
+					case RequestWebMessage m:
+						this.GetViewerVM(m.Key)?.LoadLogsCommand.Execute(new(m.RequestId, m.Start, m.End));
+						break;
+					case StartGrepWebMessage m:
+						var vm = this.GetViewerVM(m.Key);
+						if (vm is null) {
+							return;
+						}
+						vm.GrepStartLine.Value = m.StartLine;
+						vm.GrepQuery.Value = m.Keyword;
+						vm.GrepCommand.Execute(Unit.Default);
+						break;
+					case CancelGrepWebMessage:
+						this.GetViewerVM(message.Key)?.GrepCancelCommand.Execute(Unit.Default);
+						break;
+					case ReadyWebMessage:
+						this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
+						this.ViewModel.IsViewerReady.Value = true;
+						break;
+					case SaveRangeRequestWebMessage m:
+						var srrvm = this.GetViewerVM(m.Key);
+						if (srrvm is null) {
+							return;
+						}
+						if (m.End < m.Start) {
+							return;
+						}
+						try {
+							var picker = new Windows.Storage.Pickers.FileSavePicker();
+							var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
+							InitializeWithWindow.Initialize(picker, hwnd);
+							picker.FileTypeChoices.Add("Text", [".txt"]);
+							picker.SuggestedFileName = $"lines_{m.Start}_{m.End}";
+							var file = await picker.PickSaveFileAsync();
+							if (file == null) {
+								return;
+							}
+							using var stream = await file.OpenStreamForWriteAsync();
+							using var writer = new StreamWriter(stream);
+							await srrvm.SaveRangeContent(writer, m.Start, m.End);
+						} catch {
+							// TODO: エラー通知
+						}
+						break;
+					case ChangeEncodingWebMessage m:
+						this.GetViewerVM(m.Key)?.ChangeEncodingCommand.Execute(m.Encoding);
+						break;
 
-			switch (message) {
-				case RequestWebMessage rwm:
-					this.ViewModel.LoadLogsCommand.Execute(new(rwm.RequestId, rwm.Start, rwm.End));
-					break;
-				case StartGrepWebMessage sgwm:
-					this.ViewModel.GrepStartLine.Value = sgwm.StartLine;
-					this.ViewModel.GrepQuery.Value = sgwm.Keyword;
-					this.ViewModel.GrepCommand.Execute(Unit.Default);
-					break;
-				case CancelGrepWebMessage _:
-					this.ViewModel.GrepCancelCommand.Execute(Unit.Default);
-					break;
-				case ReadyWebMessage _:
-					post("LineStyleChanged", this._highlightService.CreateCss());
-					this.ViewModel.IsViewerReady.Value = true;
-					break;
+				}
 			}
-		};
+		);
 
 		this._settingsStoreModel.SettingsUpdated.Subscribe(x => {
-			post("LineStyleChanged", this._highlightService.CreateCss());
-			post("ReloadRequested", null);
-			post("GrepResultReset", null);
+			this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
+			this.PostWV2("*", "ReloadRequested", null);
+			this.PostWV2("*", "GrepResultReset", null);
 		});
 
+		Observable.FromEvent<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+			h => (sender, e) => h(e),
+			h => this.ViewModel.OpenedFileViewerViewModels.CollectionChanged += h,
+			h => this.ViewModel.OpenedFileViewerViewModels.CollectionChanged -= h
+		).Subscribe(e => {
+			switch (e.Action) {
+				case NotifyCollectionChangedAction.Add:
+					if (e.NewItems is not null) {
+						foreach (TextFileViewerViewModel vm in e.NewItems) {
+							this.RegisterViewerVMEvents(vm);
+							this.PostWV2("*", "FileOpend", new {
+								vm.PageKey,
+								vm.OpenedFilePath.Value
+							});
+						}
+					}
+					if (e.OldItems is not null) {
+						foreach (TextFileViewerViewModel vm in e.OldItems) {
+							this.RegisterViewerVMEvents(vm);
+							this.PostWV2("*", "FileClosed", vm.PageKey);
+						}
+					}
+					break;
+			}
+		}).AddTo(this.ViewModel.CompositeDisposable);
+	}
+
+	private void RegisterViewerVMEvents(TextFileViewerViewModel vm) {
 		// メインログビューイベント
-		_ = this.ViewModel.Loaded.Subscribe(x => {
-			post("Loaded", new {
+		_ = vm.Loaded.Subscribe(x => {
+			this.PostWV2(vm.PageKey, "Loaded", new {
 				x.RequestId,
 				Content = x.Content.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content)))
 			});
-		});
+		}).AddTo(vm.CompositeDisposable);
 
-		_ = this.ViewModel.OpenedFilePath.AsObservable().Subscribe(x => {
+		_ = vm.OpenedFilePath.AsObservable().Subscribe(x => {
 			if (x == null) {
 				return;
 			}
-			post("FileChanged", x);
-		});
-		_ = this.ViewModel.ReloadRequested.AsObservable().Subscribe(x => {
-			post("ReloadRequested", null);
-		});
-		_ = this.ViewModel.TotalLines.AsObservable().Subscribe(async x => {
-			post("TotalLinesUpdated", x);
-		});
+			this.PostWV2(vm.PageKey, "FileChanged", x);
+		}).AddTo(vm.CompositeDisposable);
+		_ = vm.ReloadRequested.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "ReloadRequested", null);
+		}).AddTo(vm.CompositeDisposable);
+		_ = vm.TotalLines.AsObservable().Subscribe(async x => {
+			this.PostWV2(vm.PageKey, "TotalLinesUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
 
 		// GREPタブイベント
-		_ = this.ViewModel.GrepProgress.AsObservable().Subscribe(x => {
-			post("GrepProgressUpdated", x * 100);
-		});
+		_ = vm.GrepProgress.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "GrepProgressUpdated", x * 100);
+		}).AddTo(vm.CompositeDisposable);
 
-		_ = this.ViewModel.GrepStartLine.AsObservable().Subscribe(x => {
-			post("GrepStartLineUpdated", x);
-		});
+		_ = vm.GrepStartLine.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "GrepStartLineUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
 
-		_ = this.ViewModel.IsGrepRunning.AsObservable().Subscribe(x => {
-			post("IsGrepRunningUpdated", x);
-		});
+		_ = vm.IsGrepRunning.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "IsGrepRunningUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
 
-		this.ViewModel.GrepResults.CollectionChanged += (s, e) => {
+		_ = Observable.FromEvent<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+			h => (sender, e) => h(e),
+			h => vm.GrepResults.CollectionChanged += h,
+			h => vm.GrepResults.CollectionChanged -= h
+		).Subscribe(e => {
 			switch (e.Action) {
 				case NotifyCollectionChangedAction.Add:
 					if (e.NewItems is null) {
 						return;
 					}
-					post("GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
+					this.PostWV2(vm.PageKey, "GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
 					break;
 				case NotifyCollectionChangedAction.Reset:
-					post("GrepResultReset", null);
+					this.PostWV2(vm.PageKey, "GrepResultReset", null);
 					break;
 			}
+		}).AddTo(vm.CompositeDisposable);
+	}
+
+	private void PostWV2(string key, string type, dynamic? data) {
+		var message = new {
+			key,
+			type,
+			data
 		};
-
+		this.ContentWebViewer.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
 	}
 
-	private async void SaveRangeButton_Click(object sender, RoutedEventArgs e) {
+	private TextFileViewerViewModel? GetViewerVM(string key) {
 		if (this.ViewModel == null) {
-			return;
+			throw new InvalidOperationException();
 		}
-		var startBox = (TextBox)this.FindName("StartLineBox");
-		var endBox = (TextBox)this.FindName("EndLineBox");
-		if (!long.TryParse(startBox.Text, out var start) || !long.TryParse(endBox.Text, out var end)) {
-			return;
-		}
-		if (end < start) {
-			return;
-		}
-		try {
-			var picker = new FileSavePicker();
-			var hwnd = WindowNative.GetWindowHandle(WinUI.App.MainWindow);
-			InitializeWithWindow.Initialize(picker, hwnd);
-			picker.FileTypeChoices.Add("Text", [".txt"]);
-			picker.SuggestedFileName = $"lines_{start}_{end}";
-			var file = await picker.PickSaveFileAsync();
-			if (file == null) {
-				return;
-			}
-			using var stream = await file.OpenStreamForWriteAsync();
-			using var writer = new StreamWriter(stream);
-			await this.ViewModel.SaveRangeContent(writer, start, end);
-		} catch {
-			// TODO: エラー通知
-		}
-	}
 
-	private void AutoSuggestBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) {
-		if (this.ViewModel == null) {
-			return;
-		}
-		this.ViewModel.ChangeEncodingCommand.Execute(Unit.Default);
+		return this.ViewModel.OpenedFileViewerViewModels.FirstOrDefault(x => x.PageKey == key);
 	}
 
 	public void Reset() {

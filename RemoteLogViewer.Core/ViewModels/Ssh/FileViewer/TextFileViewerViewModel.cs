@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -6,8 +5,6 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
-using RemoteLogViewer.Core.Services;
-using RemoteLogViewer.Core.Services.Ssh;
 using RemoteLogViewer.Core.Stores.Settings;
 using RemoteLogViewer.Core.Utils;
 using RemoteLogViewer.Core.Utils.Extensions;
@@ -20,13 +17,11 @@ namespace RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 [Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly TextFileViewerModel _textFileViewerModel;
-	private readonly NotificationService _notificationService;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 
-	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, NotificationService notificationService, ILogger<TextFileViewerViewModel> logger) : base(logger) {
+	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this._textFileViewerModel = textFileViewerModel;
-		this._notificationService = notificationService;
 		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.TotalBytes = this._textFileViewerModel.TotalBytes.Select(x => x is { } ul ? (long?)ul : null).ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.Progress
@@ -95,18 +90,20 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this.PickedupTextLine.Value = await this._textFileViewerModel.PickupTextLine(x, ct);
 		}).AddTo(this.CompositeDisposable);
 
-		_ = this.ChangeEncodingCommand.Subscribe(_ => {
-			if (this.SelectedEncoding.Value is null) {
-				return;
-			}
-			this._textFileViewerModel.ChangeEncoding(this.SelectedEncoding.Value);
+		_ = this.ChangeEncodingCommand.Subscribe(encoding => {
+			this._textFileViewerModel.ChangeEncoding(encoding);
 			this._reloadRequestedSubject.OnNext(Unit.Default);
 		}).AddTo(this.CompositeDisposable);
 	}
 
-	public BindableReactiveProperty<bool> IsViewerReady {
-		get;
-	} = new(false);
+	public string PageKey {
+		get {
+			if (this._textFileViewerModel.PageKey is null) {
+				throw new InvalidOperationException();
+			}
+			return this._textFileViewerModel.PageKey;
+		}
+	}
 
 	/// <summary>開いているファイルのパス。</summary>
 	public IReadOnlyBindableReactiveProperty<string?> OpenedFilePath {
@@ -225,7 +222,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		get;
 	}
 
-	public ReactiveCommand ChangeEncodingCommand {
+	public ReactiveCommand<string> ChangeEncodingCommand {
 		get;
 	} = new();
 
@@ -244,63 +241,5 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._saveContentCts?.Dispose();
 			this._saveContentCts = null;
 		}
-	}
-
-	/// <summary>
-	///     ファイルを開きます。
-	/// </summary>
-	public async Task OpenFileAsync(string path, FileSystemObject fso, CancellationToken ct) {
-		if (!this.IsViewerReady.Value) {
-			this._notificationService.Publish("TextFileViewer", "The viewer is initializing. Please wait.", NotificationSeverity.Warning);
-			return;
-		}
-		await this._textFileViewerModel.OpenFileAsync(path, fso, this.SelectedEncoding.Value, ct);
-	}
-
-	/// <summary>
-	/// 表示削減量算出
-	/// </summary>
-	/// <param name="contents">コンテンツ</param>
-	/// <param name="totalDecrement">合計削減量</param>
-	/// <returns></returns>
-	private static Dictionary<int, int> CalcDecrement(IEnumerable<string> contents, int totalDecrement) {
-		var n = contents.Count();
-		// 元の値とインデックスをペアで保持
-		var indexedNums = contents
-			.Select((x, Index) => new { x.Length, Index })
-			.OrderByDescending(x => x.Length)
-			.ToList();
-
-		var reduce = new int[n]; // ソート後の減らす量
-		var remain = totalDecrement;
-
-		for (var i = 0; i < n && remain > 0; i++) {
-			var nextLength = (i < n - 1) ? indexedNums[i + 1].Length : 0;
-			var diff = indexedNums[i].Length - nextLength;
-			var canReduce = diff * (i + 1);
-
-			var use = Math.Min(remain, canReduce);
-			var lengthPerIndex = use / (i + 1);
-			var extra = use % (i + 1);
-
-			for (var j = 0; j <= i; j++) {
-				reduce[j] += lengthPerIndex;
-				if (extra > 0) {
-					reduce[j]++;
-					extra--;
-				}
-			}
-			remain -= use;
-		}
-
-		// 結果を元のINDEXに戻す
-		var result = new Dictionary<int, int>();
-		for (var i = 0; i < n; i++) {
-			var originalIndex = indexedNums[i].Index;
-			if (reduce[i] > 0) {
-				result[originalIndex] = reduce[i];
-			}
-		}
-		return result;
 	}
 }

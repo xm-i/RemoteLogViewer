@@ -1,13 +1,13 @@
 const TabArea = {
 	components: { GrepTab, LineViewTab },
 	template: `
-<div id="tab-container">
-	<ul id="tab-headers" v-if="lineViewTabVisibility">
+<div class="tab-container">
+	<ul class="tab-headers" v-if="lineViewTabVisibility">
 	  <li v-on:click="change('Grep')" v-bind:class="{'active': isActive === 'Grep'}">Grep</li>
 	  <li v-on:click="change('LineView')" v-bind:class="{'active': isActive === 'LineView'}">Line View</li>
 	</ul>
 
-	<div id="tab-contents">
+	<div class="tab-contents">
 		<grep-tab v-show="isActive === 'Grep'" @line-clicked="grepLineClicked"></grep-tab>
 		<line-view-tab ref="lineViewTab" v-show="isActive === 'LineView'"></line-view-tab>
 	</div>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -12,30 +13,39 @@ namespace RemoteLogViewer.Core.Models.Ssh.FileViewer;
 
 [Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
-	private readonly ISshService _sshService;
+	private ISshService? _sshService;
 	private readonly SettingsStoreModel _settingsStore;
 	private readonly IOperationRegistry _operations;
 	private readonly IByteOffsetIndex _byteOffsetIndex;
 
 	public TextFileViewerModel(
-		ISshService sshService,
 		SettingsStoreModel settingsStore,
 		IOperationRegistry operations,
 		IByteOffsetIndex byteOffsetIndex,
 		IGrepOperation grepOperation,
 		ISaveRangeContentOperation saveRangeContentOperation,
 		IBuildByteOffsetMapOperation buildByteOffsetMapOperation,
+		IServiceProvider serviceProvider,
 		ILogger<TextFileViewerModel> logger) : base(logger) {
-		this._sshService = sshService;
 		this._settingsStore = settingsStore;
 		this._operations = operations.AddTo(this.CompositeDisposable);
 		this._byteOffsetIndex = byteOffsetIndex;
 		this.GrepOperation = grepOperation.AddTo(this.CompositeDisposable);
+		this.ServiceProvider = serviceProvider;
 		this.TotalLines.Subscribe(x => {
 			this.GrepOperation.TotalLineCount.Value = x;
 		}).AddTo(this.CompositeDisposable);
 		this.SaveRangeOperation = saveRangeContentOperation.AddTo(this.CompositeDisposable);
 		this.BuildByteOffsetMapOperation = buildByteOffsetMapOperation.AddTo(this.CompositeDisposable);
+	}
+
+	public string? PageKey {
+		get;
+		private set;
+	}
+
+	public IServiceProvider ServiceProvider {
+		get;
 	}
 
 	/// <summary>開いているファイルのフルパス。</summary>
@@ -78,6 +88,13 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		get;
 	} = new(0);
 
+	[MemberNotNull(nameof(_sshService))]
+	[MemberNotNull(nameof(PageKey))]
+	public void Initialize(ISshService sshService, string pageKey) {
+		this._sshService = sshService;
+		this.PageKey = pageKey;
+	}
+
 	/// <summary>
 	///     ファイルを開き内容を取得します。
 	/// </summary>
@@ -85,14 +102,16 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// <param name="fso">ファイル。</param>
 	/// <param name="encoding">エンコード</param>
 	/// <param name="ct">キャンセルトークン。</param>
-	public async Task OpenFileAsync(string path, FileSystemObject fso, string? encoding, CancellationToken ct) {
+	public async Task OpenFileAsync(string path, FileSystemObject fso, CancellationToken ct) {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		if (fso.FileSystemObjectType is not (FileSystemObjectType.File or FileSystemObjectType.SymlinkFile)) {
 			return;
 		}
 		this.ResetStates();
 		var fullPath = PathUtils.CombineUnixPath(path, fso.FileName, fso.FileSystemObjectType);
 		this.OpenedFilePath.Value = fullPath;
-		this.FileEncoding.Value = encoding;
 		this.TotalBytes.Value = fso.FileSize;
 		this._byteOffsetIndex.Reset();
 		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, fso.FileSize, null, ct);
@@ -106,6 +125,9 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// テキストファイル参照に利用可能なエンコードを取得します。
 	/// </summary>
 	public void LoadAvailableEncoding() {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		this.AvailableEncodings.Clear();
 		this.AvailableEncodings.AddRange(this._sshService.ListIconvEncodings());
 	}
@@ -118,6 +140,9 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>取得した行群</returns>
 	public async Task<TextLine[]> GetLinesAsync(long startLine, long endLine, CancellationToken ct) {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		using var op = this._operations.Register(ct);
 		try {
 			if (this.OpenedFilePath.Value == null) {
@@ -133,6 +158,9 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
 	public async Task Grep(string? query, string? encoding, long startLine, CancellationToken ct) {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		this.GrepResults.Clear();
 		var max = this._settingsStore.SettingsModel.TextViewerSettings.GrepMaxResults.Value;
 		var startOffset = this._byteOffsetIndex.Find(startLine);
@@ -155,6 +183,9 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// </summary>
 	/// <param name="ct">キャンセルトークン。</param>
 	public async Task UpdateTotalLines(CancellationToken ct) {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		if (this.OpenedFilePath.Value == null) {
 			return;
 		}
@@ -186,10 +217,16 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// <param name="ct">キャンセルトークン</param>
 	/// <returns>結合済みテキスト (末尾改行無し)</returns>
 	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine, CancellationToken ct) {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		await this.SaveRangeOperation.ExecuteAsync(this._sshService, this.OpenedFilePath.Value, streamWriter, startLine, endLine, this.FileEncoding.Value, ct);
 	}
 
 	public async Task<TextLine?> PickupTextLine(long lineNumber, CancellationToken ct) {
+		if (this._sshService is null) {
+			throw new InvalidOperationException();
+		}
 		if (this.OpenedFilePath.Value == null) {
 			return null;
 		}

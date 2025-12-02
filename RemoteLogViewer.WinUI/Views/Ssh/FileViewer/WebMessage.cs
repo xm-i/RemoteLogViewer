@@ -4,6 +4,10 @@ using System.Text.Json;
 namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 
 public class WebMessage {
+	public required string Key {
+		get;
+		set;
+	}
 	public required string Type {
 		get;
 		set;
@@ -14,6 +18,8 @@ public class WebMessage {
 		{ "StartGrep", typeof(StartGrepWebMessage) },
 		{ "CancelGrep", typeof(CancelGrepWebMessage) },
 		{ "Ready", typeof(ReadyWebMessage) },
+		{ "SaveRangeRequest", typeof(SaveRangeRequestWebMessage) },
+		{ "ChangeEncoding", typeof(ChangeEncodingWebMessage) },
 	};
 
 	public static WebMessage Create(string json) {
@@ -59,3 +65,19 @@ public class CancelGrepWebMessage : WebMessage {
 public class ReadyWebMessage : WebMessage {
 }
 
+public class SaveRangeRequestWebMessage : WebMessage {
+	public required long Start {
+		get;
+		set;
+	}
+	public required long End {
+		get;
+		set;
+	}
+}
+public class ChangeEncodingWebMessage : WebMessage {
+	public required string Encoding {
+		get;
+		set;
+	}
+}

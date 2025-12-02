@@ -1,4 +1,7 @@
 using System.Text;
+using System.Threading;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
@@ -18,6 +21,9 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 	private readonly SshConnectionStoreModel _store;
 	private readonly TextFileViewerModel _textFileViewerModel;
 	private readonly NotificationService _notificationService;
+	private readonly IServiceProvider _serviceProvider;
+	private int pageKey = 0;
+
 	/// <summary>接続済みか。</summary>
 	public ReactiveProperty<bool> IsConnected {
 		get;
@@ -31,6 +37,9 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 	public ReactiveProperty<string> CurrentPath {
 		get;
 	} = new("/");
+	public ObservableList<TextFileViewerModel> OpenedFileViewers {
+		get;
+	} = [];
 
 	/// <summary>
 	/// 現在のパスがブックマークされているか。
@@ -57,11 +66,12 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		get;
 	} = Encoding.GetEncodings().Where(x => Constants.EncodingPairs.Any(ep => ep.CSharp == x.Name)).ToArray();
 
-	public SshSessionModel(ISshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger) : base(logger) {
+	public SshSessionModel(ISshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger, IServiceProvider serviceProvider) : base(logger) {
 		this._sshService = sshService.AddTo(this.CompositeDisposable);
 		this._store = store;
 		this._textFileViewerModel = textFileViewerModel.AddTo(this.CompositeDisposable);
 		this._notificationService = notificationService;
+		this._serviceProvider = serviceProvider;
 		this.SavedConnections = store.Profile.Items;
 		this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
 		this.IsCurrentDirectoryBookmarked = this.CurrentPath.Select(x => {
@@ -106,6 +116,21 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 
 	public void Reconnect() {
 		this.Connect(true);
+	}
+
+	/// <summary>
+	/// タブを追加してファイルを開く。
+	/// </summary>
+	/// <param name="path">ディレクトリパス</param>
+	/// <param name="fso">ファイスシステムオブジェクト</param>
+	/// <param name="ct">キャンセルトークン</param>
+	/// <returns></returns>
+	public async Task OpenFileAsync(string path, FileSystemObject fso, CancellationToken ct) {
+		var scope = this._serviceProvider.CreateScope();
+		var tfv = scope.ServiceProvider.GetRequiredService<TextFileViewerModel>();
+		tfv.Initialize(this._sshService, $"p{++this.pageKey}");
+		await tfv.OpenFileAsync(path, fso, ct);
+		this.OpenedFileViewers.Add(tfv);
 	}
 
 	/// <summary>

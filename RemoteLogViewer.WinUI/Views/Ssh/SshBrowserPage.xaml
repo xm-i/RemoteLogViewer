@@ -86,7 +86,7 @@
 				<TranslateTransform Y="-7" />
 			</controls:GridSplitter.RenderTransform>
 		</controls:GridSplitter>
-		<fileViewer:TextFileViewer x:Name="TextFileViewer" Grid.Column="2" MinWidth="100" ViewModel="{x:Bind ViewModel.TextFileViewerViewModel}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay,Converter={StaticResource BooleanNegationConverter}}" />
+		<fileViewer:TextFileViewer x:Name="TextFileViewer" Grid.Column="2" MinWidth="100" ViewModel="{x:Bind ViewModel}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay,Converter={StaticResource BooleanNegationConverter}}" />
 		<controls:DockPanel Grid.Row="1" Grid.ColumnSpan="3" controls:DockPanel.Dock="Bottom" >
 			<Button controls:DockPanel.Dock="Right" Content="Disconnect" Command="{x:Bind ViewModel.DisconnectCommand,Mode=OneWay}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}" />
 			<Button controls:DockPanel.Dock="Right" Content="Reconnect" Command="{x:Bind ViewModel.ReconnectCommand,Mode=OneWay}" IsEnabled="{x:Bind ViewModel.DisconnectedWithException.Value,Mode=OneWay}" />

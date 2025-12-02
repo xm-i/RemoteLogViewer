@@ -1,7 +1,7 @@
 const LineViewTab = {
 	template: `
-<div id="line-view-tab">
-	<div id="line-view-results" class="log-container">
+<div class="line-view-tab">
+	<div class="line-view-results log-container">
 		<div v-if="line !== null" class="log-line">
 			<span class="line-number">{{ line.LineNumber }}</span>
 			<span class="line-content wrap" v-html="line.Content"></span>
