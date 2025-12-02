@@ -27,6 +27,10 @@ public class WebMessage {
 }
 
 public class RequestWebMessage : WebMessage {
+	public required int RequestId {
+		get;
+		set;
+	}
 	public required long Start {
 		get;
 		set;

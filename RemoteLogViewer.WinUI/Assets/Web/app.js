@@ -15,11 +15,11 @@ const App = {
 			logs: [],
 			maxLineNumber: 0,
 			minLineNumber: 0,
+			// 読み込み中リクエスト管理
+			currentRequestId: 0,
+			loadingRequests: [],
 			// ログ表示状況
 			startLine: 0,
-			// 追加読み込み用 IntersectionObserver
-			nextObserver: null,
-			previousObserver: null,
 			// 仮想スクロール
 			virtualScrollTimeout: null,
 			logScrollObserver: null,
@@ -34,12 +34,13 @@ const App = {
 	watch: {
 		logs: {
 			handler() {
+				// 読み込み完了
+				this.loadingStartLineNumber = null;
+				this.loadingEndLineNumber = null;
 				// 最小・最大行番号を更新
 				this.minLineNumber = this.logs[0]?.LineNumber ?? 0;
 				this.maxLineNumber = this.logs[this.logs.length - 1]?.LineNumber ?? 0;
 				// 新しい行が追加されたら observer を再セット
-				this.setupObserverForNextLoad();
-				this.setupObserverForPreviousLoad();
 				this.setupObserverForLogScroll();
 			},
 			deep: true
@@ -68,24 +69,43 @@ const App = {
 			if (start >= end) {
 				return;
 			}
-			this.log(() => `requestLogs start: ${start}, end: ${end}`);
-			window.chrome.webview.postMessage({
+			this.loadingStartLineNumber = start;
+			this.loadingEndLineNumber = end;
+
+			const request = {
 				Type: "Request",
+				RequestId: ++this.currentRequestId,
 				Start: start,
 				End: end
-			});
+			}
+
+			this.loadingRequests.push(request);
+
+			this.log(() => `requestLogs id: ${request.RequestId}, start: ${request.Start}, end: ${request.End}, requesting: ${this.loadingRequests.map(x => x.RequestId)}`);
+			window.chrome.webview.postMessage(request);
 		},
 		reset() {
+			this.loadingRequests.splice(0);
 			this.logs.splice(0);
 			this.visibleLines.splice(0);
 		},
 		// ログ受信時処理
-		addLogs(newLogs) {
-			this.log(() => `addLogs start ${newLogs[0]?.LineNumber}, ${newLogs.length}`);
+		addLogsFromRequest(requestId, newLogs) {
+			if (!this.loadingRequests.find(x => x.RequestId === requestId)) {
+				// リクエスト中でなければ、無視する。
+				this.log(() => `addLogs skipped [${requestId}]`);
+				return;
+			}
+			this.loadingRequests = this.loadingRequests.filter(x => x.RequestId !== requestId);
+
+			this.log(() => `addLogs start [${requestId}] ${newLogs[0]?.LineNumber}, ${newLogs.length}`);
 			if (newLogs.length === 0) {
 				return;
 			}
+
+			let isScrollUp = false;
 			if (newLogs[newLogs.length - 1].LineNumber + 1 === this.minLineNumber) {
+				isScrollUp = true;
 				this.logs.unshift(...newLogs);
 				if (this.logs.length > maxLogLines) {
 					const removeCount = this.logs.length - maxLogLines;
@@ -102,8 +122,20 @@ const App = {
 			}
 
 			if (this.jumpStartLine !== null) {
+				// ジャンプ先指定あり
 				const startLine = this.jumpStartLine;
 				this.jumpStartLine = null;
+
+				this.$nextTick(() => {
+					const target = this.$refs.row.find(x => Number(x.dataset.lineNumber) === startLine);
+					if (!target) {
+						return;
+					}
+					this.$refs.logArea.scrollTop = target.offsetTop;
+				});
+			} else if (isScrollUp){
+				// 上スクロールで且つジャンプ先指定なしの場合、スクロールはvisibleLinesの1行目に合わせる。
+				const startLine = this.visibleLines[0];
 				this.$nextTick(() => {
 					const target = this.$refs.row.find(x => Number(x.dataset.lineNumber) === startLine);
 					if (!target) {
@@ -114,87 +146,7 @@ const App = {
 			}
 			this.log(() => `addLogs end`);
 		},
-		// 次のチャンクを読み込むための監視処理
-		setupObserverForNextLoad() {
-			// 既存の observer があれば解除
-			if (this.nextObserver) {
-				this.nextObserver.disconnect();
-				this.log(() => `nextObserver disconnected`);
-			}
-
-			// IntersectionObserver 作成
-			this.nextObserver = new IntersectionObserver(entries => {
-				if (entries.find(x => x.isIntersecting)) {
-					this.nextObserver.disconnect();
-					this.log(() => `nextObserver intersecting ${entries[0].target.dataset.lineNumber}`);
-					this.loadNextChunk();
-				}
-			}, {
-				root: this.$refs.logArea
-			});
-
-			this.$nextTick(() => {
-				const rowRefs = this.$refs.row || [];
-
-				const sentinelLine = this.maxLineNumber - prefetchThreshold;
-				const sentinelEl = rowRefs.find(
-					x => Number(x.dataset.lineNumber) === sentinelLine
-				);
-				if (sentinelEl) {
-					this.log(() => `nextObserver observe ${sentinelEl.dataset.lineNumber}`);
-					this.nextObserver.observe(sentinelEl);
-				}
-
-				const lastEl = rowRefs.find(
-					x => Number(x.dataset.lineNumber) === this.maxLineNumber
-				);
-				if (lastEl) {
-					this.log(() => `nextObserver observe ${lastEl.dataset.lineNumber}`);
-					this.nextObserver.observe(lastEl);
-				}
-			});
-		},
-		// 前のチャンクを読み込むための監視処理
-		setupObserverForPreviousLoad() {
-			// 既存の observer があれば解除
-			if (this.previousObserver) {
-				this.previousObserver.disconnect();
-				this.log(() => `previousObserver disconnected`);
-			}
-
-			// IntersectionObserver 作成
-			this.previousObserver = new IntersectionObserver(entries => {
-				if (entries.find(x => x.isIntersecting)) {
-					this.previousObserver.disconnect();
-					this.log(() => `previousObserver intersecting ${entries[0].target.dataset.lineNumber}`);
-					this.loadPreviousChunk();
-				}
-			}, {
-				root: this.$refs.logArea
-			});
-
-			this.$nextTick(() => {
-				const rowRefs = this.$refs.row || [];
-
-				const sentinelLine = this.minLineNumber + prefetchThreshold;
-				const sentinelEl = rowRefs.find(
-					x => Number(x.dataset.lineNumber) === sentinelLine
-				);
-				if (sentinelEl) {
-					this.log(() => `previousObserver observe ${sentinelEl.dataset.lineNumber}`);
-					this.previousObserver.observe(sentinelEl);
-				}
-
-				const firstEl = rowRefs.find(
-					x => Number(x.dataset.lineNumber) === this.minLineNumber
-				);
-				if (firstEl) {
-					this.log(() => `previousObserver observe ${firstEl.dataset.lineNumber}`);
-					this.previousObserver.observe(firstEl);
-				}
-			});
-		},
-		// 仮想スクロール位置同期のためのログスクロール監視
+		// ログスクロール監視
 		setupObserverForLogScroll() {
 			// 既存の observer があれば解除
 			if (this.logScrollObserver) {
@@ -219,8 +171,21 @@ const App = {
 						}
 					}
 				}
+
 				this.visibleLines.sort((a, b) => a - b);
 
+				// 上方向の事前読み込み処理
+				if (this.visibleLines[0] < this.minLineNumber + prefetchThreshold && !this.loadingRequests.find(x => x.End === this.minLineNumber - 1)) {
+					this.log(() => `request by intersect ${this.visibleLines[0]}`);
+					this.requestLogs(this.minLineNumber - prefetchLines, this.minLineNumber - 1);
+				}
+
+				// 下方向の事前読み込み処理
+				if (this.visibleLines[this.visibleLines.length - 1] > this.maxLineNumber - prefetchThreshold && !this.loadingRequests.find(x => x.Start === this.maxLineNumber + 1)) {
+					this.log(() => `request by intersect ${this.visibleLines[this.visibleLines.length - 1]}`);
+					this.requestLogs(this.maxLineNumber + 1, this.maxLineNumber + prefetchLines);
+				}
+				// 仮想スクロール位置同期
 				this.startLine = this.visibleLines[0] || 1;
 
 				this.log(() => `logScrollObserver intersecting / new startLine: ${this.startLine}`);
@@ -285,7 +250,8 @@ const App = {
 	mounted() {
 		// テスト用
 		if (!window.chrome.webview) {
-			this.addLogs([...Array(100)].map((_, i) => i).map(i => {
+			this.loadingRequests.push({ RequestId: 1, Start: 1, End: 100 });
+			this.addLogsFromRequest(1, [...Array(100)].map((_, i) => i).map(i => {
 				return {
 					LineNumber: i + 1, Content: "I have a dream that one day on the red hills of Georgia, the sons of former slaves and the sons of former slave owners will be able to sit down together at the table of brotherhood." };
 			}));
@@ -298,7 +264,7 @@ const App = {
 			const message = e.data;
 			switch (message.type) {
 				case "Loaded":
-					this.addLogs(message.data);
+					this.addLogsFromRequest(message.data.RequestId, message.data.Content);
 					break;
 				case "TotalLinesUpdated":
 					this.totalLines = message.data;

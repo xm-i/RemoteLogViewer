@@ -1,2 +1,3 @@
-namespace RemoteLogViewer.Core.Models.Ssh.FileViewer; 
-public record struct LogFileRange(long Start, long End);
+namespace RemoteLogViewer.Core.Models.Ssh.FileViewer;
+
+public record struct LogFileLoadRequest(int RequestId, long Start, long End);

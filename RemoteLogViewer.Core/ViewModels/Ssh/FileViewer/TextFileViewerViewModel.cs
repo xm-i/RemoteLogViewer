@@ -23,7 +23,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	private readonly NotificationService _notificationService;
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
-	
+
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, NotificationService notificationService, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this._textFileViewerModel = textFileViewerModel;
 		this._notificationService = notificationService;
@@ -45,7 +45,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		this.FilteredAvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 		this.AvailableEncodings = this._textFileViewerModel.AvailableEncodings.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
-		this.UpdateTotalLineCommand.SubscribeAwait(async (_,ct) => {
+		_ = this.UpdateTotalLineCommand.SubscribeAwait(async (_, ct) => {
 			await this._textFileViewerModel.UpdateTotalLines(ct);
 		}).AddTo(this.CompositeDisposable);
 
@@ -61,9 +61,9 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			.SubscribeAwait(async (val, ct) => {
 				logger.LogTrace($"LoadLogsCommand start: {val.Start} - {val.End}");
 				var loaded = await this._textFileViewerModel.GetLinesAsync(val.Start, val.End, ct);
-				this._loadedSubject.OnNext(loaded);
+				this._loadedSubject.OnNext((val.RequestId, loaded));
 				logger.LogTrace($"LoadLogsCommand end: {val.Start} - {val.End}");
-			}, AwaitOperation.Switch).AddTo(this.CompositeDisposable);
+			}, AwaitOperation.Sequential).AddTo(this.CompositeDisposable);
 
 		// GREP 実行: 既存タスクをキャンセルして新規開始
 		_ = this.GrepCommand.SubscribeAwait(async (_, ct) => {
@@ -128,12 +128,12 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		get;
 	}
 
-	public ReactiveCommand<LogFileRange> LoadLogsCommand {
+	public ReactiveCommand<LogFileLoadRequest> LoadLogsCommand {
 		get;
 	} = new();
 
-	private readonly Subject<TextLine[]> _loadedSubject = new();
-	public Observable<TextLine[]> Loaded {
+	private readonly Subject<(int RequestId, TextLine[] Content)> _loadedSubject = new();
+	public Observable<(int RequestId, TextLine[] Content)> Loaded {
 		get {
 			return field ??= this._loadedSubject.AsObservable();
 		}

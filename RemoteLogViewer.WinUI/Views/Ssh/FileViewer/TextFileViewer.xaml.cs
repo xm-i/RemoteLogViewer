@@ -81,7 +81,7 @@ public sealed partial class TextFileViewer {
 
 			switch (message) {
 				case RequestWebMessage rwm:
-					this.ViewModel.LoadLogsCommand.Execute(new(rwm.Start, rwm.End));
+					this.ViewModel.LoadLogsCommand.Execute(new(rwm.RequestId, rwm.Start, rwm.End));
 					break;
 				case StartGrepWebMessage sgwm:
 					this.ViewModel.GrepStartLine.Value = sgwm.StartLine;
@@ -106,7 +106,10 @@ public sealed partial class TextFileViewer {
 
 		// メインログビューイベント
 		_ = this.ViewModel.Loaded.Subscribe(x => {
-			post("Loaded", x.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
+			post("Loaded", new {
+				x.RequestId,
+				Content = x.Content.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content)))
+			});
 		});
 
 		_ = this.ViewModel.OpenedFilePath.AsObservable().Subscribe(x => {
