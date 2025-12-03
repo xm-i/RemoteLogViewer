@@ -82,6 +82,10 @@ public class SshBrowserViewModel : BaseSshPageViewModel<SshBrowserViewModel> {
 		get;
 	} = new();
 
+	public ReactiveCommand<TextFileViewerViewModel> CloseFileViewerCommand {
+		get;
+	} = new();
+
 	/// <summary>ブックマークオープンコマンド。</summary>
 	public ReactiveCommand<SshBookmarkModel> OpenBookmarkCommand { get; } = new();
 
@@ -137,6 +141,10 @@ public class SshBrowserViewModel : BaseSshPageViewModel<SshBrowserViewModel> {
 			.Subscribe(vm => {
 				this._model.EnterDirectory(vm.FileName);
 			}).AddTo(this.CompositeDisposable);
+
+		_ = this.CloseFileViewerCommand.Subscribe(x => {
+			this._model.CloseFile(x.Model);
+		});
 
 		_ = this.OpenBookmarkCommand.Subscribe(bm => {
 			if (bm == null) {

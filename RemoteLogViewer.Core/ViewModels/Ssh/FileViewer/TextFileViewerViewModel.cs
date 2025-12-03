@@ -16,32 +16,35 @@ namespace RemoteLogViewer.Core.ViewModels.Ssh.FileViewer;
 /// </summary>
 [Inject(InjectServiceLifetime.Scoped)]
 public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
-	private readonly TextFileViewerModel _textFileViewerModel;
+	public TextFileViewerModel Model {
+		get;
+		private set;
+	}
 	private CancellationTokenSource? _grepCts; // GREP 用 CTS
 	private CancellationTokenSource? _saveContentCts; // 指定範囲保存用 CTS
 
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, ILogger<TextFileViewerViewModel> logger) : base(logger) {
-		this._textFileViewerModel = textFileViewerModel;
-		this.OpenedFilePath = this._textFileViewerModel.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.TotalBytes = this._textFileViewerModel.TotalBytes.Select(x => x is { } ul ? (long?)ul : null).ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
-		this.FileLoadProgress = this._textFileViewerModel.BuildByteOffsetMapOperation.Progress
+		this.Model = textFileViewerModel;
+		this.OpenedFilePath = this.Model.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TotalBytes = this.Model.TotalBytes.Select(x => x is { } ul ? (long?)ul : null).ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
+		this.FileLoadProgress = this.Model.BuildByteOffsetMapOperation.Progress
 			.Throttle()
 			.ObserveOnCurrentSynchronizationContext()
 			.ToReadOnlyBindableReactiveProperty(0)
 			.AddTo(this.CompositeDisposable);
-		this.TotalLines = this._textFileViewerModel.TotalLines.Throttle().ObserveOnCurrentSynchronizationContext().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.TotalLines = this.Model.TotalLines.Throttle().ObserveOnCurrentSynchronizationContext().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 
-		var grepResultsView = this._textFileViewerModel.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
+		var grepResultsView = this.Model.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.GrepResults = grepResultsView.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
-		this.IsGrepRunning = this._textFileViewerModel.GrepOperation.IsRunning.ToReadOnlyBindableReactiveProperty(false)
+		this.IsGrepRunning = this.Model.GrepOperation.IsRunning.ToReadOnlyBindableReactiveProperty(false)
 			.AddTo(this.CompositeDisposable);
-		this.GrepProgress = this._textFileViewerModel.GrepOperation.Progress.ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
-		var view = this._textFileViewerModel.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
+		this.GrepProgress = this.Model.GrepOperation.Progress.ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
+		var view = this.Model.AvailableEncodings.CreateView(x => x).AddTo(this.CompositeDisposable);
 		this.FilteredAvailableEncodings = view.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
-		this.AvailableEncodings = this._textFileViewerModel.AvailableEncodings.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
+		this.AvailableEncodings = this.Model.AvailableEncodings.ToNotifyCollectionChanged().AddTo(this.CompositeDisposable);
 
 		_ = this.UpdateTotalLineCommand.SubscribeAwait(async (_, ct) => {
-			await this._textFileViewerModel.UpdateTotalLines(ct);
+			await this.Model.UpdateTotalLines(ct);
 		}).AddTo(this.CompositeDisposable);
 
 		_ = this.SelectedEncoding.Subscribe(x => {
@@ -55,7 +58,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		_ = this.LoadLogsCommand
 			.SubscribeAwait(async (val, ct) => {
 				logger.LogTrace($"LoadLogsCommand start: {val.Start} - {val.End}");
-				var loaded = await this._textFileViewerModel.GetLinesAsync(val.Start, val.End, ct);
+				var loaded = await this.Model.GetLinesAsync(val.Start, val.End, ct);
 				this._loadedSubject.OnNext((val.RequestId, loaded));
 				logger.LogTrace($"LoadLogsCommand end: {val.Start} - {val.End}");
 			}, AwaitOperation.Sequential).AddTo(this.CompositeDisposable);
@@ -65,7 +68,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			try {
 				logger.LogTrace($"Grep start: {this.GrepQuery.Value}");
-				await this._textFileViewerModel.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this.GrepStartLine.Value, this._grepCts.Token);
+				await this.Model.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this.GrepStartLine.Value, this._grepCts.Token);
 				logger.LogTrace("Grep end");
 			} finally {
 				this._grepCts?.Dispose();
@@ -79,29 +82,29 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._grepCts?.Cancel();
 		}).AddTo(this.CompositeDisposable);
 
-		this.SaveRangeProgress = this._textFileViewerModel.SaveRangeOperation.Progress.Throttle().ObserveOnCurrentSynchronizationContext().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.IsRangeContentSaving = this._textFileViewerModel.SaveRangeOperation.IsRunning.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.SaveRangeProgress = this.Model.SaveRangeOperation.Progress.Throttle().ObserveOnCurrentSynchronizationContext().ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.IsRangeContentSaving = this.Model.SaveRangeOperation.IsRunning.ToBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.SaveRangeContentCancelCommand =
 			this.IsRangeContentSaving
 			.ToReactiveCommand(_ => this._saveContentCts?.Cancel())
 			.AddTo(this.CompositeDisposable);
 
 		_ = this.PickupTextLineCommand.SubscribeAwait(async (x, ct) => {
-			this.PickedupTextLine.Value = await this._textFileViewerModel.PickupTextLine(x, ct);
+			this.PickedupTextLine.Value = await this.Model.PickupTextLine(x, ct);
 		}).AddTo(this.CompositeDisposable);
 
 		_ = this.ChangeEncodingCommand.Subscribe(encoding => {
-			this._textFileViewerModel.ChangeEncoding(encoding);
+			this.Model.ChangeEncoding(encoding);
 			this._reloadRequestedSubject.OnNext(Unit.Default);
 		}).AddTo(this.CompositeDisposable);
 	}
 
 	public string PageKey {
 		get {
-			if (this._textFileViewerModel.PageKey is null) {
+			if (this.Model.PageKey is null) {
 				throw new InvalidOperationException();
 			}
-			return this._textFileViewerModel.PageKey;
+			return this.Model.PageKey;
 		}
 	}
 
@@ -222,7 +225,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 		get;
 	}
 
-	public ReactiveCommand<string> ChangeEncodingCommand {
+	public ReactiveCommand<string?> ChangeEncodingCommand {
 		get;
 	} = new();
 
@@ -236,7 +239,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	public async Task SaveRangeContent(StreamWriter streamWriter, long startLine, long endLine) {
 		this._saveContentCts = new CancellationTokenSource();
 		try {
-			await this._textFileViewerModel.SaveRangeContent(streamWriter, startLine, endLine, this._saveContentCts.Token);
+			await this.Model.SaveRangeContent(streamWriter, startLine, endLine, this._saveContentCts.Token);
 		} finally {
 			this._saveContentCts?.Dispose();
 			this._saveContentCts = null;

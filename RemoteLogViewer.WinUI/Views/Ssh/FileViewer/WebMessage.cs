@@ -8,6 +8,10 @@ public class WebMessage {
 		get;
 		set;
 	}
+	public required int RequestId {
+		get;
+		set;
+	}
 	public required string Type {
 		get;
 		set;
@@ -20,6 +24,8 @@ public class WebMessage {
 		{ "Ready", typeof(ReadyWebMessage) },
 		{ "SaveRangeRequest", typeof(SaveRangeRequestWebMessage) },
 		{ "ChangeEncoding", typeof(ChangeEncodingWebMessage) },
+		{ "UpdateTotalLine", typeof(UpdateTotalLineWebMessage) },
+		{ "FileClose", typeof(FileCloseWebMessage) },
 	};
 
 	public static WebMessage Create(string json) {
@@ -33,10 +39,6 @@ public class WebMessage {
 }
 
 public class RequestWebMessage : WebMessage {
-	public required int RequestId {
-		get;
-		set;
-	}
 	public required long Start {
 		get;
 		set;
@@ -76,8 +78,13 @@ public class SaveRangeRequestWebMessage : WebMessage {
 	}
 }
 public class ChangeEncodingWebMessage : WebMessage {
-	public required string Encoding {
+	public required string? Encoding {
 		get;
 		set;
 	}
+}
+
+public class UpdateTotalLineWebMessage : WebMessage {
+}
+public class FileCloseWebMessage : WebMessage {
 }

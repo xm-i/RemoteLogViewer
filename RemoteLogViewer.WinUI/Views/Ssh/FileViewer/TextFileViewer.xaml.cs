@@ -120,9 +120,18 @@ public sealed partial class TextFileViewer {
 						}
 						break;
 					case ChangeEncodingWebMessage m:
-						this.GetViewerVM(m.Key)?.ChangeEncodingCommand.Execute(m.Encoding);
+						this.GetViewerVM(m.PageKey)?.ChangeEncodingCommand.Execute(m.Encoding);
 						break;
-
+					case UpdateTotalLineWebMessage m:
+						this.GetViewerVM(m.PageKey)?.UpdateTotalLineCommand.Execute(Unit.Default);
+						break;
+					case FileCloseWebMessage m:
+						var removeTarget = this.GetViewerVM(m.PageKey);
+						if (removeTarget is null) {
+							return;
+						}
+						this.ViewModel.CloseFileViewerCommand.Execute(removeTarget);
+						break;
 				}
 			}
 		);
@@ -140,18 +149,18 @@ public sealed partial class TextFileViewer {
 		).Subscribe(e => {
 			switch (e.Action) {
 				case NotifyCollectionChangedAction.Add:
+				case NotifyCollectionChangedAction.Remove:
 					if (e.NewItems is not null) {
 						foreach (TextFileViewerViewModel vm in e.NewItems) {
-							this.RegisterViewerVMEvents(vm);
-							this.PostWV2("*", "FileOpend", new {
+							this.PostWV2("*", "FileOpened", new {
 								vm.PageKey,
 								vm.OpenedFilePath.Value
 							});
+							this.RegisterViewerVMEvents(vm);
 						}
 					}
 					if (e.OldItems is not null) {
 						foreach (TextFileViewerViewModel vm in e.OldItems) {
-							this.RegisterViewerVMEvents(vm);
 							this.PostWV2("*", "FileClosed", vm.PageKey);
 						}
 					}
@@ -180,6 +189,39 @@ public sealed partial class TextFileViewer {
 		}).AddTo(vm.CompositeDisposable);
 		_ = vm.TotalLines.AsObservable().Subscribe(async x => {
 			this.PostWV2(vm.PageKey, "TotalLinesUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		// ファイル操作エリアイベント
+		_ = vm.FileLoadProgress.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "FileLoadProgressUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.TotalLines.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "TotalLinesUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.TotalBytes.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "TotalBytesUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.OpenedFilePath.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "OpenedFilePathChanged", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.SelectedEncoding.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "SelectedEncodingChanged", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.IsRangeContentSaving.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "IsRangeContentSavingUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.SaveRangeProgress.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "SaveRangeProgressUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
+		_ = vm.AvailableEncodings.ObservePropertyChanged(x => x.Count).Subscribe(x => {
+			this.PostWV2(vm.PageKey, "AvailableEncodingsUpdated", vm.AvailableEncodings);
 		}).AddTo(vm.CompositeDisposable);
 
 		// GREPタブイベント

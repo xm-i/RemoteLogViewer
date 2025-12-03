@@ -4,5 +4,7 @@ const app = createApp(App);
 app.mount("#app");
 
 window.chrome.webview.postMessage({
-	Type: "Ready"
+	Type: "Ready",
+	PageKey: "*",
+	RequestId: 0
 });

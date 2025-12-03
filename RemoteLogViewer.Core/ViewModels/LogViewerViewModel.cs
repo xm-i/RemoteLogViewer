@@ -1,5 +1,5 @@
-using System.IO;
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Models.Ssh;
 using RemoteLogViewer.Core.Utils;
 using RemoteLogViewer.Core.ViewModels.Ssh;
@@ -43,26 +43,20 @@ public class LogViewerViewModel : ViewModelBase<LogViewerViewModel> {
 	/// <summary>
 	///     DI 用コンストラクタ。
 	/// </summary>
-	public LogViewerViewModel(SshServerSelectorViewModel sshServerSelectorViewModel, SshBrowserViewModel sshBrowserViewModel, SshSessionModel sshSessionModel, ILogger<LogViewerViewModel> logger): base(logger) {
+	public LogViewerViewModel(SshServerSelectorViewModel sshServerSelectorViewModel, SshBrowserViewModel sshBrowserViewModel, SshSessionModel sshSessionModel, ILogger<LogViewerViewModel> logger) : base(logger) {
 		this.SshServerSelectorViewModel = sshServerSelectorViewModel.AddTo(this.CompositeDisposable);
 		this.SshBrowserViewModel = sshBrowserViewModel.AddTo(this.CompositeDisposable);
 		this.CurrentPageViewModel.Value = this.SshServerSelectorViewModel;
 		this._sshSessionModel = sshSessionModel;
 
-		this.SshBrowserViewModel
-			.TextFileViewerViewModel
-			.OpenedFilePath
+		_ = sshServerSelectorViewModel
+			.SelectedSshConnectionInfo
 			.ObservePropertyChanged(x => x.Value)
-			.CombineLatest(
-				sshServerSelectorViewModel
-					.SelectedSshConnectionInfo
-					.ObservePropertyChanged(x => x.Value),
-				(filePath, connInfo) => (filePath, connInfo))
 			.Subscribe(x => {
-			this.Title.Value = $"{Path.GetFileName(x.filePath) ?? string.Empty} @ {x.connInfo?.Name.Value ?? string.Empty}";
-		}).AddTo(this.CompositeDisposable);
+				this.Title.Value = $"{x?.Name.Value ?? string.Empty}";
+			}).AddTo(this.CompositeDisposable);
 
-		sshSessionModel.IsConnected.Subscribe(isConnected => {
+		_ = sshSessionModel.IsConnected.Subscribe(isConnected => {
 			if (isConnected) {
 				this.CurrentPageViewModel.Value = this.SshBrowserViewModel;
 			} else {

@@ -3,6 +3,7 @@ using System.Threading;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Composition.Stores.Ssh;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Services;
@@ -19,7 +20,6 @@ namespace RemoteLogViewer.Core.Models.Ssh;
 public class SshSessionModel : ModelBase<SshSessionModel> {
 	private readonly ISshService _sshService;
 	private readonly SshConnectionStoreModel _store;
-	private readonly TextFileViewerModel _textFileViewerModel;
 	private readonly NotificationService _notificationService;
 	private readonly IServiceProvider _serviceProvider;
 	private int pageKey = 0;
@@ -66,10 +66,9 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		get;
 	} = Encoding.GetEncodings().Where(x => Constants.EncodingPairs.Any(ep => ep.CSharp == x.Name)).ToArray();
 
-	public SshSessionModel(ISshService sshService, TextFileViewerModel textFileViewerModel, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger, IServiceProvider serviceProvider) : base(logger) {
+	public SshSessionModel(ISshService sshService, SshConnectionStoreModel store, NotificationService notificationService, ILogger<SshSessionModel> logger, IServiceProvider serviceProvider) : base(logger) {
 		this._sshService = sshService.AddTo(this.CompositeDisposable);
 		this._store = store;
-		this._textFileViewerModel = textFileViewerModel.AddTo(this.CompositeDisposable);
 		this._notificationService = notificationService;
 		this._serviceProvider = serviceProvider;
 		this.SavedConnections = store.Profile.Items;
@@ -81,12 +80,12 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 			return ci.Bookmarks.Any(b => b.Path.Value == x);
 		}).ToReadOnlyReactiveProperty().AddTo(this.CompositeDisposable);
 
-		this._sshService.DisconnectedWithExceptionNotification.ObserveOnCurrentSynchronizationContext().Subscribe(x => {
+		_ = this._sshService.DisconnectedWithExceptionNotification.ObserveOnCurrentSynchronizationContext().Subscribe(x => {
 			this.DisconnectedWithException.Value = true;
 			this._notificationService.Publish("SSH", $"接続が切断されました：{x.Message}", NotificationSeverity.Error, x);
 		}).AddTo(this.CompositeDisposable);
 
-		this.SavedConnections.ObserveRemove().Subscribe(x => {
+		_ = this.SavedConnections.ObserveRemove().Subscribe(x => {
 			if (x.Value == this.SelectedSshConnectionInfo.Value) {
 				this.SelectedSshConnectionInfo.Value = this.SavedConnections.FirstOrDefault();
 			}
@@ -110,7 +109,6 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		this.DisconnectedWithException.Value = false;
 		if (!isReconnect) {
 			this.NavigateTo("/");
-			this._textFileViewerModel.LoadAvailableEncoding();
 		}
 	}
 
@@ -130,7 +128,17 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		var tfv = scope.ServiceProvider.GetRequiredService<TextFileViewerModel>();
 		tfv.Initialize(this._sshService, $"p{++this.pageKey}");
 		await tfv.OpenFileAsync(path, fso, ct);
+		tfv.LoadAvailableEncoding();
 		this.OpenedFileViewers.Add(tfv);
+	}
+
+	/// <summary>
+	/// ファイルとタブを閉じる。
+	/// </summary>
+	/// <param name="viewer">対象モデル</param>
+	public void CloseFile(TextFileViewerModel viewer) {
+		_ = this.OpenedFileViewers.Remove(viewer);
+		viewer.Dispose();
 	}
 
 	/// <summary>
@@ -154,7 +162,6 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 
 		this.CurrentPath.Value = path;
 		this.LoadDirectory(path);
-		this._textFileViewerModel.CloseFile();
 	}
 
 	/// <summary>
@@ -267,7 +274,7 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		if (existing == null) {
 			return;
 		}
-		ci.Bookmarks.Remove(existing);
+		_ = ci.Bookmarks.Remove(existing);
 		this._store.Save();
 	}
 }

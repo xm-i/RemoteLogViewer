@@ -1,5 +1,5 @@
 const FileTabArea = {
-	components: { TextFileViewer },
+	components: { TextFileViewer, FileOperationArea },
 	template: `
 <div id="file-tab-container" class="tab-container">
 	<ul class="tab-headers" v-if="tabs.length > 1">
@@ -16,6 +16,7 @@ const FileTabArea = {
 			v-show="activeTab === tab.pageKey"
 			class="text-file-viewer-wrapper"
 			:class="tab.pageKey">
+			<file-operation-area :pageKey="tab.pageKey"></file-operation-area>
 			<text-file-viewer :pageKey="tab.pageKey"></text-file-viewer>
 		</div>
 	</div>

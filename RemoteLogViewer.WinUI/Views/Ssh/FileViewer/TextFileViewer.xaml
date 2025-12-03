@@ -14,49 +14,13 @@
 			<RowDefinition Height="auto"/>
 			<RowDefinition Height="2*" MinHeight="100"/>
 		</Grid.RowDefinitions>
-		<StackPanel Orientation="Horizontal" Spacing="8" Margin="4" VerticalAlignment="Center">
-			<TextBlock Width="180" FontSize="10" MaxHeight="50" TextWrapping="Wrap" >
-				<Run Text="{x:Bind ViewModel.OpenedFilePath.Value, Mode=OneWay}" />
-			</TextBlock>
-			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
-			<Grid RowDefinitions="Auto,Auto">
-				<TextBlock FontSize="12" Text=" Encoding"/>
-				<AutoSuggestBox Grid.Row="1" Width="160" ItemsSource="{x:Bind ViewModel.FilteredAvailableEncodings}" Text="{x:Bind ViewModel.SelectedEncoding.Value, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" QuerySubmitted="AutoSuggestBox_QuerySubmitted"/>
-			</Grid>
-			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
-			<Button Content="Update" Command="{x:Bind ViewModel.UpdateTotalLineCommand}"/>
-
-			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
-			<Grid RowDefinitions="*,Auto,Auto">
-				<TextBlock FontSize="12" Text="Download Selected Range"/>
-				<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-					<TextBox x:Name="StartLineBox" Width="80" PlaceholderText="Start"/>
-					<TextBox x:Name="EndLineBox" Width="80" PlaceholderText="End"/>
-					<Button Content="Save" Click="SaveRangeButton_Click" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-					<Button Content="Cancel" Command="{x:Bind ViewModel.SaveRangeContentCancelCommand}" Visibility="{x:Bind ViewModel.IsRangeContentSaving.Value, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-				</StackPanel>
-				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.SaveRangeProgress.Value, Mode=OneWay}"/>
-			</Grid>
-			<Border Margin="4,0,4,0" BorderThickness="1,0,0,0" BorderBrush="Black" Opacity="0.4" VerticalAlignment="Stretch"/>
-			<Grid RowDefinitions="*,Auto,Auto" MinWidth="150">
-				<TextBlock FontSize="12" Text="File Information"/>
-				<TextBlock Grid.Row="1" FontSize="14">
-					<Run Text="{x:Bind ViewModel.TotalLines.Value, Mode=OneWay}"/>
-					<Run Text=" ("/>
-					<Run Text="{x:Bind ViewModel.TotalBytes.Value,Mode=OneWay, Converter={StaticResource FileSizeToFriendlyStringConverter}}"/>
-					<Run Text=" )"/>
-				</TextBlock>
-				<ProgressBar Grid.Row="2" Height="14" Minimum="0" Maximum="1" Value="{x:Bind ViewModel.FileLoadProgress.Value, Mode=OneWay}"/>
-			</Grid>
-		</StackPanel>
-
 		<WebView2 x:Name="ContentWebViewer" Grid.Row="1" />
 		<Border x:Name="LoadingOverlay"
 			Grid.Row="1"
-            Background="#AAFFFFFF"
+			Background="#AAFFFFFF"
 			Visibility="{x:Bind ViewModel.IsViewerReady.Value, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch">
+			HorizontalAlignment="Stretch"
+			VerticalAlignment="Stretch">
 			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 				<ProgressRing IsActive="True" Width="60" Height="60"/>
 				<TextBlock Text="Loading..." Margin="8" FontSize="14" HorizontalAlignment="Center"/>

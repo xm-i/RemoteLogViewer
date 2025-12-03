@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
+
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Core.Services.Ssh;
@@ -32,7 +34,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		this._byteOffsetIndex = byteOffsetIndex;
 		this.GrepOperation = grepOperation.AddTo(this.CompositeDisposable);
 		this.ServiceProvider = serviceProvider;
-		this.TotalLines.Subscribe(x => {
+		_ = this.TotalLines.Subscribe(x => {
 			this.GrepOperation.TotalLineCount.Value = x;
 		}).AddTo(this.CompositeDisposable);
 		this.SaveRangeOperation = saveRangeContentOperation.AddTo(this.CompositeDisposable);
@@ -61,7 +63,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// <summary>GREP 結果行。</summary>
 	public ObservableList<TextLine> GrepResults {
 		get;
-	} = new();
+	} = [];
 
 	public IGrepOperation GrepOperation {
 		get;
@@ -191,7 +193,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		}
 		if (this.BuildByteOffsetMapOperation.IsRunning.CurrentValue) {
 			// バイトオフセットマップ作成中は待機
-			await this.BuildByteOffsetMapOperation.IsRunning.Where(x => !x).FirstAsync(ct);
+			_ = await this.BuildByteOffsetMapOperation.IsRunning.Where(x => !x).FirstAsync(ct);
 		}
 
 		var lsResult = this._sshService.ListDirectory(this.OpenedFilePath.Value);
@@ -236,7 +238,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		return lines.FirstOrDefault();
 	}
 
-	public void ChangeEncoding(string encoding) {
+	public void ChangeEncoding(string? encoding) {
 		this.FileEncoding.Value = encoding;
 		this._operations.CancelAll();
 		this.GrepResults.Clear();

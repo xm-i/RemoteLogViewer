@@ -1,9 +1,9 @@
 const GrepTab = {
 	template: `
 <div class="grep-tab">
-	<div class="grep-progress-bar-container">
+	<div class="progress-bar-container">
 		<div
-			class="grep-progress-bar"
+			class="progress-bar"
 			:style="{ width: progress + '%' }"
 		></div>
 	</div>
@@ -63,7 +63,8 @@ const GrepTab = {
 			isGrepRunning: false,
 			grepNextStartLine: 1,
 			logs: [],
-			clientOperationg: false
+			clientOperationg: false,
+			requestId: 0
 		};
 	},
 	watch: {
@@ -101,6 +102,7 @@ const GrepTab = {
 			this.clientOperationg = true;
 			window.chrome.webview.postMessage({
 				Type: "StartGrep",
+				RequestId: ++this.requestId,
 				Keyword: this.keyword,
 				StartLine: startLine
 			});
@@ -108,7 +110,7 @@ const GrepTab = {
 		cancelGrep() {
 			this.progress = 0;
 			this.clientOperationg = true;
-			window.chrome.webview.postMessage({ Type: "CancelGrep" });
+			window.chrome.webview.postMessage({ Type: "CancelGrep", RequestId: ++this.requestId });
 		},
 		lineClick(lineNumber) {
 			this.$emit("line-clicked", lineNumber);
