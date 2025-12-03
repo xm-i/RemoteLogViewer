@@ -16,7 +16,7 @@ const FileTabArea = {
 			v-show="activeTab === tab.pageKey"
 			class="text-file-viewer-wrapper"
 			:class="tab.pageKey">
-			<text-file-viewer></text-file-viewer>
+			<text-file-viewer :pageKey="tab.pageKey"></text-file-viewer>
 		</div>
 	</div>
 </div>

@@ -26,6 +26,9 @@ const TextFileViewer = {
 		<div class="tab-area">
 			<tab-area ref="tabArea" @grep-line-clicked="grepLineClicked"></tab-area>
 		</div>`,
+	props: {
+		pageKey: null
+	},
 	data() {
 		return {
 			// ログファイル情報
@@ -92,6 +95,7 @@ const TextFileViewer = {
 			this.loadingEndLineNumber = end;
 
 			const request = {
+				PageKey: this.pageKey,
 				Type: "Request",
 				RequestId: ++this.currentRequestId,
 				Start: start,
@@ -281,6 +285,9 @@ const TextFileViewer = {
 		// C# → JS 通信
 		window.chrome.webview.addEventListener("message", e => {
 			const message = e.data;
+			if (message.pageKey !== this.pageKey) {
+				return;
+			}
 			switch (message.type) {
 				case "Loaded":
 					this.addLogsFromRequest(message.data.RequestId, message.data.Content);

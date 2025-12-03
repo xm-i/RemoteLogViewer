@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 
 public class WebMessage {
-	public required string Key {
+	public required string PageKey {
 		get;
 		set;
 	}

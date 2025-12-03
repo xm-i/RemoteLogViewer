@@ -76,10 +76,10 @@ public sealed partial class TextFileViewer {
 				var message = WebMessage.Create(e.WebMessageAsJson);
 				switch (message) {
 					case RequestWebMessage m:
-						this.GetViewerVM(m.Key)?.LoadLogsCommand.Execute(new(m.RequestId, m.Start, m.End));
+						this.GetViewerVM(m.PageKey)?.LoadLogsCommand.Execute(new(m.RequestId, m.Start, m.End));
 						break;
 					case StartGrepWebMessage m:
-						var vm = this.GetViewerVM(m.Key);
+						var vm = this.GetViewerVM(m.PageKey);
 						if (vm is null) {
 							return;
 						}
@@ -88,14 +88,14 @@ public sealed partial class TextFileViewer {
 						vm.GrepCommand.Execute(Unit.Default);
 						break;
 					case CancelGrepWebMessage:
-						this.GetViewerVM(message.Key)?.GrepCancelCommand.Execute(Unit.Default);
+						this.GetViewerVM(message.PageKey)?.GrepCancelCommand.Execute(Unit.Default);
 						break;
 					case ReadyWebMessage:
 						this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
 						this.ViewModel.IsViewerReady.Value = true;
 						break;
 					case SaveRangeRequestWebMessage m:
-						var srrvm = this.GetViewerVM(m.Key);
+						var srrvm = this.GetViewerVM(m.PageKey);
 						if (srrvm is null) {
 							return;
 						}
@@ -214,9 +214,9 @@ public sealed partial class TextFileViewer {
 		}).AddTo(vm.CompositeDisposable);
 	}
 
-	private void PostWV2(string key, string type, dynamic? data) {
+	private void PostWV2(string pageKey, string type, dynamic? data) {
 		var message = new {
-			key,
+			pageKey,
 			type,
 			data
 		};

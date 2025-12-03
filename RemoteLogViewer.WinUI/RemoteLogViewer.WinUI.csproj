@@ -29,10 +29,11 @@
     <Content Remove="Assets\icon128.ico" />
     <Content Remove="Assets\icon256x256.ico" />
     <Content Remove="assets\index.html" />
+    <Content Remove="Assets\Web\app.js" />
+    <Content Remove="assets\web\fileTabsArea.js" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Web\app.js" />
     <None Remove="Assets\Web\style.css" />
     <None Remove="Assets\Web\tabArea.js" />
   </ItemGroup>
@@ -97,7 +98,7 @@
     <Content Update="Assets\Web\lineViewTab.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="Assets\Web\app.js">
+    <Content Update="Assets\Web\textFileViewer.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="Assets\Web\style.css">
