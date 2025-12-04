@@ -138,6 +138,83 @@ body {
 	height: 100%;
 }
 
+.empty-state {
+	height: 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	padding: 20px;
+	color: #555;
+	position: relative;
+	overflow: hidden;
+
+	h2 {
+		font-size: 56px;
+		color: #333;
+		margin-bottom: 24px;
+		font-weight: 600;
+		position: relative;
+		display: inline-block;
+		animation: shimmer 2.5s infinite;
+		background: linear-gradient( 90deg, #333 0%, #666 20%, #333 40%, #333 100% );
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+
+	p {
+		font-size: 26px;
+		color: #666;
+	}
+
+	&::before,
+	&::after {
+		content: "";
+		position: absolute;
+		top: -50%;
+		left: -50%;
+		width: 200%;
+		height: 200%;
+		background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 60%);
+		animation: sparkleMove 10s linear infinite;
+		opacity: 0.3;
+		pointer-events: none;
+	}
+
+	&::after {
+		animation-duration: 14s;
+		opacity: 0.2;
+	}
+}
+
+@keyframes sparkleMove {
+	0% {
+		transform: translate(0, 0) rotate(0deg);
+	}
+
+	50% {
+		transform: translate(10%, 10%) rotate(180deg);
+	}
+
+	100% {
+		transform: translate(0, 0) rotate(360deg);
+	}
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: -200px 0;
+	}
+
+	100% {
+		background-position: 200px 0;
+	}
+}
+
+
+
 /* メインエリア */
 .main-area {
 	width: 100%;

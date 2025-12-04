@@ -1,7 +1,7 @@
 const FileTabArea = {
 	components: { TextFileViewer, FileOperationArea },
 	template: `
-<div id="file-tab-container" class="tab-container">
+<div id="file-tab-container" class="tab-container" v-if="tabs.length > 0">
 	<ul class="tab-headers" v-if="tabs.length > 1">
 	  <li
 		v-for="tab in tabs"
@@ -20,6 +20,10 @@ const FileTabArea = {
 			<text-file-viewer :pageKey="tab.pageKey"></text-file-viewer>
 		</div>
 	</div>
+</div>
+<div class="empty-state" v-else>
+	<h2>Ready</h2>
+	<p>Select a file from the left pane to open it.</p>
 </div>
 	`,
 	data() {
