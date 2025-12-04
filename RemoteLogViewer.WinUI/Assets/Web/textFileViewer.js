@@ -20,7 +20,7 @@ const TextFileViewer = {
 				</div>
 			</div>
 			<div class="scroll-area" ref="scrollArea" @scroll="onVirtualScroll">
-				<div id="scroll-virtual-content"></div>
+				<div class="scroll-virtual-content"></div>
 			</div>
 		</div>
 		<div class="tab-area">

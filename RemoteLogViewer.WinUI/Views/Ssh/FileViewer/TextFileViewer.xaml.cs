@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Web.WebView2.Core;
 
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
@@ -25,6 +26,7 @@ public sealed partial class TextFileViewer {
 	private readonly HighlightService _highlightService;
 	private readonly SettingsStoreModel _settingsStoreModel;
 	private readonly NotificationService _notificationService;
+	private readonly ILogger<TextFileViewer> _logger;
 	private bool isInitialized = false;
 
 	public SshBrowserViewModel? ViewModel {
@@ -50,6 +52,7 @@ public sealed partial class TextFileViewer {
 		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this._settingsStoreModel = Ioc.Default.GetRequiredService<SettingsStoreModel>();
 		this._notificationService = Ioc.Default.GetRequiredService<NotificationService>();
+		this._logger = Ioc.Default.GetRequiredService<ILogger<TextFileViewer>>();
 		this.InitializeComponent();
 	}
 
@@ -73,6 +76,7 @@ public sealed partial class TextFileViewer {
 			h => this.ContentWebViewer.CoreWebView2.WebMessageReceived += h,
 			h => this.ContentWebViewer.CoreWebView2.WebMessageReceived -= h)
 			.SubscribeAwait(async (e, ct) => {
+				this._logger.LogDebug("WebMessageReceived: {Message}", e.WebMessageAsJson);
 				var message = WebMessage.Create(e.WebMessageAsJson);
 				switch (message) {
 					case RequestWebMessage m:
@@ -154,7 +158,7 @@ public sealed partial class TextFileViewer {
 						foreach (TextFileViewerViewModel vm in e.NewItems) {
 							this.PostWV2("*", "FileOpened", new {
 								vm.PageKey,
-								vm.OpenedFilePath.Value
+								TabHeader = vm.OpenedFilePath.Value
 							});
 							this.RegisterViewerVMEvents(vm);
 						}
@@ -220,7 +224,7 @@ public sealed partial class TextFileViewer {
 			this.PostWV2(vm.PageKey, "SaveRangeProgressUpdated", x);
 		}).AddTo(vm.CompositeDisposable);
 
-		_ = vm.AvailableEncodings.ObservePropertyChanged(x => x.Count).Subscribe(x => {
+		_ = vm.AvailableEncodings.ObservePropertyChanged(x => x.Count).ThrottleLast(TimeSpan.FromMilliseconds(100)).Subscribe(x => {
 			this.PostWV2(vm.PageKey, "AvailableEncodingsUpdated", vm.AvailableEncodings);
 		}).AddTo(vm.CompositeDisposable);
 
@@ -262,7 +266,9 @@ public sealed partial class TextFileViewer {
 			type,
 			data
 		};
-		this.ContentWebViewer.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(message));
+		var json = JsonSerializer.Serialize(message);
+		this.ContentWebViewer.CoreWebView2.PostWebMessageAsJson(json);
+		this._logger.LogDebug("PostWV2: {Message}", json);
 	}
 
 	private TextFileViewerViewModel? GetViewerVM(string key) {

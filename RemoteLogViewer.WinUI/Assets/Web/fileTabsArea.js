@@ -29,7 +29,7 @@ const FileTabArea = {
 		};
 	},
 	methods: {
-		addTab: function (pageKey, tabHeader) {
+		addTab(pageKey, tabHeader) {
 			this.tabs.push({
 				pageKey,
 				tabHeader
@@ -43,12 +43,19 @@ const FileTabArea = {
 				});
 			});
 		},
-		removeTab: function (pageKey) {
-			this.tabs = this.tabs.filter(x => x != pageKey);
-			this.activeTab = this.tabs[0];
+		removeTab(pageKey) {
+			this.tabs = this.tabs.filter(x => x.pageKey !== pageKey);
+			this.activeTab = this.tabs[0]?.pageKey;
 		},
 		change(pageKey) {
 			this.activeTab = pageKey;
+		},
+		changeTabHeader(pageKey,tabHeader) {
+			const tab = this.tabs.find(x => x.pageKey === pageKey);
+			if (!tab) {
+				return;
+			}
+			tab.tabHeader = tabHeader;
 		}
 	},
 	mounted() {
@@ -69,6 +76,10 @@ const FileTabArea = {
 					break;
 				case "FileClosed":
 					this.removeTab(message.data);
+					break;
+				case "OpenedFilePathChanged":
+					this.changeTabHeader(message.pageKey, message.data);
+					break;
 			}
 		});
 	}

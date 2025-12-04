@@ -127,9 +127,9 @@ public class SshSessionModel : ModelBase<SshSessionModel> {
 		var scope = this._serviceProvider.CreateScope();
 		var tfv = scope.ServiceProvider.GetRequiredService<TextFileViewerModel>();
 		tfv.Initialize(this._sshService, $"p{++this.pageKey}");
+		this.OpenedFileViewers.Add(tfv);
 		await tfv.OpenFileAsync(path, fso, ct);
 		tfv.LoadAvailableEncoding();
-		this.OpenedFileViewers.Add(tfv);
 	}
 
 	/// <summary>

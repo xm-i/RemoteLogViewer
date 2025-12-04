@@ -161,10 +161,10 @@ body {
 		border-radius: 5px;
 		cursor: pointer;
 		overflow: auto;
-	}
 
-	.scroll-virtual-content {
-		height: 10000px;
+		.scroll-virtual-content {
+			height: 10000px;
+		}
 	}
 }
 
