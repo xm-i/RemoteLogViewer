@@ -119,7 +119,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, fullPath, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, fso.FileSize, null, ct);
 		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
 			this._byteOffsetIndex.AddRange(entry);
-			this.TotalLines.Value = entry.Max(x => x.LineNumber);
+			this.TotalLines.Value = entry.Max(x => x.LineNumber - 1);
 		}
 	}
 
@@ -207,7 +207,7 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 		var mapStream = this.BuildByteOffsetMapOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, this._settingsStore.SettingsModel.AdvancedSettings.ByteOffsetMapChunkSize.Value, lsResult[0].FileSize, this._byteOffsetIndex.FindLast(), ct);
 		await foreach (var entry in mapStream.Select(entry => new ByteOffset(entry.LineNumber, entry.Bytes)).ChunkForAddRange(TimeSpan.FromMilliseconds(300), null, ct)) {
 			this._byteOffsetIndex.AddRange(entry);
-			this.TotalLines.Value = entry.Max(x => x.LineNumber);
+			this.TotalLines.Value = entry.Max(x => x.LineNumber - 1);
 		}
 	}
 

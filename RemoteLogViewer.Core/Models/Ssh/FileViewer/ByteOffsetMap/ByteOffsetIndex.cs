@@ -26,7 +26,7 @@ public class ByteOffsetIndex : IByteOffsetIndex {
 	}
 
 	public ByteOffset Find(long targetLine) {
-		ByteOffset result = new(0, 0);
+		ByteOffset result = new(1, 1);
 		foreach (var bo in this._entries) {
 			if (bo.LineNumber < targetLine) {
 				result = bo;

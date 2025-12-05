@@ -200,6 +200,10 @@ public sealed partial class TextFileViewer {
 			this.PostWV2(vm.PageKey, "FileLoadProgressUpdated", x);
 		}).AddTo(vm.CompositeDisposable);
 
+		_ = vm.IsFileLoadRunning.AsObservable().Subscribe(x => {
+			this.PostWV2(vm.PageKey, "IsFileLoadRunningUpdated", x);
+		}).AddTo(vm.CompositeDisposable);
+
 		_ = vm.TotalLines.AsObservable().Subscribe(x => {
 			this.PostWV2(vm.PageKey, "TotalLinesUpdated", x);
 		}).AddTo(vm.CompositeDisposable);

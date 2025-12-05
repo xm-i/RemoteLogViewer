@@ -52,7 +52,7 @@ public sealed class BuildByteOffsetMapOperation : ModelBase<BuildByteOffsetMapOp
 		try {
 			var offsets = sshService.CreateByteOffsetMap(filePath, chunkSize, startByteOffset, op.Token);
 			await foreach (var entry in offsets.WithCancellation(op.Token)) {
-				this._processedBytes.Value = entry.Bytes;
+				this._processedBytes.Value = entry.Bytes - 1;
 				yield return entry;
 				if (op.Token.IsCancellationRequested) {
 					yield break;

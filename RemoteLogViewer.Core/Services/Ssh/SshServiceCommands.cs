@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
+
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Core.Utils;
@@ -55,7 +56,7 @@ public partial class SshService {
 				_ => FileSystemObjectType.File
 			};
 
-			ulong.TryParse(sizeStr, out var size);
+			_ = ulong.TryParse(sizeStr, out var size);
 
 			var normalizedTs = ts.Insert(ts.Length - 2, ":");
 			DateTime? lastUpdated = null;
@@ -84,7 +85,7 @@ public partial class SshService {
 			if (name.EndsWith("//", StringComparison.Ordinal)) {
 				name = name[..^2];
 			}
-			set.Add(name);
+			_ = set.Add(name);
 		}
 		return set.Where(x => Constants.EncodingPairs.Any(ep => ep.Iconv == x)).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
 	}
@@ -117,9 +118,9 @@ public partial class SshService {
 		var convertPipe = NeedsConversion(fileEncoding, this.IconvEncoding) ? $" | iconv -f {EscapeSingleQuotes(fileEncoding!)} -t {this.IconvEncoding}//IGNORE" : string.Empty;
 
 		string command;
-		var relativeStart = startLine - byteOffset.LineNumber;
-		var relativeEnd = endLine - byteOffset.LineNumber;
-		var startBytes = byteOffset.Bytes + 1;
+		var relativeStart = startLine - byteOffset.LineNumber + 1;
+		var relativeEnd = endLine - byteOffset.LineNumber + 1;
+		var startBytes = byteOffset.Bytes;
 		command = $"LC_ALL=C tail -c +{startBytes} '{escaped}' 2>/dev/null | sed -n '{relativeStart},{relativeEnd}p;{relativeEnd}q' 2>/dev/null" + convertPipe;
 
 		var lines = this.RunAsync(command, ct);
@@ -178,7 +179,7 @@ public partial class SshService {
 		var convertPipe = NeedsConversion(fileEncoding, this.IconvEncoding) ? " | iconv -f " + EscapeSingleQuotes(fileEncoding!) + " -t " + EscapeSingleQuotes(this.IconvEncoding) + "//IGNORE" : string.Empty;
 
 		// 入力を開始バイトから取得
-		var relativeStart = startLine - byteOffset.LineNumber;
+		var relativeStart = startLine - byteOffset.LineNumber + 1;
 		var inputCmd = $"tail -c +{byteOffset.Bytes} '{escapedPath}' 2>/dev/null | tail -n +'{relativeStart}' 2>/dev/null";
 
 		// 実行コマンド: tail/cat の出力を grep にパイプし、必要なら出力を iconv変換する
@@ -206,6 +207,7 @@ public partial class SshService {
 	///     大規模ファイル向け: 行番号からおおよそのバイトオフセットを取得するためのインデックスを一定間隔で作成します。
 	///     返されるByteOffset は <paramref name="remoteFilePath"/> 先頭からのオフセット (改行含む) です。
 	///     最終行後(EOF) の行番号 + 1 と最終オフセットも出力されます。
+	///     開始行と開始バイト数の組み合わせで、1行目・1バイトから始まります。
 	/// </summary>
 	/// <param name="remoteFilePath">対象ファイル 。</param>
 	/// <param name="interval">インデックス間隔行数。1 以上。</param>
@@ -220,11 +222,16 @@ public partial class SshService {
 		if (interval < 1) {
 			throw new ArgumentException("interval must be >=1", nameof(interval));
 		}
+
+		startByteOffset ??= new ByteOffset(1, 1);
+
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
 
-		var inputCmd = $"tail -c +{startByteOffset?.Bytes ?? 0} '{escapedPath}' 2>/dev/null";
+		var startBytes = startByteOffset.Bytes;
+		var startLineNumber = startByteOffset.LineNumber;
+		var inputCmd = $"tail -c +{startBytes} '{escapedPath}' 2>/dev/null";
 
-		var cmd = $"LC_ALL=C {inputCmd} | awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR+{startByteOffset?.LineNumber ?? 0}, offset+{startByteOffset?.Bytes ?? 0} }} END {{ if (NR%{interval} != 0) print NR+{startByteOffset?.LineNumber ?? 0}, offset+{startByteOffset?.Bytes ?? 0} }}' 2>/dev/null";
+		var cmd = $"LC_ALL=C {inputCmd} | awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR+{startLineNumber}, offset+{startBytes} }} END {{ if (NR%{interval} != 0) print NR+{startLineNumber}, offset+{startBytes} }}' 2>/dev/null";
 
 		var lines = this.RunAsync(cmd, ct);
 

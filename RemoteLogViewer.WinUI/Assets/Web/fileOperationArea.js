@@ -38,7 +38,7 @@ const FileOperationArea = {
 			<div class="check-update">
 				<div class="title">Check Update</div>
 				<div class="content">
-					<button @click="checkUpdateClicked" :disabled="fileLoadProgress !== 100 || clientOperationg">
+					<button @click="checkUpdateClicked" :disabled="isFileLoadUpdating || clientOperationg">
 						CHECK<br/>UPDATE
 					</button>
 				</div>
@@ -82,6 +82,7 @@ const FileOperationArea = {
 			totalLines: 0,
 			totalBytes: 0,
 			fileLoadProgress: 0,
+			isFileLoadUpdating: false,
 			// save range
 			startLine: null,
 			endLine: null,
@@ -193,6 +194,9 @@ const FileOperationArea = {
 				return;
 			}
 			switch (message.type) {
+				case "IsFileLoadRunningUpdated":
+					this.isFileLoadUpdating = message.data;
+					break;
 				case "FileLoadProgressUpdated":
 					this.fileLoadProgress = message.data * 100;
 					break;

@@ -32,6 +32,9 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			.ObserveOnCurrentSynchronizationContext()
 			.ToReadOnlyBindableReactiveProperty(0)
 			.AddTo(this.CompositeDisposable);
+		this.IsFileLoadRunning = this.Model.BuildByteOffsetMapOperation.IsRunning
+			.ToReadOnlyBindableReactiveProperty(false)
+			.AddTo(this.CompositeDisposable);
 		this.TotalLines = this.Model.TotalLines.Throttle().ObserveOnCurrentSynchronizationContext().ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 
 		var grepResultsView = this.Model.GrepResults.CreateView(x => x).AddTo(this.CompositeDisposable);
@@ -120,6 +123,10 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 
 	/// <summary>ファイル読み込み進捗率。</summary>
 	public IReadOnlyBindableReactiveProperty<double> FileLoadProgress {
+		get;
+	}
+
+	public IReadOnlyBindableReactiveProperty<bool> IsFileLoadRunning {
 		get;
 	}
 
