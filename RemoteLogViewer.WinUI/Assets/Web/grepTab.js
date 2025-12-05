@@ -56,6 +56,9 @@ const GrepTab = {
 
 </div>
   `,
+	props: {
+		pageKey: null
+	},
 	data() {
 		return {
 			keyword: "",
@@ -101,6 +104,7 @@ const GrepTab = {
 			this.progress = 0;
 			this.clientOperationg = true;
 			window.chrome.webview.postMessage({
+				PageKey: this.pageKey, 
 				Type: "StartGrep",
 				RequestId: ++this.requestId,
 				Keyword: this.keyword,
@@ -110,7 +114,7 @@ const GrepTab = {
 		cancelGrep() {
 			this.progress = 0;
 			this.clientOperationg = true;
-			window.chrome.webview.postMessage({ Type: "CancelGrep", RequestId: ++this.requestId });
+			window.chrome.webview.postMessage({ PageKey: this.pageKey, Type: "CancelGrep", RequestId: ++this.requestId });
 		},
 		lineClick(lineNumber) {
 			this.$emit("line-clicked", lineNumber);
@@ -120,6 +124,9 @@ const GrepTab = {
 		// C# → JS
 		window.chrome.webview.addEventListener("message", e => {
 			const message = e.data;
+			if (message.pageKey !== this.pageKey) {
+				return;
+			}
 			switch (message.type) {
 				case "GrepResultAdded":
 					this.addResult(message.data);

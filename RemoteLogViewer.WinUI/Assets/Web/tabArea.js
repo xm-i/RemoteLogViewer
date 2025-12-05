@@ -8,11 +8,14 @@ const TabArea = {
 	</ul>
 
 	<div class="tab-contents">
-		<grep-tab v-show="isActive === 'Grep'" @line-clicked="grepLineClicked"></grep-tab>
+		<grep-tab :pageKey="pageKey" v-show="isActive === 'Grep'" @line-clicked="grepLineClicked"></grep-tab>
 		<line-view-tab ref="lineViewTab" v-show="isActive === 'LineView'"></line-view-tab>
 	</div>
 </div>
 	`,
+	props: {
+		pageKey: null
+	},
 	data() {
 		return {
 			isActive: 'Grep',

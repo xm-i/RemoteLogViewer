@@ -24,7 +24,7 @@ const TextFileViewer = {
 			</div>
 		</div>
 		<div class="tab-area">
-			<tab-area ref="tabArea" @grep-line-clicked="grepLineClicked"></tab-area>
+			<tab-area :pageKey="pageKey" ref="tabArea" @grep-line-clicked="grepLineClicked"></tab-area>
 		</div>`,
 	props: {
 		pageKey: null
