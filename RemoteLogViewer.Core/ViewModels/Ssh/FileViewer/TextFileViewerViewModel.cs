@@ -25,6 +25,8 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 
 	public TextFileViewerViewModel(TextFileViewerModel textFileViewerModel, SettingsStoreModel settingsStoreModel, ILogger<TextFileViewerViewModel> logger) : base(logger) {
 		this.Model = textFileViewerModel;
+		// ModelDispose時にVMもDispose
+		this.AddTo(this.Model.CompositeDisposable);
 		this.OpenedFilePath = this.Model.OpenedFilePath.ToReadOnlyBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.TotalBytes = this.Model.TotalBytes.Select(x => x is { } ul ? (long?)ul : null).ToReadOnlyBindableReactiveProperty(0).AddTo(this.CompositeDisposable);
 		this.FileLoadProgress = this.Model.BuildByteOffsetMapOperation.Progress
