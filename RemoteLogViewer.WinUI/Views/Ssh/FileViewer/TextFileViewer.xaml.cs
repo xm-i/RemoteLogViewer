@@ -140,6 +140,10 @@ public sealed partial class TextFileViewer {
 			}
 		);
 
+		this.ViewModel.DisconnectedWithException.AsObservable().Subscribe(x => {
+			this.PostWV2("*", "IsDisconnectedUpdated", x);
+		}).AddTo(this.ViewModel.CompositeDisposable);
+
 		this._settingsStoreModel.SettingsUpdated.Subscribe(x => {
 			this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
 			this.PostWV2("*", "ReloadRequested", null);

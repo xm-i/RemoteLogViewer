@@ -31,14 +31,14 @@ const FileOperationArea = {
 							{{ encoding }}
 						</option>
 					</select><br/>
-					<button @click="applyEncodingClicked" :disabled="clientOperationg">Apply</button>
+					<button @click="applyEncodingClicked" :disabled="clientOperationg || isDisconnected">Apply</button>
 				</div>
 			</div>
 
 			<div class="check-update">
 				<div class="title">Check Update</div>
 				<div class="content">
-					<button @click="checkUpdateClicked" :disabled="isFileLoadUpdating || clientOperationg">
+					<button @click="checkUpdateClicked" :disabled="isFileLoadUpdating || clientOperationg || isDisconnected">
 						CHECK<br/>UPDATE
 					</button>
 				</div>
@@ -47,11 +47,11 @@ const FileOperationArea = {
 			<div class="range-save">
 				<div class="title">Download</div>
 				<div class="content">
-					<input name="startLine" type="number" v-model.number="startLine" min="1" placeholder="1" />
+					<input name="startLine" type="number" v-model.number="startLine" min="1" placeholder="1" :disabled="isDisconnected"/>
 					-
-					<input name="endLine" type="number" v-model.number="endLine" min="1" placeholder="1000" />
+					<input name="endLine" type="number" v-model.number="endLine" min="1" placeholder="1000" :disabled="isDisconnected"/>
 					<br/>
-					<button @click="saveRangeClicked" :disabled="isSaving || clientOperationg">
+					<button @click="saveRangeClicked" :disabled="isSaving || clientOperationg || isDisconnected">
 						Download
 					</button>
 				</div>
@@ -73,7 +73,8 @@ const FileOperationArea = {
 		</div>
 	`,
 	props: {
-		pageKey: null
+		pageKey: null,
+		isDisconnected: false
 	},
 	data() {
 		return {

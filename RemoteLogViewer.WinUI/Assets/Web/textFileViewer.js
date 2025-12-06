@@ -9,7 +9,7 @@ const TextFileViewer = {
 	components: { TabArea },
 	template: `
 		<div class="main-area">
-			<div ref="logArea" class="log-area log-container" @scroll="onLogAreaScroll">
+			<div ref="logArea" class="log-area log-container">
 				<div v-for="line in logs"
 						:key="line.LineNumber"
 						ref="row"
@@ -19,15 +19,16 @@ const TextFileViewer = {
 					<span class="line-content" v-html="line.Content"></span>
 				</div>
 			</div>
-			<div class="scroll-area" ref="scrollArea" @scroll="onVirtualScroll">
+			<div class="scroll-area" ref="scrollArea" @scroll="onVirtualScroll" v-show="!isDisconnected">
 				<div class="scroll-virtual-content"></div>
 			</div>
 		</div>
 		<div class="tab-area">
-			<tab-area :pageKey="pageKey" ref="tabArea" @grep-line-clicked="grepLineClicked"></tab-area>
+			<tab-area :pageKey="pageKey" ref="tabArea" @grep-line-clicked="grepLineClicked" :isDisconnected="isDisconnected"></tab-area>
 		</div>`,
 	props: {
-		pageKey: null
+		pageKey: null,
+		isDisconnected: false
 	},
 	data() {
 		return {
@@ -196,6 +197,11 @@ const TextFileViewer = {
 				}
 
 				this.visibleLines.sort((a, b) => a - b);
+
+				// 切断状態では何もしない。
+				if (this.isDisconnected) {
+					return;
+				}
 
 				// 上方向の事前読み込み処理
 				if (this.visibleLines[0] < this.minLineNumber + prefetchThreshold && !this.loadingRequests.find(x => x.End === this.minLineNumber - 1)) {

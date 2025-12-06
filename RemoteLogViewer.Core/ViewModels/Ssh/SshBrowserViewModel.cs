@@ -133,12 +133,19 @@ public class SshBrowserViewModel : BaseSshPageViewModel<SshBrowserViewModel> {
 					return;
 				}
 
+				if (this.DisconnectedWithException.Value) {
+					return;
+				}
+
 				await this._model.OpenFileAsync(this.CurrentPath.Value, vm.Original, ct);
 			}, AwaitOperation.Sequential).AddTo(this.CompositeDisposable);
 
 		_ = this.OpenCommand
 			.Where(vm => vm?.FileSystemObjectType == FileSystemObjectType.Directory || vm?.FileSystemObjectType == FileSystemObjectType.SymlinkDirectory)
 			.Subscribe(vm => {
+				if (this.DisconnectedWithException.Value) {
+					return;
+				}
 				this._model.EnterDirectory(vm.FileName);
 			}).AddTo(this.CompositeDisposable);
 

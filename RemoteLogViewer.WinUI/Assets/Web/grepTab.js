@@ -20,7 +20,7 @@ const GrepTab = {
 			/>
 		</span>
 
-		<button @click="startGrepFirst" :disabled="isGrepRunning || clientOperationg">Search</button>
+		<button @click="startGrepFirst" :disabled="isGrepRunning || clientOperationg || isDisconnected">Search</button>
 
 		<span>
 			Next Start Line:<br>
@@ -33,9 +33,9 @@ const GrepTab = {
 			/>
 		</span>
 
-		<button @click="startGrepNext" :disabled="isGrepRunning || clientOperationg">Next</button>
+		<button @click="startGrepNext" :disabled="isGrepRunning || clientOperationg || isDisconnected">Next</button>
 
-		<button @click="cancelGrep" :disabled="!isGrepRunning || clientOperationg">Cancel</button>
+		<button @click="cancelGrep" :disabled="!isGrepRunning || clientOperationg || isDisconnected">Cancel</button>
 
 		<span class="grep-results-count">
 			results: {{ logs.length }}
@@ -57,7 +57,8 @@ const GrepTab = {
 </div>
   `,
 	props: {
-		pageKey: null
+		pageKey: null,
+		isDisconnected: false
 	},
 	data() {
 		return {

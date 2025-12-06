@@ -16,8 +16,8 @@ const FileTabArea = {
 			v-show="activeTab === tab.pageKey"
 			class="text-file-viewer-wrapper"
 			:class="tab.pageKey">
-			<file-operation-area :pageKey="tab.pageKey"></file-operation-area>
-			<text-file-viewer :pageKey="tab.pageKey"></text-file-viewer>
+			<file-operation-area :pageKey="tab.pageKey" :isDisconnected="isDisconnected"></file-operation-area>
+			<text-file-viewer :pageKey="tab.pageKey" :isDisconnected="isDisconnected"></text-file-viewer>
 		</div>
 	</div>
 </div>
@@ -29,7 +29,8 @@ const FileTabArea = {
 	data() {
 		return {
 			tabs: [],
-			activeTab: null
+			activeTab: null,
+			isDisconnected: false
 		};
 	},
 	methods: {
@@ -83,6 +84,9 @@ const FileTabArea = {
 					break;
 				case "OpenedFilePathChanged":
 					this.changeTabHeader(message.pageKey, message.data);
+					break;
+				case "IsDisconnectedUpdated":
+					this.isDisconnected = message.data;
 					break;
 			}
 		});
