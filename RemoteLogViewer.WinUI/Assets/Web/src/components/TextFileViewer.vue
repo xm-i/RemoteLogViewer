@@ -1,7 +1,7 @@
 <template>
 	<div class="text-file-viewer">
 		<div class="main-area">
-			<div ref="logArea" class="log-area log-container">
+			<div ref="logArea" class="log-area log-container" :class="{'log-wrap-lines': wrapLines}">
 				<div v-for="line in logs"
 					:key="line.lineNumber"
 					ref="row"
@@ -32,11 +32,13 @@ import { RequestWebMessage } from '@/types/outgoingMessages';
 
 interface Props {
 	pageKey: string
-	isDisconnected?: boolean
+	isDisconnected?: boolean,
+  wrapLines: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-	isDisconnected: false
+	isDisconnected: false,
+  wrapLines: false
 });
 
 // 追加読み込み行数
@@ -361,4 +363,8 @@ onMounted(() => {
       }
     }
   }
+	.log-wrap-lines .line-content {
+		white-space: normal;
+		min-width: 0;
+	}
 </style>

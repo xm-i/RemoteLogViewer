@@ -19,8 +19,8 @@
 				class="text-file-viewer-wrapper"
 				:class="tab.pageKey"
 			>
-				<FileOperationArea :pageKey="tab.pageKey" :isDisconnected="isDisconnected" />
-				<TextFileViewer :pageKey="tab.pageKey" :isDisconnected="isDisconnected" />
+				<FileOperationArea :pageKey="tab.pageKey" :isDisconnected="isDisconnected" @update:wrapLines="updateWrapLines"/>
+				<TextFileViewer :pageKey="tab.pageKey" :isDisconnected="isDisconnected" :wrapLines="wrapLines"/>
 			</div>
 		</div>
 	</div>
@@ -43,6 +43,7 @@ const tabs = ref<{
 	}[]>([]);
 const activeTab = ref<string | null>(null);
 const isDisconnected = ref<boolean>(false);
+const wrapLines = ref<boolean>(false);
 
 const addTab = (pageKey: string, tabHeader: string) => {
 	tabs.value.push({
@@ -74,7 +75,11 @@ const changeTabHeader = (pageKey: string, tabHeader: string) => {
 	if (tab) {
 		tab.tabHeader = tabHeader;
 	}
-};
+	};
+
+const updateWrapLines = (value: boolean) => {
+	wrapLines.value = value;
+}
 
 onMounted(() => {
 	// テスト用
