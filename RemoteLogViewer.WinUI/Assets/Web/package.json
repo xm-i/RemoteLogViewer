@@ -1,6 +1,6 @@
 {
   "name": "remotelogviewer-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Web UI for RemoteLogViewer",
   "scripts": {
     "build": "webpack --mode production",

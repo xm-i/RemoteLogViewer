@@ -24,11 +24,26 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'RemoteLogViewer.WinUI/Assets/Web/package-lock.json'
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: RemoteLogViewer.WinUI/Assets/Web
+
+      - name: Build Web Assets (Production)
+        run: npm run build
+        working-directory: RemoteLogViewer.WinUI/Assets/Web
+
       - name: Restore dependencies
-        run: dotnet restore RemoteLogViewer/RemoteLogViewer.csproj
+        run: dotnet restore RemoteLogViewer.WinUI/RemoteLogViewer.WinUI.csproj
 
       - name: Publish
-        run: dotnet publish RemoteLogViewer/RemoteLogViewer.csproj -c Release-Unpackaged -r ${{ matrix.runtime }} -o publish/
+        run: dotnet publish RemoteLogViewer.WinUI/RemoteLogViewer.WinUI.csproj -c Release-Unpackaged -r ${{ matrix.runtime }} -o publish/
 
       - name: ZIP
         run: Compress-Archive -Path publish/* -DestinationPath RemoteLogViewer-${{ github.ref_name }}-${{ matrix.runtime }}.zip
