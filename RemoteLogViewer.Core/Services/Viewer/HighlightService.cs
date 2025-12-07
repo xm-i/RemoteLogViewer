@@ -27,10 +27,10 @@ public class HighlightService {
 			var sb = new StringBuilder();
 			sb.Append($".{x.ClassName}{{");
 			if (x.Condition.ForeColor.Value is { } fore) {
-				sb.Append($$"""color:rgba({{fore.R}},{{fore.G}},{{fore.B}},{{fore.A}});""");
+				sb.Append($$"""color:rgb({{fore.R}} {{fore.G}} {{fore.B}} / {{(double)fore.A / byte.MaxValue}});""");
 			}
 			if (x.Condition.BackColor.Value is { } back) {
-				sb.Append($$"""background:rgba({{back.R}},{{back.G}},{{back.B}},{{back.A}});""");
+				sb.Append($$"""background:rgb({{back.R}} {{back.G}} {{back.B}} / {{(double)back.A / byte.MaxValue}});""");
 			}
 			sb.Append("}");
 			return sb.ToString();

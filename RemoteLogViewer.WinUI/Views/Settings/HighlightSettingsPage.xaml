@@ -100,7 +100,7 @@
 								</Button.Content>
 								<Button.Flyout>
 									<Flyout>
-										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=TwoWay, Converter={StaticResource ColorModelToColorConverter}}" IsAlphaEnabled="False" />
+										<ColorPicker Color="{x:Bind ViewModel.SelectedRule.Value.SelectedCondition.Value.ForeColor.Value, Mode=TwoWay, Converter={StaticResource ColorModelToColorConverter}}" IsAlphaEnabled="True" />
 									</Flyout>
 								</Button.Flyout>
 							</Button>
