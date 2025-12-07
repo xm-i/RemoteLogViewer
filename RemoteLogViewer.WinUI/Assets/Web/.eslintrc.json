@@ -1,0 +1,32 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "parser": "@typescript-eslint/parser",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "vue",
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "semi": ["error", "always"],
+    "@typescript-eslint/semi": ["error", "always"],
+    "quotes": ["error", "single"],
+    "indent": ["error", "tab", {
+      "SwitchCase": 1
+    }],
+    "no-trailing-spaces": "error",
+    "eol-last": ["error", "always"],
+    "no-undef": "off",
+    "no-unused-vars": "off"
+  }
+}

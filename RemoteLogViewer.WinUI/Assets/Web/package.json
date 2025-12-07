@@ -1,0 +1,36 @@
+{
+  "name": "remotelogviewer-web",
+  "version": "1.0.0",
+  "description": "Web UI for RemoteLogViewer",
+  "scripts": {
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "dev": "webpack --mode development --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.6.2",
+    "typescript": "^5.9.3",
+    "webpack": "^5.103.0",
+    "webpack-cli": "^6.0.1",
+    "ts-loader": "^9.5.4",
+    "vue-loader": "^17.4.2",
+    "@vue/compiler-sfc": "^3.5.25",
+    "css-loader": "^7.1.2",
+    "style-loader": "^4.0.0",
+    "html-webpack-plugin": "^5.6.5",
+    "vue-tsc": "^3.1.6",
+    "rimraf": "^6.1.2"
+  },
+  "dependencies": {
+    "vue": "^3.5.25",
+    "split.js": "^1.6.5"
+  }
+}

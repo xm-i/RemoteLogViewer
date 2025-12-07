@@ -291,7 +291,7 @@ node_modules/
 # Visual Studio 6 workspace options file
 *.opt
 
-# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
+# Visual Studio 6 workspace options file (contains which files were open etc.)
 *.vbw
 
 # Visual Studio LightSwitch build output
@@ -363,3 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 .idea/
+
+# Vue.js Web Assets
+**/Assets/Web/node_modules/
+**/Assets/Web/dist/
+**/Assets/Web/.eslintcache

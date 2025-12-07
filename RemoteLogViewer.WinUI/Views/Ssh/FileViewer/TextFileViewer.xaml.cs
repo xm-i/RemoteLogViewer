@@ -64,11 +64,11 @@ public sealed partial class TextFileViewer {
 			return;
 		}
 		await this.ContentWebViewer.EnsureCoreWebView2Async();
-#if !DEBUG_UNPACKAGED
+#if RELEASE || RELEASE_UNPACKAGED
 		this.ContentWebViewer.CoreWebView2.Settings.AreDevToolsEnabled = false;
 		this.ContentWebViewer.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
 #endif
-		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web"), CoreWebView2HostResourceAccessKind.Allow);
+		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web","dist"), CoreWebView2HostResourceAccessKind.Allow);
 		this.ContentWebViewer.CoreWebView2.Navigate("https://app/index.html");
 
 
@@ -80,30 +80,30 @@ public sealed partial class TextFileViewer {
 				var message = WebMessage.Create(e.WebMessageAsJson);
 				switch (message) {
 					case RequestWebMessage m:
-						this.GetViewerVM(m.PageKey)?.LoadLogsCommand.Execute(new(m.RequestId, m.Start, m.End));
+						this.GetViewerVM(m.pageKey)?.LoadLogsCommand.Execute(new(m.requestId, m.start, m.end));
 						break;
 					case StartGrepWebMessage m:
-						var vm = this.GetViewerVM(m.PageKey);
+						var vm = this.GetViewerVM(m.pageKey);
 						if (vm is null) {
 							return;
 						}
-						vm.GrepStartLine.Value = m.StartLine;
-						vm.GrepQuery.Value = m.Keyword;
+						vm.GrepStartLine.Value = m.startLine;
+						vm.GrepQuery.Value = m.keyword;
 						vm.GrepCommand.Execute(Unit.Default);
 						break;
 					case CancelGrepWebMessage:
-						this.GetViewerVM(message.PageKey)?.GrepCancelCommand.Execute(Unit.Default);
+						this.GetViewerVM(message.pageKey)?.GrepCancelCommand.Execute(Unit.Default);
 						break;
 					case ReadyWebMessage:
 						this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
 						this.ViewModel.IsViewerReady.Value = true;
 						break;
 					case SaveRangeRequestWebMessage m:
-						var srrvm = this.GetViewerVM(m.PageKey);
+						var srrvm = this.GetViewerVM(m.pageKey);
 						if (srrvm is null) {
 							return;
 						}
-						if (m.End < m.Start) {
+						if (m.end < m.start) {
 							return;
 						}
 						try {
@@ -111,26 +111,26 @@ public sealed partial class TextFileViewer {
 							var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
 							InitializeWithWindow.Initialize(picker, hwnd);
 							picker.FileTypeChoices.Add("Text", [".txt"]);
-							picker.SuggestedFileName = $"lines_{m.Start}_{m.End}";
+							picker.SuggestedFileName = $"lines_{m.start}_{m.end}";
 							var file = await picker.PickSaveFileAsync();
 							if (file == null) {
 								return;
 							}
 							using var stream = await file.OpenStreamForWriteAsync();
 							using var writer = new StreamWriter(stream);
-							await srrvm.SaveRangeContent(writer, m.Start, m.End);
+							await srrvm.SaveRangeContent(writer, m.start, m.end);
 						} catch {
 							// TODO: エラー通知
 						}
 						break;
 					case ChangeEncodingWebMessage m:
-						this.GetViewerVM(m.PageKey)?.ChangeEncodingCommand.Execute(m.Encoding);
+						this.GetViewerVM(m.pageKey)?.ChangeEncodingCommand.Execute(m.encoding);
 						break;
 					case UpdateTotalLineWebMessage m:
-						this.GetViewerVM(m.PageKey)?.UpdateTotalLineCommand.Execute(Unit.Default);
+						this.GetViewerVM(m.pageKey)?.UpdateTotalLineCommand.Execute(Unit.Default);
 						break;
 					case FileCloseWebMessage m:
-						var removeTarget = this.GetViewerVM(m.PageKey);
+						var removeTarget = this.GetViewerVM(m.pageKey);
 						if (removeTarget is null) {
 							return;
 						}
@@ -161,8 +161,8 @@ public sealed partial class TextFileViewer {
 					if (e.NewItems is not null) {
 						foreach (TextFileViewerViewModel vm in e.NewItems) {
 							this.PostWV2("*", "FileOpened", new {
-								vm.PageKey,
-								TabHeader = vm.OpenedFilePath.Value
+								pageKey = vm.PageKey,
+								tabHeader = vm.OpenedFilePath.Value
 							});
 							this.RegisterViewerVMEvents(vm);
 						}
@@ -181,8 +181,11 @@ public sealed partial class TextFileViewer {
 		// メインログビューイベント
 		_ = vm.Loaded.Subscribe(x => {
 			this.PostWV2(vm.PageKey, "Loaded", new {
-				x.RequestId,
-				Content = x.Content.Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content)))
+				requestId = x.RequestId,
+				content = x.Content.Select(x => new {
+					lineNumber = x.LineNumber,
+					content = this._highlightService.CreateStyledLine(x.Content)
+				})
 			});
 		}).AddTo(vm.CompositeDisposable);
 
@@ -206,10 +209,6 @@ public sealed partial class TextFileViewer {
 
 		_ = vm.IsFileLoadRunning.AsObservable().Subscribe(x => {
 			this.PostWV2(vm.PageKey, "IsFileLoadRunningUpdated", x);
-		}).AddTo(vm.CompositeDisposable);
-
-		_ = vm.TotalLines.AsObservable().Subscribe(x => {
-			this.PostWV2(vm.PageKey, "TotalLinesUpdated", x);
 		}).AddTo(vm.CompositeDisposable);
 
 		_ = vm.TotalBytes.AsObservable().Subscribe(x => {
@@ -238,7 +237,7 @@ public sealed partial class TextFileViewer {
 
 		// GREPタブイベント
 		_ = vm.GrepProgress.AsObservable().Subscribe(x => {
-			this.PostWV2(vm.PageKey, "GrepProgressUpdated", x * 100);
+			this.PostWV2(vm.PageKey, "GrepProgressUpdated", x);
 		}).AddTo(vm.CompositeDisposable);
 
 		_ = vm.GrepStartLine.AsObservable().Subscribe(x => {
@@ -259,7 +258,7 @@ public sealed partial class TextFileViewer {
 					if (e.NewItems is null) {
 						return;
 					}
-					this.PostWV2(vm.PageKey, "GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x => new TextLine(x.LineNumber, Content: this._highlightService.CreateStyledLine(x.Content))));
+					this.PostWV2(vm.PageKey, "GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x => new { lineNumber = x.LineNumber, content = this._highlightService.CreateStyledLine(x.Content) }));
 					break;
 				case NotifyCollectionChangedAction.Reset:
 					this.PostWV2(vm.PageKey, "GrepResultReset", null);

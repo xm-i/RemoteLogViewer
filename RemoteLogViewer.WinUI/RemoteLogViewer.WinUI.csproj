@@ -32,13 +32,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Web\app.js" />
-    <None Remove="Assets\Web\fileTabsArea.js" />
-    <None Remove="Assets\Web\style.css" />
-    <None Remove="Assets\Web\tabArea.js" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
@@ -80,40 +73,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Assets\Web\app.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\fileTabsArea.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\script.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\grepTab.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\index.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\Libs\split.min.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\Libs\vue.global.prod.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\lineViewTab.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\fileOperationArea.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\textFileViewer.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\style.css">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Assets\Web\tabArea.js">
+    <Content Include="Assets\Web\dist\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -154,4 +114,27 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Unpackaged|ARM64'">
     <Optimize>True</Optimize>
   </PropertyGroup>
+
+  <!-- Web Assets Build Targets -->
+  <Target Name="BuildWebAssetsDebug" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Debug' Or '$(Configuration)' == 'Debug-Unpackaged'">
+    <Message Text="Building Web Assets (Development)..." Importance="high" />
+    <Exec Command="npm run build:dev" WorkingDirectory="Assets\Web" ContinueOnError="false" />
+  </Target>
+
+  <Target Name="BuildWebAssetsRelease" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release' Or '$(Configuration)' == 'Release-Unpackaged'">
+    <Message Text="Building Web Assets (Production)..." Importance="high" />
+    <Exec Command="npm run build" WorkingDirectory="Assets\Web" ContinueOnError="false" />
+  </Target>
+
+  <!-- Clean Web Assets -->
+  <Target Name="CleanWebAssets" BeforeTargets="Clean">
+    <Message Text="Cleaning Web Assets..." Importance="high" />
+    <Exec Command="npm run clean" WorkingDirectory="Assets\Web" ContinueOnError="true" />
+  </Target>
+
+  <!-- Ensure npm packages are installed -->
+  <Target Name="EnsureNpmPackages" BeforeTargets="BuildWebAssetsDebug;BuildWebAssetsRelease">
+    <Message Text="Checking npm packages..." Importance="high" />
+    <Exec Command="npm ci" WorkingDirectory="Assets\Web" ContinueOnError="false" Condition="!Exists('Assets\Web\node_modules')" />
+  </Target>
 </Project>
