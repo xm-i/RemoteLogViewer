@@ -162,7 +162,7 @@ public sealed partial class TextFileViewer {
 						foreach (TextFileViewerViewModel vm in e.NewItems) {
 							this.PostWV2("*", "FileOpened", new {
 								pageKey = vm.PageKey,
-								tabHeader = vm.OpenedFilePath.Value
+								tabHeader = Path.GetFileName(vm.OpenedFilePath.Value)
 							});
 							this.RegisterViewerVMEvents(vm);
 						}
