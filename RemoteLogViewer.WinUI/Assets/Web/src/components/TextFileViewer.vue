@@ -320,7 +320,8 @@ onMounted(() => {
 				reset();
 				requestLogs(1, prefetchLines * 2);
 				break;
-			case 'ReloadRequested':
+      case 'ReloadRequested':
+        reset();
 				jumpLine(startLine.value);
 				break;
 		}
