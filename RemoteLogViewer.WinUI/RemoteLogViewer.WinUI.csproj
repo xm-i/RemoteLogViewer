@@ -11,6 +11,7 @@
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
+    <EnableMsixTooling Condition="'$(Configuration)' == 'Debug-Unpackaged'">false</EnableMsixTooling>
     <PublishTrimmed>False</PublishTrimmed>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release;Debug-Unpackaged;Release-Unpackaged</Configurations>
