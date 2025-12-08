@@ -10,12 +10,10 @@
 		<div class="grep-toolbar">
 			<div>
 				Search Word:<br>
-				<input
-					type="text"
-					v-model="keyword"
-					placeholder="word"
-					class="grep-keyword"
-				/>
+				<input type="text"
+							 v-model="keyword"
+							 placeholder="word"
+							 class="grep-keyword" />
 				<button @click="startGrepFirst" :disabled="isGrepRunning || clientOperating || isDisconnected">Search</button>
 				<button @click="cancelGrep" :disabled="!isGrepRunning || clientOperating || isDisconnected">Cancel</button>
 			</div>
@@ -23,12 +21,22 @@
 			<div>
 				Load Next Lines:<br>
 				<input type="number"
-					v-model="grepNextStartLine"
-					placeholder="100"
-					class="grep-next-start-line"
-					min="1" />
+							 v-model="grepNextStartLine"
+							 placeholder="100"
+							 class="grep-next-start-line"
+							 min="1" />
 
 				<button @click="startGrepNext" :disabled="isGrepRunning || clientOperating || isDisconnected">Next</button>
+			</div>
+
+			<div>
+				Use Regex:<br>
+				<input type="checkbox" v-model="useRegex" :disabled="isGrepRunning || isDisconnected" />
+			</div>
+
+			<div>
+				Ignore Case:<br>
+				<input type="checkbox" v-model="ignoreCase" :disabled="isGrepRunning || isDisconnected" />
 			</div>
 
 			<div class="grep-results-count">
@@ -75,6 +83,8 @@ const grepNextStartLine = ref(1);
 const logs = ref<TextLine[]>([]);
 const clientOperating = ref(false);
 const requestId = ref(0);
+const useRegex = ref(false);
+const ignoreCase = ref(false);
 
 const addResult = (data: TextLine[]) => {
 	logs.value.push(...data);
@@ -106,7 +116,9 @@ const startGrep = (startLine: number) => {
 			type: 'StartGrep',
 			requestId: ++requestId.value,
 			keyword: keyword.value,
-			startLine: startLine
+			startLine: startLine,
+			ignoreCase: ignoreCase.value,
+			useRegex: useRegex.value
 		});
 	}
 };

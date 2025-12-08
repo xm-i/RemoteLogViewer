@@ -80,7 +80,7 @@ public interface ISshService : IDisposable {
 	/// <param name="startLine">検索開始時点の行番号</param>
 	/// <param name="ct">キャンセルトークン。</param>
 	/// <returns>一致行。</returns>
-	public IAsyncEnumerable<TextLine> GrepAsync(string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, CancellationToken ct);
+	public IAsyncEnumerable<TextLine> GrepAsync(string remoteFilePath, string pattern, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, bool ignoreCase, bool useRegex, CancellationToken ct);
 
 	/// <summary>
 	///     大規模ファイル向け: 行番号からおおよそのバイトオフセットを取得するためのインデックスを一定間隔で作成します。

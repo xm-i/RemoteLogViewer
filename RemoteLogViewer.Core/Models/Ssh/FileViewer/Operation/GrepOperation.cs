@@ -44,7 +44,7 @@ public sealed class GrepOperation : ModelBase<GrepOperation>, IGrepOperation {
 		get;
 	}
 
-	public async IAsyncEnumerable<TextLine> RunAsync(ISshService sshService, string? filePath, string? query, string? encoding, ByteOffset startOffset, long startLine, int maxResults, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> RunAsync(ISshService sshService, string? filePath, string? query, string? encoding, ByteOffset startOffset, long startLine, int maxResults, bool ignoreCase, bool useRegex, [EnumeratorCancellation] CancellationToken ct) {
 		this._receivedLineCount.Value = 0;
 		if (string.IsNullOrEmpty(filePath)) {
 			yield break;
@@ -57,7 +57,7 @@ public sealed class GrepOperation : ModelBase<GrepOperation>, IGrepOperation {
 
 		this._isRunning.Value = true;
 		try {
-			var lines = sshService.GrepAsync(filePath, query, false, encoding, maxResults, startOffset, startLine, op.Token);
+			var lines = sshService.GrepAsync(filePath, query, encoding, maxResults, startOffset, startLine, ignoreCase, useRegex, op.Token);
 			await foreach (var line in lines.WithCancellation(op.Token)) {
 				this._receivedLineCount.Value = line.LineNumber;
 				yield return line;

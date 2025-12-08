@@ -16,7 +16,7 @@ public class GrepOperationTests {
 	public async Task RunAsync_ShouldPublishLinesAndProgress() {
 		var subject = new Subject<TextLine>();
 		var sshMock = new Mock<ISshService>();
-		sshMock.Setup(s => s.GrepAsync("file.log", "ERR", false, null,100, It.IsAny<ByteOffset>(),1, It.IsAny<CancellationToken>()))
+		sshMock.Setup(s => s.GrepAsync("file.log", "ERR", null, 100, It.IsAny<ByteOffset>(), 1, false, false, It.IsAny<CancellationToken>()))
 			.Returns((string _, string _, bool _, string? _, int _, ByteOffset bo, long _, CancellationToken t) => subject.ToAsyncEnumerable(t));
 
 		using var opRegistry = new OperationRegistry();
@@ -24,7 +24,7 @@ public class GrepOperationTests {
 		var op = new GrepOperation(opRegistry, loggerMock.Object);
 		op.TotalLineCount.Value = 1000;
 
-		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", "ERR", null, new ByteOffset(0,0),1,100, CancellationToken.None)).ToLiveList();
+		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", "ERR", null, new ByteOffset(0, 0), 1, 100, false, false, CancellationToken.None)).ToLiveList();
 
 		var l1 = new TextLine(10, "ERR first");
 		var l2 = new TextLine(200, "ERR second");
@@ -59,7 +59,7 @@ public class GrepOperationTests {
 		var cts = new CancellationTokenSource();
 		var subject = new Subject<TextLine>();
 		var sshMock = new Mock<ISshService>();
-		sshMock.Setup(s => s.GrepAsync("file.log", "ERR", false, null,100, It.IsAny<ByteOffset>(),1, It.IsAny<CancellationToken>()))
+		sshMock.Setup(s => s.GrepAsync("file.log", "ERR", null, 100, It.IsAny<ByteOffset>(), 1, false, false, It.IsAny<CancellationToken>()))
 			.Returns((string _, string _, bool _, string? _, int _, ByteOffset bo, long _, CancellationToken t) => subject.ToAsyncEnumerable(t));
 
 		using var opRegistry = new OperationRegistry();
@@ -67,7 +67,7 @@ public class GrepOperationTests {
 		var op = new GrepOperation(opRegistry, loggerMock.Object);
 		op.TotalLineCount.Value = 1000;
 
-		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", "ERR", null, new ByteOffset(0,0),1,100, cts.Token)).ToLiveList();
+		var list = Observable.ToObservable(op.RunAsync(sshMock.Object, "file.log", "ERR", null, new ByteOffset(0, 0), 1, 100, false, false, cts.Token)).ToLiveList();
 
 		var l1 = new TextLine(10, "ERR first");
 		var l2 = new TextLine(200, "ERR second");

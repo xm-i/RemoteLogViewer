@@ -73,7 +73,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			try {
 				logger.LogTrace($"Grep start: {this.GrepQuery.Value}");
-				await this.Model.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this.GrepStartLine.Value, this._grepCts.Token);
+				await this.Model.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this.GrepStartLine.Value, this.GrepIgnoreCase.Value, this.GrepUseRegex.Value, this._grepCts.Token);
 				logger.LogTrace("Grep end");
 			} finally {
 				this._grepCts?.Dispose();
@@ -164,6 +164,13 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	public BindableReactiveProperty<long> GrepStartLine {
 		get;
 	} = new(1);
+
+	public BindableReactiveProperty<bool> GrepIgnoreCase {
+		get;
+	} = new(false);
+	public BindableReactiveProperty<bool> GrepUseRegex {
+		get;
+	} = new(false);
 
 	/// <summary>GREP 結果。</summary>
 	public NotifyCollectionChangedSynchronizedViewList<TextLine> GrepResults {

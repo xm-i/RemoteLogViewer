@@ -3,6 +3,8 @@ using System.Text.Json;
 
 namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 
+// JS側にあわせるため、命名スタイル違反を許容
+#pragma warning disable IDE1006
 public class WebMessage {
 	public required string pageKey {
 		get;
@@ -58,6 +60,14 @@ public class StartGrepWebMessage : WebMessage {
 		get;
 		set;
 	}
+	public required bool ignoreCase {
+		get;
+		set;
+	}
+	public required bool useRegex {
+		get;
+		set;
+	}
 }
 
 
@@ -88,3 +98,4 @@ public class UpdateTotalLineWebMessage : WebMessage {
 }
 public class FileCloseWebMessage : WebMessage {
 }
+#pragma warning restore IDE1006 // 命名スタイル

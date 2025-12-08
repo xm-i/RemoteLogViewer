@@ -89,6 +89,8 @@ public sealed partial class TextFileViewer {
 						}
 						vm.GrepStartLine.Value = m.startLine;
 						vm.GrepQuery.Value = m.keyword;
+						vm.GrepUseRegex.Value = m.useRegex;
+						vm.GrepIgnoreCase.Value = m.ignoreCase;
 						vm.GrepCommand.Execute(Unit.Default);
 						break;
 					case CancelGrepWebMessage:

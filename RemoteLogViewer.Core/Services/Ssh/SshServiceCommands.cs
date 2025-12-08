@@ -137,14 +137,15 @@ public partial class SshService {
 	/// </summary>
 	/// <param name="remoteFilePath">対象ファイル。</param>
 	/// <param name="pattern">パターン。</param>
-	/// <param name="ignoreCase">大文字小文字無視。</param>
 	/// <param name="fileEncoding">ファイルエンコーディング。</param>
 	/// <param name="maxResults">取得件数上限。</param>
 	/// <param name="byteOffset">検索開始に利用するバイトオフセット。</param>
 	/// <param name="startLine">検索開始時点の行番号</param>
+	/// <param name="ignoreCase">大文字小文字無視。</param>
+	/// <param name="useRegex">正規表現利用有無。</param>
 	/// <param name="ct">キャンセルトークン。</param>
 	/// <returns>一致行。</returns>
-	public async IAsyncEnumerable<TextLine> GrepAsync(string remoteFilePath, string pattern, bool ignoreCase, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, [EnumeratorCancellation] CancellationToken ct) {
+	public async IAsyncEnumerable<TextLine> GrepAsync(string remoteFilePath, string pattern, string? fileEncoding, int maxResults, ByteOffset byteOffset, long startLine, bool ignoreCase, bool useRegex, [EnumeratorCancellation] CancellationToken ct) {
 		if (string.IsNullOrWhiteSpace(remoteFilePath)) {
 			throw new ArgumentException("file path is empty", nameof(remoteFilePath));
 		}
@@ -164,6 +165,7 @@ public partial class SshService {
 		var escapedPath = EscapeSingleQuotes(remoteFilePath);
 		var escapedPattern = EscapeSingleQuotes(pattern);
 		var ic = ignoreCase ? " -i" : string.Empty;
+		var regexOption = useRegex ? "-E" : "-F";
 
 		// パターン変換必要か
 		var needsPatternConversion = NeedsConversion(this.IconvEncoding, fileEncoding);
@@ -183,7 +185,7 @@ public partial class SshService {
 		var inputCmd = $"tail -c +{byteOffset.Bytes} '{escapedPath}' 2>/dev/null | tail -n +'{relativeStart}' 2>/dev/null";
 
 		// 実行コマンド: tail/cat の出力を grep にパイプし、必要なら出力を iconv変換する
-		var cmd = $"LC_ALL=C {inputCmd} | grep -n -h{ic} -m {maxResults} -F --binary-files=text --color=never --line-buffered -- {patternExpr}{convertPipe} 2>/dev/null || true";
+		var cmd = $"LC_ALL=C {inputCmd} | grep -n -h{ic} -m {maxResults} {regexOption} --binary-files=text --color=never --line-buffered -- {patternExpr}{convertPipe} 2>/dev/null || true";
 		var lines = this.RunAsync(cmd, ct);
 
 		await foreach (var line in lines) {

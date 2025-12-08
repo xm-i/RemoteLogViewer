@@ -19,7 +19,9 @@ export interface RequestWebMessage extends OutgoingAbstractWebMessage {
 export interface StartGrepWebMessage extends OutgoingAbstractWebMessage {
 	type: 'StartGrep';
 	startLine: number;
-	keyword: string;
+  keyword: string;
+  ignoreCase: boolean;
+  useRegex: boolean;
 }
 
 export interface CancelGrepWebMessage extends OutgoingAbstractWebMessage {

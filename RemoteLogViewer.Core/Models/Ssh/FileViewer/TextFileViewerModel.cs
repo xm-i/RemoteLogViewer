@@ -159,14 +159,14 @@ public class TextFileViewerModel : ModelBase<TextFileViewerModel> {
 	/// <summary>
 	/// GREP 実行。クエリが空の場合は結果をクリア。
 	/// </summary>
-	public async Task Grep(string? query, string? encoding, long startLine, CancellationToken ct) {
+	public async Task Grep(string? query, string? encoding, long startLine, bool ignoreCase, bool useRegex, CancellationToken ct) {
 		if (this._sshService is null) {
 			throw new InvalidOperationException();
 		}
 		this.GrepResults.Clear();
 		var max = this._settingsStore.SettingsModel.TextViewerSettings.GrepMaxResults.Value;
 		var startOffset = this._byteOffsetIndex.Find(startLine);
-		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, startOffset, startLine, max, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
+		await foreach (var lines in this.GrepOperation.RunAsync(this._sshService, this.OpenedFilePath.Value, query, encoding, startOffset, startLine, max, ignoreCase, useRegex, ct).ChunkForAddRange(TimeSpan.FromMilliseconds(500), null, ct)) {
 			this.GrepResults.AddRange(lines);
 		}
 	}
