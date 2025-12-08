@@ -363,8 +363,8 @@ onMounted(() => {
       }
     }
   }
-	.log-wrap-lines .line-content {
-		white-space: normal;
-		min-width: 0;
-	}
+  .log-wrap-lines .line-content {
+    white-space: pre-wrap;
+    min-width: 0;
+  }
 </style>

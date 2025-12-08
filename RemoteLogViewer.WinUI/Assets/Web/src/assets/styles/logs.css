@@ -20,7 +20,6 @@
 	text-align: right;
 	padding: 0 4px 0 4px;
 	font-variant-numeric: tabular-nums;
-	white-space: pre;
 	position: sticky;
 	left: 0;
 	cursor: pointer;
@@ -35,7 +34,7 @@
 	padding: 0 4px 0 0;
 
 	&.wrap {
-		white-space: normal;
+		white-space: pre-wrap;
 		min-width: 0;
 	}
 }
