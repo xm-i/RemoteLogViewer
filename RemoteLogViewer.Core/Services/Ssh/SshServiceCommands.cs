@@ -231,7 +231,7 @@ public partial class SshService {
 		var startLineNumber = startByteOffset.LineNumber;
 		var inputCmd = $"tail -c +{startBytes} '{escapedPath}' 2>/dev/null";
 
-		var cmd = $"LC_ALL=C {inputCmd} | awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR+{startLineNumber}, offset+{startBytes} }} END {{ if (NR%{interval} != 0) print NR+{startLineNumber}, offset+{startBytes} }}' 2>/dev/null";
+		var cmd = $"LC_ALL=C {inputCmd} | LC_ALL=C awk '{{ offset+=length($0)+1 }} NR%{interval}==0 {{ print NR+{startLineNumber}, offset+{startBytes} }} END {{ if (NR%{interval} != 0) print NR+{startLineNumber}, offset+{startBytes} }}' 2>/dev/null";
 
 		var lines = this.RunAsync(cmd, ct);
 
