@@ -18,7 +18,6 @@ public class LicensePageViewModel : InfoPageViewModel<LicensePageViewModel> {
 		new("Serilog", "Apache-2.0", "https://github.com/serilog/serilog/blob/dev/LICENSE"),
 		new("Split.js", "MIT", "https://github.com/nathancahill/split/blob/master/LICENSE"),
 		new("SSH.NET", "MIT", "https://github.com/sshnet/SSH.NET/blob/develop/LICENSE"),
-		new("System.Linq.Async", "MIT", "https://github.com/dotnet/reactive/blob/main/LICENSE"),
 		new("Vue", "MIT", "https://github.com/vuejs/core/blob/main/LICENSE"),
 	];
 }
