@@ -27,6 +27,8 @@ defineExpose({
 <style scoped>
 .line-view-tab {
 	padding: 8px;
+	height: 100%;
+	overflow: scroll;
 
 	.line-number {
 		pointer-events: none;
