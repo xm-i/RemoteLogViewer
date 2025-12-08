@@ -222,9 +222,6 @@ onMounted(() => {
 			case 'OpenedFilePathChanged':
 				openedFilepath.value = message.data;
 				break;
-			case 'SelectedEncodingChanged':
-				selectedEncoding.value = message.data;
-				break;
 			case 'IsRangeContentSavingUpdated':
 				isSaving.value = message.data;
 				break;

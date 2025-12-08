@@ -221,10 +221,6 @@ public sealed partial class TextFileViewer {
 			this.PostWV2(vm.PageKey, "OpenedFilePathChanged", x);
 		}).AddTo(vm.CompositeDisposable);
 
-		_ = vm.SelectedEncoding.AsObservable().Subscribe(x => {
-			this.PostWV2(vm.PageKey, "SelectedEncodingChanged", x);
-		}).AddTo(vm.CompositeDisposable);
-
 		_ = vm.IsRangeContentSaving.AsObservable().Subscribe(x => {
 			this.PostWV2(vm.PageKey, "IsRangeContentSavingUpdated", x);
 		}).AddTo(vm.CompositeDisposable);

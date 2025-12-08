@@ -52,14 +52,6 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			await this.Model.UpdateTotalLines(ct);
 		}).AddTo(this.CompositeDisposable);
 
-		_ = this.SelectedEncoding.Subscribe(x => {
-			if (string.IsNullOrWhiteSpace(x)) {
-				view.ResetFilter();
-				return;
-			}
-			view.AttachFilter(ae => Regex.IsMatch(ae, string.Join(".*?", x.Select(c => c)), RegexOptions.IgnoreCase));
-		}).AddTo(this.CompositeDisposable);
-
 		_ = this.LoadLogsCommand
 			.SubscribeAwait(async (val, ct) => {
 				logger.LogTrace($"LoadLogsCommand start: {val.Start} - {val.End}");
@@ -73,7 +65,7 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 			this._grepCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			try {
 				logger.LogTrace($"Grep start: {this.GrepQuery.Value}");
-				await this.Model.Grep(this.GrepQuery.Value, this.SelectedEncoding.Value, this.GrepStartLine.Value, this.GrepIgnoreCase.Value, this.GrepUseRegex.Value, this._grepCts.Token);
+				await this.Model.Grep(this.GrepQuery.Value, this.GrepStartLine.Value, this.GrepIgnoreCase.Value, this.GrepUseRegex.Value, this._grepCts.Token);
 				logger.LogTrace("Grep end");
 			} finally {
 				this._grepCts?.Dispose();
@@ -203,11 +195,6 @@ public class TextFileViewerViewModel : ViewModelBase<TextFileViewerViewModel> {
 	public NotifyCollectionChangedSynchronizedViewList<string> FilteredAvailableEncodings {
 		get;
 	}
-
-	/// <summary>選択エンコーディング。</summary>
-	public BindableReactiveProperty<string?> SelectedEncoding {
-		get;
-	} = new();
 
 	/// <summary>
 	/// GREP 結果行番号ジャンプコマンド。
