@@ -32,9 +32,21 @@
 	min-width: max-content;
 	word-break: normal;
 	padding: 0 4px 0 0;
+	position: relative;
+	cursor: text;
 
 	&.wrap {
 		white-space: pre-wrap;
 		min-width: 0;
+	}
+
+	&:focus::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-color: rgb(27 79 204 / 0.5);
+		border-style: solid;
+		border-width: 1px 0;
+		pointer-events: none;
 	}
 }

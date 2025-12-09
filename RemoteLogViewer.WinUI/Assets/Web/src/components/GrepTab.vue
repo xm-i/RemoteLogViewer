@@ -53,7 +53,7 @@
 				class="log-line"
 			>
 				<span class="line-number" @click="lineClick(line.lineNumber)">{{ line.lineNumber }}</span>
-				<span class="line-content" v-html="line.content"></span>
+				<span class="line-content" v-html="line.content" tabindex="-1"></span>
 			</div>
 		</div>
 	</div>

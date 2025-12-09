@@ -8,7 +8,7 @@
 					:data-line-number="line.lineNumber"
 					class="log-line">
 					<span class="line-number" @click="onLineNumberClick(line)">{{ line.lineNumber }}</span>
-					<span class="line-content" v-html="line.content"></span>
+					<span class="line-content" v-html="line.content" tabindex="-1"></span>
 				</div>
 			</div>
 			<div class="scroll-area" ref="scrollArea" @scroll="onVirtualScroll" v-show="!isDisconnected">

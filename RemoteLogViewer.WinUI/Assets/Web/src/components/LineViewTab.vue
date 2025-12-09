@@ -3,7 +3,7 @@
 		<div class="line-view-results log-container">
 			<div v-if="line !== null" class="log-line">
 				<span class="line-number">{{ line.lineNumber }}</span>
-				<span class="line-content wrap" v-html="line.content"></span>
+				<span class="line-content wrap" v-html="line.content" tabindex="-1"></span>
 			</div>
 		</div>
 	</div>
