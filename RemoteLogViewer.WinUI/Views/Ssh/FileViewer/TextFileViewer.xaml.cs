@@ -1,11 +1,14 @@
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Web.WebView2.Core;
 
+using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.Services.Viewer;
@@ -23,7 +26,7 @@ namespace RemoteLogViewer.WinUI.Views.Ssh.FileViewer;
 ///     テキストファイルビューア。スクロール位置に応じて行を部分的に読み込みます。
 /// </summary>
 public sealed partial class TextFileViewer {
-	private readonly HighlightService _highlightService;
+	private readonly TabObjectsList _tabObjects = [];
 	private readonly SettingsStoreModel _settingsStoreModel;
 	private readonly NotificationService _notificationService;
 	private readonly ILogger<TextFileViewer> _logger;
@@ -49,7 +52,6 @@ public sealed partial class TextFileViewer {
 	}
 
 	public TextFileViewer() {
-		this._highlightService = Ioc.Default.GetRequiredService<HighlightService>();
 		this._settingsStoreModel = Ioc.Default.GetRequiredService<SettingsStoreModel>();
 		this._notificationService = Ioc.Default.GetRequiredService<NotificationService>();
 		this._logger = Ioc.Default.GetRequiredService<ILogger<TextFileViewer>>();
@@ -68,7 +70,7 @@ public sealed partial class TextFileViewer {
 		this.ContentWebViewer.CoreWebView2.Settings.AreDevToolsEnabled = false;
 		this.ContentWebViewer.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
 #endif
-		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web","dist"), CoreWebView2HostResourceAccessKind.Allow);
+		this.ContentWebViewer.CoreWebView2.SetVirtualHostNameToFolderMapping("app", Path.Combine(AppContext.BaseDirectory, "Assets", "Web", "dist"), CoreWebView2HostResourceAccessKind.Allow);
 		this.ContentWebViewer.CoreWebView2.Navigate("https://app/index.html");
 
 
@@ -83,6 +85,15 @@ public sealed partial class TextFileViewer {
 						this.GetViewerVM(m.pageKey)?.LoadLogsCommand.Execute(new(m.requestId, m.start, m.end));
 						break;
 					case StartGrepWebMessage m:
+						var gc = this._tabObjects.GetGrepCondition(m.pageKey);
+						gc.Pattern.Value = m.keyword;
+						gc.IgnoreCase.Value = m.ignoreCase;
+						gc.PatternType.Value = m.useRegex ? HighlightPatternType.Regex : HighlightPatternType.Exact;
+						gc.HighlightOnlyMatch.Value = true;
+						gc.BackColor.Value = new Composition.Utils.Objects.ColorModel() { A = 0xDD, R = 0xFF, G = 0xFF, B = 0 };
+						this.PostWV2("*", "LineStyleChanged", this._tabObjects.CreateCss());
+						this.PostWV2(m.pageKey, "ReloadRequested", null);
+
 						var vm = this.GetViewerVM(m.pageKey);
 						if (vm is null) {
 							return;
@@ -97,7 +108,6 @@ public sealed partial class TextFileViewer {
 						this.GetViewerVM(message.pageKey)?.GrepCancelCommand.Execute(Unit.Default);
 						break;
 					case ReadyWebMessage:
-						this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
 						this.ViewModel.IsViewerReady.Value = true;
 						break;
 					case SaveRangeRequestWebMessage m:
@@ -147,7 +157,7 @@ public sealed partial class TextFileViewer {
 		}).AddTo(this.ViewModel.CompositeDisposable);
 
 		this._settingsStoreModel.SettingsUpdated.Subscribe(x => {
-			this.PostWV2("*", "LineStyleChanged", this._highlightService.CreateCss());
+			this.PostWV2("*", "LineStyleChanged", this._tabObjects.CreateCss());
 			this.PostWV2("*", "ReloadRequested", null);
 			this.PostWV2("*", "GrepResultReset", null);
 		});
@@ -162,6 +172,8 @@ public sealed partial class TextFileViewer {
 				case NotifyCollectionChangedAction.Remove:
 					if (e.NewItems is not null) {
 						foreach (TextFileViewerViewModel vm in e.NewItems) {
+							this._tabObjects.Add(new TabObjects(vm.PageKey, Ioc.Default.CreateScope().ServiceProvider));
+							this.PostWV2("*", "LineStyleChanged", this._tabObjects.CreateCss());
 							this.PostWV2("*", "FileOpened", new {
 								pageKey = vm.PageKey,
 								tabHeader = Path.GetFileName(vm.OpenedFilePath.Value)
@@ -186,7 +198,7 @@ public sealed partial class TextFileViewer {
 				requestId = x.RequestId,
 				content = x.Content.Select(x => new {
 					lineNumber = x.LineNumber,
-					content = this._highlightService.CreateStyledLine(x.Content)
+					content = this._tabObjects.GetHighlightService(vm.PageKey).CreateStyledLine(x.Content)
 				})
 			});
 		}).AddTo(vm.CompositeDisposable);
@@ -256,7 +268,11 @@ public sealed partial class TextFileViewer {
 					if (e.NewItems is null) {
 						return;
 					}
-					this.PostWV2(vm.PageKey, "GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x => new { lineNumber = x.LineNumber, content = this._highlightService.CreateStyledLine(x.Content) }));
+					this.PostWV2(vm.PageKey, "GrepResultAdded", e.NewItems.Cast<TextLine>().Select(x =>
+						new {
+							lineNumber = x.LineNumber,
+							content = this._tabObjects.GetHighlightService(vm.PageKey).CreateStyledLine(x.Content)
+						}));
 					break;
 				case NotifyCollectionChangedAction.Reset:
 					this.PostWV2(vm.PageKey, "GrepResultReset", null);
@@ -290,5 +306,41 @@ public sealed partial class TextFileViewer {
 		}
 		this.ViewModel.IsViewerReady.Value = false;
 		this.ContentWebViewer.CoreWebView2.Reload();
+	}
+
+	private class TabObjects {
+		public string PageKey {
+			get;
+		}
+		public HighlightService HighlightService {
+			get;
+		}
+
+		public HighlightConditionModel GrepCondition {
+			get;
+		}
+
+		public TabObjects(string pageKey, IServiceProvider scopedServiceProvider) {
+			this.PageKey = pageKey;
+			var scopedService = Ioc.Default.CreateScope().ServiceProvider;
+			this.GrepCondition = scopedService.GetRequiredService<HighlightConditionModel>();
+			this.HighlightService = scopedService.GetRequiredService<HighlightService>();
+		}
+	}
+
+	private class TabObjectsList : List<TabObjects> {
+		public string CreateCss() {
+			return string.Join("", this.Select(x => x.HighlightService.CreateCss($".{x.PageKey}")));
+		}
+
+		public HighlightService GetHighlightService(string pageKey) {
+			var tab = this.First(x => x.PageKey == pageKey);
+			return tab.HighlightService;
+		}
+
+		public HighlightConditionModel GetGrepCondition(string pageKey) {
+			var tab = this.First(x => x.PageKey == pageKey);
+			return tab.GrepCondition;
+		}
 	}
 }

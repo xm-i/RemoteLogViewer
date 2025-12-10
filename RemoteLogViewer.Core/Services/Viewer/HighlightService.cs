@@ -4,6 +4,8 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Core.Stores.Settings;
 
@@ -11,20 +13,29 @@ namespace RemoteLogViewer.Core.Services.Viewer;
 
 [Inject(InjectServiceLifetime.Transient)]
 public class HighlightService {
+	private readonly IServiceProvider _serviceProvider;
 	private readonly SettingsStoreModel _settingsStoreModel;
 	private readonly ConcurrentDictionary<(string pattern, bool ignoreCase), Regex> _regexCache = [];
-	private (string ClassName, HighlightConditionModel Condition)[] _ruleWithClassName = [];
-	public HighlightService(SettingsStoreModel settingsStoreModel) {
+	private readonly List<(string ClassName, HighlightConditionModel Condition)> _ruleWithClassName = [];
+
+	public HighlightService(SettingsStoreModel settingsStoreModel, IServiceProvider serviceProvider) {
 		this._settingsStoreModel = settingsStoreModel;
+		this._serviceProvider = serviceProvider;
 	}
 
-	public string CreateCss() {
-		var conditions = this._settingsStoreModel.SettingsModel.HighlightSettings.Rules.SelectMany(x => x.Conditions);
-		this._ruleWithClassName = conditions.Select((x, i) => ($"c{i}", x)).ToArray();
+	public string CreateCss(string wrapperSelector) {
+		var conditions = this._settingsStoreModel.SettingsModel.HighlightSettings.Rules.SelectMany(x => x.Conditions).Where(x => !string.IsNullOrEmpty(x.Pattern.Value));
+		var grepCondition = this._serviceProvider.GetRequiredService<HighlightConditionModel>();
 
-		return string.Join("", this._ruleWithClassName.Select(x => {
+		if (!string.IsNullOrEmpty(grepCondition.Pattern.Value)) {
+			this._ruleWithClassName.Add(("grep-condition", grepCondition));
+		}
+		this._ruleWithClassName.AddRange(conditions.Select((x, i) => ($"c{i}", x)));
+
+
+		return wrapperSelector + "{" + string.Join("", this._ruleWithClassName.AsEnumerable().Reverse().Select((x, i) => {
 			var sb = new StringBuilder();
-			_ = sb.Append($".{x.ClassName}{{");
+			_ = sb.Append($".{x.ClassName}{string.Join("", Enumerable.Repeat("[class]", i))}{{");
 			if (x.Condition.ForeColor.Value is { } fore) {
 				_ = sb.Append($$"""color:rgb({{fore.R}} {{fore.G}} {{fore.B}} / {{(double)fore.A / byte.MaxValue}});""");
 			}
@@ -33,7 +44,7 @@ public class HighlightService {
 			}
 			_ = sb.Append("}");
 			return sb.ToString();
-		}));
+		})) + "}";
 	}
 
 	public string CreateStyledLine(string content) {
