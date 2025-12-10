@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -25,21 +24,21 @@ public class HighlightService {
 
 		return string.Join("", this._ruleWithClassName.Select(x => {
 			var sb = new StringBuilder();
-			sb.Append($".{x.ClassName}{{");
+			_ = sb.Append($".{x.ClassName}{{");
 			if (x.Condition.ForeColor.Value is { } fore) {
-				sb.Append($$"""color:rgb({{fore.R}} {{fore.G}} {{fore.B}} / {{(double)fore.A / byte.MaxValue}});""");
+				_ = sb.Append($$"""color:rgb({{fore.R}} {{fore.G}} {{fore.B}} / {{(double)fore.A / byte.MaxValue}});""");
 			}
 			if (x.Condition.BackColor.Value is { } back) {
-				sb.Append($$"""background:rgb({{back.R}} {{back.G}} {{back.B}} / {{(double)back.A / byte.MaxValue}});""");
+				_ = sb.Append($$"""background:rgb({{back.R}} {{back.G}} {{back.B}} / {{(double)back.A / byte.MaxValue}});""");
 			}
-			sb.Append("}");
+			_ = sb.Append("}");
 			return sb.ToString();
 		}));
 	}
 
 	public string CreateStyledLine(string content) {
 		// 行全体スタイルの決定
-		string? lineClass = null;
+		List<string> lineClasses = [];
 		foreach (var lineCondition in this._ruleWithClassName.Where(x => !x.Condition.HighlightOnlyMatch.Value)) {
 			var condition = lineCondition.Condition;
 			if (condition.PatternType.Value == HighlightPatternType.Regex) {
@@ -48,15 +47,13 @@ public class HighlightService {
 					continue;
 				}
 				if (regex.IsMatch(content)) {
-					lineClass = lineCondition.ClassName;
-					break;
+					lineClasses.Add(lineCondition.ClassName);
 				}
 			} else if (condition.PatternType.Value == HighlightPatternType.Exact) {
 				var comparison = condition.IgnoreCase.Value ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
 				if (content.IndexOf(condition.Pattern.Value, comparison) >= 0) {
-					lineClass = lineCondition.ClassName;
-					break;
+					lineClasses.Add(lineCondition.ClassName);
 				}
 			}
 		}
@@ -105,15 +102,15 @@ public class HighlightService {
 
 		var sb = new StringBuilder();
 
-		if (lineClass != null) {
-			sb.Append($@"<span class=""{lineClass}"">");
+		if (lineClasses.Count != 0) {
+			_ = sb.Append($@"<span class=""{string.Join(" ", lineClasses)}"">");
 		}
 
 		var styledIndex = -1;
 		List<PointStyle> applying = [];
 		// スタイルの付け替えが発生する可能性のあるindexを列挙
 		foreach (var index in mergedWordStyles.SelectMany(x => new int[] { x.Start, x.End + 1 }).OrderBy(x => x).Distinct()) {
-			sb.Append(Escape(content[(styledIndex + 1)..index]));
+			_ = sb.Append(Escape(content[(styledIndex + 1)..index]));
 			styledIndex = index - 1;
 
 			var starts = mergedWordStyles.Where(x => x.Start == index).OrderByDescending(x => x.Priority).ToArray();
@@ -121,14 +118,14 @@ public class HighlightService {
 
 			// 今回終了
 			foreach (var end in ends) {
-				sb.Append("</span>");
-				applying.Remove(end);
+				_ = sb.Append("</span>");
+				_ = applying.Remove(end);
 			}
 
 			List<PointStyle> requiredOpenStyles = [];
 			// 今回適用開始/終了するスタイルよりも優先度が高いものは一旦閉じる (Priority数値が低いほど優先度が高い)
-			foreach (var ap in applying.Where(x => (starts.Length>0 && x.Priority < starts[0].Priority) || (ends.Length > 0 && x.Priority < ends[0].Priority))) {
-				sb.Append("</span>");
+			foreach (var ap in applying.Where(x => (starts.Length > 0 && x.Priority < starts[0].Priority) || (ends.Length > 0 && x.Priority < ends[0].Priority))) {
+				_ = sb.Append("</span>");
 				requiredOpenStyles.Add(ap);
 			}
 
@@ -141,13 +138,13 @@ public class HighlightService {
 
 			// 開始タグ追加
 			foreach (var ap in requiredOpenStyles.OrderBy(x => x.Priority)) {
-				sb.Append($@"<span class=""{ap.ClassName}"">");
+				_ = sb.Append($@"<span class=""{ap.ClassName}"">");
 			}
 		}
-		sb.Append(Escape(content[(styledIndex + 1)..]));
+		_ = sb.Append(Escape(content[(styledIndex + 1)..]));
 
-		if (lineClass != null) {
-			sb.Append("</span>");
+		if (lineClasses.Count != 0) {
+			_ = sb.Append("</span>");
 		}
 
 		return sb.ToString();
