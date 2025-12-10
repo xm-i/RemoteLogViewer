@@ -1,0 +1,71 @@
+name: Build Web Assets (Debug)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: true
+        default: 'master'
+        type: choice
+        options:
+          - master
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - debug
+          - production
+          - both
+
+jobs:
+  build-web-assets:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.branch }}
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'RemoteLogViewer.WinUI/Assets/Web/package-lock.json'
+        
+    - name: Install dependencies
+      working-directory: RemoteLogViewer.WinUI/Assets/Web
+      run: npm ci
+      timeout-minutes: 10
+      
+    - name: Build for Debug
+      if: ${{ github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
+      working-directory: RemoteLogViewer.WinUI/Assets/Web
+      run: npm run build:dev
+      timeout-minutes: 10
+      
+    - name: Upload Debug Web Assets
+      if: ${{ github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-assets-debug-${{ github.event.inputs.branch }}-${{ github.sha }}
+        path: RemoteLogViewer.WinUI/Assets/Web/dist/
+        retention-days: 30
+        
+    - name: Build for Production
+      if: ${{ github.event.inputs.build_type == 'production' || github.event.inputs.build_type == 'both' }}
+      working-directory: RemoteLogViewer.WinUI/Assets/Web
+      run: npm run build
+      timeout-minutes: 10
+      
+    - name: Upload Production Web Assets
+      if: ${{ github.event.inputs.build_type == 'production' || github.event.inputs.build_type == 'both' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-assets-production-${{ github.event.inputs.branch }}-${{ github.sha }}
+        path: RemoteLogViewer.WinUI/Assets/Web/dist/
+        retention-days: 30
