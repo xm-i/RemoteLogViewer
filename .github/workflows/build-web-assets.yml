@@ -1,4 +1,6 @@
 name: Build Web Assets (Debug)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
