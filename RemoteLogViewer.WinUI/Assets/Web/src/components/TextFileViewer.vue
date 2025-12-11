@@ -251,6 +251,10 @@ const onVirtualScroll = (e: Event) => {
 
 	virtualScrollTimeout.value = setTimeout(() => {
 		const scrollRatio = target.scrollTop / (target.scrollHeight - target.clientHeight);
+
+    if (isNaN(scrollRatio)) {
+      return;
+    }
 		if (scrollRatio === 1) {
 			jumpLine(totalLines.value);
 		} else {
