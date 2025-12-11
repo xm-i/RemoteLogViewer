@@ -273,6 +273,9 @@ const jumpLine = (startLineNumber: number) => {
 			logArea.value.scrollTop = target.offsetTop;
 		}
 	} else {
+		if (props.isDisconnected) {
+			return;
+		}
 		reset();
 		jumpStartLine.value = startLineNumber;
 		requestLogs(startLineNumber - prefetchLines, startLineNumber + prefetchLines);
