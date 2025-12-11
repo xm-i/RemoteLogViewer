@@ -12,7 +12,7 @@
 				</div>
 			</div>
 			<div class="scroll-area" ref="scrollArea" @scroll="onVirtualScroll" v-show="!isDisconnected">
-				<div class="scroll-virtual-content"></div>
+				<div class="scroll-virtual-content" ref="virtualScrollContent"></div>
 			</div>
 		</div>
 		<div class="tab-area">
@@ -51,6 +51,7 @@ const maxLogLines = 1000;
 // テンプレート参照
 const logArea = ref<HTMLElement>();
 const scrollArea = ref<HTMLElement>();
+const virtualScrollContent = ref<HTMLElement>();
 const tabArea = ref<InstanceType<typeof TabArea>>();
 const row = ref<HTMLElement[]>([]);
 
@@ -284,12 +285,41 @@ const grepLineClicked = (lineNumber: number) => {
 	jumpLine(lineNumber);
 };
 
+// 仮想スクロールサイズ変更
+const updateScrollAreaHeight = () => {
+	if(!virtualScrollContent.value) {
+		return;
+	}
+	if (row.value.length === 0) {
+		virtualScrollContent.value.style.height = '0';
+		return;
+	}
+	const averageHeight = row.value.map(x => x.clientHeight).reduce((a, b) => a + b) / row.value.length;
+	if (isNaN(averageHeight)) {
+		return;
+	}
+	virtualScrollContent.value.style.height = averageHeight * totalLines.value + 'px';
+}
+
 // ウォッチャー
 watch(logs, () => {
 	minLineNumber.value = logs.value[0]?.lineNumber ?? 0;
 	maxLineNumber.value = logs.value[logs.value.length - 1]?.lineNumber ?? 0;
 	setupObserverForLogScroll();
+	nextTick(() => {
+		updateScrollAreaHeight();
+	});
 }, { deep: true });
+
+watch(totalLines, () => {
+	updateScrollAreaHeight();
+});
+
+watch(() => props.wrapLines, () =>{
+	nextTick(() => {
+		updateScrollAreaHeight();
+	});
+});	
 
 onMounted(() => {
 	// テスト用
@@ -345,7 +375,7 @@ onMounted(() => {
         white-space: pre;
         border-collapse: collapse;
         flex: 1;
-        overflow: scroll;
+        overflow: auto;
         width: 100%;
       }
       /* 右：スクロールバー */
