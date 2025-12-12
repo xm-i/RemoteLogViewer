@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Stores.Settings;
 using RemoteLogViewer.Core.Utils.Extensions;
 
@@ -10,16 +11,23 @@ namespace RemoteLogViewer.Core.ViewModels.Settings;
 [Inject(InjectServiceLifetime.Transient)]
 public class TextViewerSettingsPageViewModel : SettingsPageViewModel<TextViewerSettingsPageViewModel> {
 	/// <summary>
-	/// 1行に表示する最大文字数
+	/// 1度に追加読み込みする行数
 	/// </summary>
-	public BindableReactiveProperty<int> MaxPreviewOneLineCharacters {
+	public BindableReactiveProperty<int> PrefetchLineCount {
 		get;
 	}
 
 	/// <summary>
-	/// 全体で表示する最大文字数
+	/// 追加読み込みの閾値行数(残りXX行になったら追加読み込みする。)
 	/// </summary>
-	public BindableReactiveProperty<int> MaxPreviewCharacters {
+	public BindableReactiveProperty<int> PrefetchThresholdLines {
+		get;
+	}
+
+	/// <summary>
+	/// 画面内に保持する最大行数
+	/// </summary>
+	public BindableReactiveProperty<int> MaxLogLineLimit {
 		get;
 	}
 
@@ -32,8 +40,9 @@ public class TextViewerSettingsPageViewModel : SettingsPageViewModel<TextViewerS
 
 	/// <summary>コンストラクタ。</summary>
 	public TextViewerSettingsPageViewModel(SettingsStoreModel settingsStoreModel, ILogger<TextViewerSettingsPageViewModel> logger) : base("TextViewer", logger) {
-		this.MaxPreviewOneLineCharacters = settingsStoreModel.SettingsModel.TextViewerSettings.MaxPreviewOneLineCharacters.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
-		this.MaxPreviewCharacters = settingsStoreModel.SettingsModel.TextViewerSettings.MaxPreviewCharacters.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.PrefetchLineCount = settingsStoreModel.SettingsModel.TextViewerSettings.PrefetchLineCount.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.PrefetchThresholdLines = settingsStoreModel.SettingsModel.TextViewerSettings.PrefetchThresholdLines.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
+		this.MaxLogLineLimit = settingsStoreModel.SettingsModel.TextViewerSettings.MaxLogLineLimit.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
 		this.GrepMaxResults = settingsStoreModel.SettingsModel.TextViewerSettings.GrepMaxResults.ToTwoWayBindableReactiveProperty().AddTo(this.CompositeDisposable);
 	}
 }

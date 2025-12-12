@@ -11,18 +11,25 @@ namespace RemoteLogViewer.Composition.Stores.Settings;
 public class TextViewerSettingsModel(IServiceProvider service) {
 	public IServiceProvider ScopedService { get; } = service;
 	/// <summary>
-	/// 1行に表示する最大文字数
+	/// 1度に追加読み込みする行数
 	/// </summary>
-	public ReactiveProperty<int> MaxPreviewOneLineCharacters {
+	public ReactiveProperty<int> PrefetchLineCount {
 		get;
-	} = new(1000);
+	} = new(200);
 
 	/// <summary>
-	/// 全体で表示する最大文字数
+	/// 追加読み込みの閾値行数(残りXX行になったら追加読み込みする。)
 	/// </summary>
-	public ReactiveProperty<int> MaxPreviewCharacters {
+	public ReactiveProperty<int> PrefetchThresholdLines {
 		get;
-	} = new(30000);
+	} = new(50);
+
+	/// <summary>
+	/// 画面内に保持する最大行数
+	/// </summary>
+	public ReactiveProperty<int> MaxLogLineLimit {
+		get;
+	} = new(1000);
 
 	/// <summary>
 	/// Grep の最大件数

@@ -12,6 +12,15 @@ export interface IsDisconnectedUpdatedMessage extends IncomingAbstractWebMessage
 	data: boolean;
 }
 
+export interface SettingsUpdatedMessage extends IncomingAbstractWebMessage {
+  type: 'SettingsUpdated';
+  data: {
+    prefetchLineCount: number;
+    prefetchThresholdLines: number;
+    maxLogLineLimit: number;
+  };
+}
+
 export interface LineStyleChangedMessage extends IncomingAbstractWebMessage {
 	type: 'LineStyleChanged';
 	data: string;
@@ -120,6 +129,7 @@ export interface GrepResultResetMessage extends IncomingAbstractWebMessage {
 
 export type IncomingWebMessage =
 	| IsDisconnectedUpdatedMessage
+	| SettingsUpdatedMessage
 	| LineStyleChangedMessage
 	| ReloadRequestedMessage
 	| FileOpenedMessage

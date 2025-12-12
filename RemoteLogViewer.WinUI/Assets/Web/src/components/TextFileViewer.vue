@@ -42,11 +42,11 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // 追加読み込み行数
-const prefetchLines = 200;
+let prefetchLines = 200;
 // 追加読み込みのしきい値行数
-const prefetchThreshold = 50;
+let prefetchThreshold = 50;
 // ログ保持上限行数
-const maxLogLines = 1000;
+let maxLogLines = 1000;
 
 // テンプレート参照
 const logArea = ref<HTMLElement>();
@@ -343,7 +343,7 @@ onMounted(() => {
 	// C# → JS 通信
 	window.chrome.webview.addEventListener('message', e => {
 		const message = e.data;
-		if (message.pageKey !== props.pageKey) {
+    if (![props.pageKey, '*'].includes(message.pageKey)) {
 			return;
 		}
 		switch (message.type) {
@@ -360,6 +360,11 @@ onMounted(() => {
       case 'ReloadRequested':
         reset();
 				jumpLine(startLine.value);
+				break;
+			case 'SettingsUpdated':
+				prefetchLines = message.data.prefetchLineCount;
+				prefetchThreshold = message.data.prefetchThresholdLines;
+				maxLogLines = message.data.maxLogLineLimit;
 				break;
 		}
 	});

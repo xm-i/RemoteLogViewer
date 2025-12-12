@@ -158,6 +158,11 @@ public sealed partial class TextFileViewer {
 
 		this._settingsStoreModel.SettingsUpdated.Subscribe(x => {
 			this.PostWV2("*", "LineStyleChanged", this._tabObjects.CreateCss());
+			this.PostWV2("*", "SettingsUpdated", new {
+				prefetchLineCount = this._settingsStoreModel.SettingsModel.TextViewerSettings.PrefetchLineCount,
+				prefetchThresholdLines = this._settingsStoreModel.SettingsModel.TextViewerSettings.PrefetchThresholdLines,
+				maxLogLineLimit = this._settingsStoreModel.SettingsModel.TextViewerSettings.MaxLogLineLimit,
+			});
 			this.PostWV2("*", "ReloadRequested", null);
 			this.PostWV2("*", "GrepResultReset", null);
 		});
@@ -177,6 +182,11 @@ public sealed partial class TextFileViewer {
 							this.PostWV2("*", "FileOpened", new {
 								pageKey = vm.PageKey,
 								tabHeader = Path.GetFileName(vm.OpenedFilePath.Value)
+							});
+							this.PostWV2("*", "SettingsUpdated", new {
+								prefetchLineCount = this._settingsStoreModel.SettingsModel.TextViewerSettings.PrefetchLineCount.Value,
+								prefetchThresholdLines = this._settingsStoreModel.SettingsModel.TextViewerSettings.PrefetchThresholdLines.Value,
+								maxLogLineLimit = this._settingsStoreModel.SettingsModel.TextViewerSettings.MaxLogLineLimit.Value,
 							});
 							this.RegisterViewerVMEvents(vm);
 						}

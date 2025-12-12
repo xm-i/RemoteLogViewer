@@ -7,12 +7,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-	<Grid Padding="16" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
-		<TextBlock Text="1行あたり表示可能文字数"/>
-		<NumberBox Grid.Column="1" Text="{x:Bind ViewModel.MaxPreviewOneLineCharacters.Value,Mode=TwoWay}"/>
-		<TextBlock Grid.Row="1" Text="全体で表示可能文字数"/>
-		<NumberBox Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.MaxPreviewCharacters.Value,Mode=TwoWay}"/>
-		<TextBlock Grid.Row="2" Text="Grep 最大件数"/>
-		<NumberBox Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.GrepMaxResults.Value,Mode=TwoWay}"/>
+	<Grid Padding="16" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
+		<TextBlock Text="Number of lines to prefetch near the end of the buffer."/>
+		<NumberBox Grid.Column="1" Text="{x:Bind ViewModel.PrefetchLineCount.Value,Mode=TwoWay}"/>
+		<TextBlock Grid.Row="1" Text="Number of remaining lines that triggers prefetching."/>
+		<NumberBox Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.PrefetchThresholdLines.Value,Mode=TwoWay}"/>
+		<TextBlock Grid.Row="2" Text="Maximum number of lines to keep in memory."/>
+		<NumberBox Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.MaxLogLineLimit.Value,Mode=TwoWay}"/>
+		<TextBlock Grid.Row="3" Text="Maximum number of matched results returned by GREP."/>
+		<NumberBox Grid.Row="3" Grid.Column="1" Text="{x:Bind ViewModel.GrepMaxResults.Value,Mode=TwoWay}"/>
 	</Grid>
 </Page>
