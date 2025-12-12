@@ -6,7 +6,6 @@
     <BuildType Name="Release-Unpackaged" />
     <Platform Name="ARM64" />
     <Platform Name="x64" />
-    <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Libs/">
     <Project Path="AutoDiAttributes/AutoDiAttributes.Generator/AutoDiAttributes.Generator.csproj">
@@ -52,7 +51,6 @@
   <Project Path="RemoteLogViewer.WinUI/RemoteLogViewer.WinUI.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
     <Deploy Solution="Debug|*" />
     <Deploy Solution="Release|*" />
   </Project>
