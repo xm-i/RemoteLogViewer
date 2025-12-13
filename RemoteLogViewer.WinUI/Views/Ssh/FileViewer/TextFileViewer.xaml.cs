@@ -29,6 +29,7 @@ public sealed partial class TextFileViewer {
 	private readonly TabObjectsList _tabObjects = [];
 	private readonly SettingsStoreModel _settingsStoreModel;
 	private readonly NotificationService _notificationService;
+	private readonly WebView2EnvironmentContainer _webView2EnvironmentContainer;
 	private readonly ILogger<TextFileViewer> _logger;
 	private bool isInitialized = false;
 
@@ -52,6 +53,7 @@ public sealed partial class TextFileViewer {
 	}
 
 	public TextFileViewer() {
+		this._webView2EnvironmentContainer = Ioc.Default.GetRequiredService<WebView2EnvironmentContainer>();
 		this._settingsStoreModel = Ioc.Default.GetRequiredService<SettingsStoreModel>();
 		this._notificationService = Ioc.Default.GetRequiredService<NotificationService>();
 		this._logger = Ioc.Default.GetRequiredService<ILogger<TextFileViewer>>();
@@ -65,7 +67,8 @@ public sealed partial class TextFileViewer {
 		if (this.ViewModel == null) {
 			return;
 		}
-		await this.ContentWebViewer.EnsureCoreWebView2Async();
+		await this._webView2EnvironmentContainer.EnsureEnvironmentCreatedAsync();
+		await this.ContentWebViewer.EnsureCoreWebView2Async(this._webView2EnvironmentContainer.SharedEnvironment);
 #if RELEASE || RELEASE_UNPACKAGED
 		this.ContentWebViewer.CoreWebView2.Settings.AreDevToolsEnabled = false;
 		this.ContentWebViewer.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
