@@ -1,4 +1,5 @@
-namespace RemoteLogViewer.Core.Services.Viewer; 
+namespace RemoteLogViewer.Core.Services.Viewer;
+
 public class TextRange {
 	public int StartIndex;
 	public int Length;

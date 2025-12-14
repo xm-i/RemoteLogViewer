@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 using Microsoft.Extensions.Logging;

@@ -12,7 +12,7 @@ public static class ObservableEx {
 
 	public static Observable<T> Throttle<T>(this Observable<T> source, TimeProvider? timeProvider = null) {
 		timeProvider ??= TimeProvider.System;
-		return source.Chunk(TimeSpan.FromMilliseconds(300),timeProvider).Select(x => x.Last());
+		return source.Chunk(TimeSpan.FromMilliseconds(300), timeProvider).Select(x => x.Last());
 	}
 	public static BindableReactiveProperty<T> ToTwoWayBindableReactiveProperty<T>(this ReactiveProperty<T> source, T initialValue = default!) {
 		var bindable = source.ToBindableReactiveProperty(initialValue);

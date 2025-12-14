@@ -13,12 +13,12 @@ export interface IsDisconnectedUpdatedMessage extends IncomingAbstractWebMessage
 }
 
 export interface SettingsUpdatedMessage extends IncomingAbstractWebMessage {
-  type: 'SettingsUpdated';
-  data: {
-    prefetchLineCount: number;
-    prefetchThresholdLines: number;
-    maxLogLineLimit: number;
-  };
+	type: 'SettingsUpdated';
+	data: {
+		prefetchLineCount: number;
+		prefetchThresholdLines: number;
+		maxLogLineLimit: number;
+	};
 }
 
 export interface LineStyleChangedMessage extends IncomingAbstractWebMessage {

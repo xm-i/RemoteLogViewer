@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Composition.Utils.Objects;
 using RemoteLogViewer.Core.Utils;

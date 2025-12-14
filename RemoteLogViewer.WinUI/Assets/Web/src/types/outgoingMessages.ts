@@ -19,9 +19,9 @@ export interface RequestWebMessage extends OutgoingAbstractWebMessage {
 export interface StartGrepWebMessage extends OutgoingAbstractWebMessage {
 	type: 'StartGrep';
 	startLine: number;
-  keyword: string;
-  ignoreCase: boolean;
-  useRegex: boolean;
+	keyword: string;
+	ignoreCase: boolean;
+	useRegex: boolean;
 }
 
 export interface CancelGrepWebMessage extends OutgoingAbstractWebMessage {
@@ -48,11 +48,11 @@ export interface FileCloseWebMessage extends OutgoingAbstractWebMessage {
 }
 
 export type OutgoingWebMessage =
-  | ReadyWebMessage
-  | RequestWebMessage
-  | StartGrepWebMessage
-  | CancelGrepWebMessage
-  | SaveRangeRequestWebMessage
-  | ChangeEncodingWebMessage
-  | UpdateTotalLineWebMessage
-  | FileCloseWebMessage;
+	| ReadyWebMessage
+	| RequestWebMessage
+	| StartGrepWebMessage
+	| CancelGrepWebMessage
+	| SaveRangeRequestWebMessage
+	| ChangeEncodingWebMessage
+	| UpdateTotalLineWebMessage
+	| FileCloseWebMessage;

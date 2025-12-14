@@ -1,4 +1,5 @@
 using System.IO;
+
 using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer.Core.Services;

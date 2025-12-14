@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Stores.Settings;
 using RemoteLogViewer.Core.Utils;
 using RemoteLogViewer.Core.ViewModels.Settings.Highlight;

@@ -60,7 +60,7 @@
 		<div class="wrap-lines">
 			<div class="title">Wrap Lines</div>
 			<div class="content">
-				<input type="checkbox" nmae="wrapLines" v-model="wrapLines" @change="$emit('update:wrapLines', $event.target.checked)"/>
+				<input type="checkbox" nmae="wrapLines" v-model="wrapLines" @change="$emit('update:wrapLines', $event.target.checked)" />
 			</div>
 		</div>
 		<div class="file-close">
@@ -75,211 +75,212 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+	import { ref, computed, watch, onMounted } from 'vue';
 
-interface Props {
-	pageKey: string
-	isDisconnected?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
-	isDisconnected: false
-});
-
-// File info
-const openedFilepath = ref<string | null>(null);
-const totalLines = ref(0);
-const totalBytes = ref(0);
-const fileLoadProgress = ref(0);
-const isFileLoadUpdating = ref(false);
-
-// Save range
-const startLine = ref<number | null>(null);
-const endLine = ref<number | null>(null);
-const isSaving = ref(false);
-const saveProgress = ref(0);
-
-// Encoding
-const selectedEncoding = ref<string | null>(null);
-const availableEncodings = ref<string[] | null>(null);
-
-// Wrap Lines
-const wrapLines = ref<boolean>(false);
-
-// Client operation
-const clientOperating = ref(false);
-const currentRequestId = ref(0);
-
-const formattedTotalBytes = computed(() => {
-	return formatBytes(totalBytes.value);
-});
-
-const formatBytes = (bytes: number): string => {
-	if (bytes >= (1024 ** 3)) {
-    return (bytes / (1024 ** 3)).toFixed(1) + 'GB';
-	}
-  if (bytes >= (1024 ** 2)) {
-    return (bytes / (1024 ** 2)).toFixed(1) + 'MB';
-	}
-	if (bytes >= 1024) {
-		return (bytes / 1024).toFixed(1) + 'KB';
-	}
-	return bytes + 'B';
-};
-
-const checkUpdateClicked = () => {
-	clientOperating.value = true;
-	const request = {
-		pageKey: props.pageKey,
-		requestId: ++currentRequestId.value,
-		type: 'UpdateTotalLine'
-	} as const;
-
-	if (window.chrome?.webview) {
-		window.chrome.webview.postMessage(request);
-	}
-};
-
-const saveRangeClicked = () => {
-	clientOperating.value = true;
-	if (!startLine.value || !endLine.value || endLine.value < startLine.value) {
-		alert('Please enter valid start and end lines.');
-		return;
+	interface Props {
+		pageKey: string
+		isDisconnected?: boolean
 	}
 
-	const request = {
-		pageKey: props.pageKey,
-		type: 'SaveRangeRequest',
-		requestId: ++currentRequestId.value,
-		start: startLine.value,
-		end: endLine.value
-	} as const;
+	const props = withDefaults(defineProps<Props>(), {
+		isDisconnected: false
+	});
 
-	if (window.chrome?.webview) {
-		window.chrome.webview.postMessage(request);
-	}
-};
+	// File info
+	const openedFilepath = ref<string | null>(null);
+	const totalLines = ref(0);
+	const totalBytes = ref(0);
+	const fileLoadProgress = ref(0);
+	const isFileLoadUpdating = ref(false);
 
-const applyEncodingClicked = () => {
-	clientOperating.value = true;
-	const request = {
-		pageKey: props.pageKey,
-		type: 'ChangeEncoding',
-		requestId: ++currentRequestId.value,
-		encoding: selectedEncoding.value
-	} as const;
+	// Save range
+	const startLine = ref<number | null>(null);
+	const endLine = ref<number | null>(null);
+	const isSaving = ref(false);
+	const saveProgress = ref(0);
 
-	if (window.chrome?.webview) {
-		window.chrome.webview.postMessage(request);
-	}
-};
+	// Encoding
+	const selectedEncoding = ref<string | null>(null);
+	const availableEncodings = ref<string[] | null>(null);
 
-const fileCloseClicked = () => {
-	const request = {
-		pageKey: props.pageKey,
-		type: 'FileClose',
-		requestId: ++currentRequestId.value
-	} as const;
+	// Wrap Lines
+	const wrapLines = ref<boolean>(false);
 
-	if (window.chrome?.webview) {
-		window.chrome.webview.postMessage(request);
-	}
-};
+	// Client operation
+	const clientOperating = ref(false);
+	const currentRequestId = ref(0);
 
-watch(clientOperating, () => {
-	if (!clientOperating.value) {
-		return;
-	}
-	setTimeout(() => {
-		clientOperating.value = false;
-	}, 100);
-});
+	const formattedTotalBytes = computed(() => {
+		return formatBytes(totalBytes.value);
+	});
 
-onMounted(() => {
-	if (!window.chrome?.webview) {
-		return;
-	}
+	const formatBytes = (bytes: number): string => {
+		if (bytes >= (1024 ** 3)) {
+			return (bytes / (1024 ** 3)).toFixed(1) + 'GB';
+		}
+		if (bytes >= (1024 ** 2)) {
+			return (bytes / (1024 ** 2)).toFixed(1) + 'MB';
+		}
+		if (bytes >= 1024) {
+			return (bytes / 1024).toFixed(1) + 'KB';
+		}
+		return bytes + 'B';
+	};
 
-	// C# → JS 通信
-	window.chrome.webview.addEventListener('message', e => {
-		const message = e.data;
-		if (message.pageKey !== props.pageKey) {
+	const checkUpdateClicked = () => {
+		clientOperating.value = true;
+		const request = {
+			pageKey: props.pageKey,
+			requestId: ++currentRequestId.value,
+			type: 'UpdateTotalLine'
+		} as const;
+
+		if (window.chrome?.webview) {
+			window.chrome.webview.postMessage(request);
+		}
+	};
+
+	const saveRangeClicked = () => {
+		clientOperating.value = true;
+		if (!startLine.value || !endLine.value || endLine.value < startLine.value) {
+			alert('Please enter valid start and end lines.');
 			return;
 		}
-		switch (message.type) {
-			case 'IsFileLoadRunningUpdated':
-				isFileLoadUpdating.value = message.data;
-				break;
-			case 'FileLoadProgressUpdated':
-				fileLoadProgress.value = message.data * 100;
-				break;
-			case 'TotalLinesUpdated':
-				totalLines.value = message.data;
-				break;
-			case 'TotalBytesUpdated':
-				totalBytes.value = message.data;
-				break;
-			case 'OpenedFilePathChanged':
-				openedFilepath.value = message.data;
-				break;
-			case 'IsRangeContentSavingUpdated':
-				isSaving.value = message.data;
-				break;
-			case 'SaveRangeProgressUpdated':
-				saveProgress.value = message.data * 100;
-				break;
-			case 'AvailableEncodingsUpdated':
-				availableEncodings.value = message.data;
-				break;
+
+		const request = {
+			pageKey: props.pageKey,
+			type: 'SaveRangeRequest',
+			requestId: ++currentRequestId.value,
+			start: startLine.value,
+			end: endLine.value
+		} as const;
+
+		if (window.chrome?.webview) {
+			window.chrome.webview.postMessage(request);
 		}
+	};
+
+	const applyEncodingClicked = () => {
+		clientOperating.value = true;
+		const request = {
+			pageKey: props.pageKey,
+			type: 'ChangeEncoding',
+			requestId: ++currentRequestId.value,
+			encoding: selectedEncoding.value
+		} as const;
+
+		if (window.chrome?.webview) {
+			window.chrome.webview.postMessage(request);
+		}
+	};
+
+	const fileCloseClicked = () => {
+		const request = {
+			pageKey: props.pageKey,
+			type: 'FileClose',
+			requestId: ++currentRequestId.value
+		} as const;
+
+		if (window.chrome?.webview) {
+			window.chrome.webview.postMessage(request);
+		}
+	};
+
+	watch(clientOperating, () => {
+		if (!clientOperating.value) {
+			return;
+		}
+		setTimeout(() => {
+			clientOperating.value = false;
+		}, 100);
 	});
-});
+
+	onMounted(() => {
+		if (!window.chrome?.webview) {
+			return;
+		}
+
+		// C# → JS 通信
+		window.chrome.webview.addEventListener('message', e => {
+			const message = e.data;
+			if (message.pageKey !== props.pageKey) {
+				return;
+			}
+			switch (message.type) {
+				case 'IsFileLoadRunningUpdated':
+					isFileLoadUpdating.value = message.data;
+					break;
+				case 'FileLoadProgressUpdated':
+					fileLoadProgress.value = message.data * 100;
+					break;
+				case 'TotalLinesUpdated':
+					totalLines.value = message.data;
+					break;
+				case 'TotalBytesUpdated':
+					totalBytes.value = message.data;
+					break;
+				case 'OpenedFilePathChanged':
+					openedFilepath.value = message.data;
+					break;
+				case 'IsRangeContentSavingUpdated':
+					isSaving.value = message.data;
+					break;
+				case 'SaveRangeProgressUpdated':
+					saveProgress.value = message.data * 100;
+					break;
+				case 'AvailableEncodingsUpdated':
+					availableEncodings.value = message.data;
+					break;
+			}
+		});
+	});
 </script>
 
 <style scoped>
-/* ファイル操作エリア */
-.file-operation-area {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 16px;
-	align-items: stretch;
-	align-content: flex-start;
-	padding: 2px 4px;
-
-	.title {
-		position: relative;
-		top: 0;
-		width: 100%;
-		text-align: center;
-		font-size: 0.9em;
-		color: #555;
-		padding-bottom: 4px;
-	}
-
-	div .content {
+	/* ファイル操作エリア */
+	.file-operation-area {
 		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 16px;
+		align-items: stretch;
+		align-content: flex-start;
+		padding: 2px 4px;
 
-	.filepath .content {
-		width: 100px;
-	}
+		.title {
+			position: relative;
+			top: 0;
+			width: 100%;
+			text-align: center;
+			font-size: 0.9em;
+			color: #555;
+			padding-bottom: 4px;
+		}
 
-	.file-stats .content {
-		min-width: 100px;
-	}
+		div .content {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
 
-	.range-save .content {
-		input {
-			width: 60px;
+		.filepath .content {
+			width: 100px;
+		}
+
+		.file-stats .content {
+			min-width: 100px;
+		}
+
+		.range-save .content {
+			input {
+				width: 60px;
+			}
+		}
+
+		.wrap-lines {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
 		}
 	}
-	.wrap-lines {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-}
 </style>

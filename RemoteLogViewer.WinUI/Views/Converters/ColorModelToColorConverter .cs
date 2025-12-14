@@ -1,8 +1,10 @@
-using Windows.UI;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Data;
+
 using RemoteLogViewer.Composition.Utils.Objects;
 using RemoteLogViewer.WinUI.Utils;
+
+using Windows.UI;
 
 namespace RemoteLogViewer.WinUI.Views.Converters;
 

@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+
 using RemoteLogViewer.Core.ViewModels.Settings;
 using RemoteLogViewer.Core.ViewModels.Settings.Highlight;
 

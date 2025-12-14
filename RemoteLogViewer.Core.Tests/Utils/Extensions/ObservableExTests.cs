@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Time.Testing;
+
 using R3;
+
 using RemoteLogViewer.Core.Utils.Extensions;
+
 using Shouldly;
 
 namespace RemoteLogViewer.Core.Tests.Utils.Extensions;
@@ -162,7 +165,7 @@ public class ObservableExTests {
 
 		// Assert
 		// 間引かれるはず
-		results.ShouldBe([3,6,8 ]);
+		results.ShouldBe([3, 6, 8]);
 	}
 	#endregion
 

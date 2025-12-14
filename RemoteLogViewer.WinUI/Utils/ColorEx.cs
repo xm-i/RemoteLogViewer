@@ -1,5 +1,6 @@
-using Windows.UI;
 using RemoteLogViewer.Composition.Utils.Objects;
+
+using Windows.UI;
 
 namespace RemoteLogViewer.WinUI.Utils;
 

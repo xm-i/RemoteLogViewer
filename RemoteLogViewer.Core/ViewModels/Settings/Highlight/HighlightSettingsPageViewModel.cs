@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Composition.Stores.Settings;
 
 namespace RemoteLogViewer.Core.ViewModels.Settings.Highlight;

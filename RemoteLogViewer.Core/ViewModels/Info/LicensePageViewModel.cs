@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 using Microsoft.Extensions.Logging;
 
 namespace RemoteLogViewer.Core.ViewModels.Info;
@@ -8,7 +9,9 @@ public class LicensePageViewModel : InfoPageViewModel<LicensePageViewModel> {
 	public LicensePageViewModel(ILogger<LicensePageViewModel> logger) : base("Licenses", logger) {
 	}
 
-	public List<LicenseInfo> Licenses { get; } = [
+	public List<LicenseInfo> Licenses {
+		get;
+	} = [
 		new("CommunityToolkit.Mvvm", "MIT", "https://github.com/CommunityToolkit/dotnet/blob/main/License.md"),
 		new("CommunityToolkit.WinUI", "MIT", "https://github.com/CommunityToolkit/Windows/blob/main/License.md"),
 		new("Microsoft.Extensions.DependencyInjection", "MIT", "https://github.com/dotnet/dotnet/blob/main/LICENSE.TXT"),

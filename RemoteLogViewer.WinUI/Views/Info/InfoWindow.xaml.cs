@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+
 using RemoteLogViewer.Core.ViewModels.Info;
 
 namespace RemoteLogViewer.WinUI.Views.Info;

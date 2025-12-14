@@ -43,13 +43,15 @@ public class NotificationService {
 	/// <param name="message">表示メッセージ。</param>
 	/// <param name="severity">重大度。</param>
 	/// <param name="ex">例外 (任意)。</param>
-	public void Publish(string source, string message, NotificationSeverity severity, string primaryActionText,Action primaryAction,string secondaryActionText, Action secondaryAction, Exception? ex = null) {
+	public void Publish(string source, string message, NotificationSeverity severity, string primaryActionText, Action primaryAction, string secondaryActionText, Action secondaryAction, Exception? ex = null) {
 		this._notificationWithActionsSubject.OnNext(new NotificationInfoWithAction(DateTimeOffset.UtcNow, source, message, severity, primaryActionText, primaryAction, secondaryActionText, secondaryAction, ex));
 	}
 }
 
 /// <summary>通知重大度。</summary>
-public enum NotificationSeverity { Info, Warning, Error, Critical }
+public enum NotificationSeverity {
+	Info, Warning, Error, Critical
+}
 /// <summary>通知情報。</summary>
 public readonly record struct NotificationInfo(DateTimeOffset OccurredAt, string Source, string Message, NotificationSeverity Severity, Exception? Exception);
 

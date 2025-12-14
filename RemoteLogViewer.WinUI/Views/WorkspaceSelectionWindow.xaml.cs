@@ -1,7 +1,10 @@
-using Windows.Storage.Pickers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using RemoteLogViewer.Core.ViewModels.Settings;
+
+using Windows.Storage.Pickers;
+
 using WinRT.Interop;
 
 namespace RemoteLogViewer.WinUI.Views;

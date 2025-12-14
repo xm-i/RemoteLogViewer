@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Core.Utils;
 
 namespace RemoteLogViewer.Core.ViewModels.Info;

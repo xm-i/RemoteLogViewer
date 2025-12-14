@@ -10,29 +10,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { TextLine } from '@/types';
+	import { ref } from 'vue';
+	import type { TextLine } from '@/types';
 
-const line = ref<TextLine | null>(null);
+	const line = ref<TextLine | null>(null);
 
-const setLine = (newLine: TextLine) => {
-	line.value = newLine;
-};
+	const setLine = (newLine: TextLine) => {
+		line.value = newLine;
+	};
 
-defineExpose({
-	setLine
-});
+	defineExpose({
+		setLine
+	});
 </script>
 
 <style scoped>
-.line-view-tab {
-	padding: 8px;
-	height: 100%;
-	overflow: scroll;
+	.line-view-tab {
+		padding: 8px;
+		height: 100%;
+		overflow: scroll;
 
-	.line-number {
-		pointer-events: none;
-		color: black;
+		.line-number {
+			pointer-events: none;
+			color: black;
+		}
 	}
-}
 </style>

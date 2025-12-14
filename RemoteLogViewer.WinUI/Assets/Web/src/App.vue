@@ -1,26 +1,22 @@
 <template>
 	<div id="file-tab-container" class="tab-container" v-if="tabs.length > 0">
 		<ul class="tab-headers" v-if="tabs.length > 1">
-			<li
-				v-for="tab in tabs"
-				:key="tab.pageKey"
-				@click="change(tab.pageKey)"
-				:class="{ 'active': activeTab === tab.pageKey }"
-			>
+			<li v-for="tab in tabs"
+					:key="tab.pageKey"
+					@click="change(tab.pageKey)"
+					:class="{ 'active': activeTab === tab.pageKey }">
 				{{ tab.tabHeader }}
 			</li>
 		</ul>
 
 		<div class="tab-contents">
-			<div
-				v-for="tab in tabs"
-				:key="tab.pageKey"
-				v-show="activeTab === tab.pageKey"
-				class="text-file-viewer-wrapper"
-				:class="tab.pageKey"
-			>
-				<FileOperationArea :pageKey="tab.pageKey" :isDisconnected="isDisconnected" @update:wrapLines="updateWrapLines"/>
-				<TextFileViewer :pageKey="tab.pageKey" :isDisconnected="isDisconnected" :wrapLines="wrapLines"/>
+			<div v-for="tab in tabs"
+					 :key="tab.pageKey"
+					 v-show="activeTab === tab.pageKey"
+					 class="text-file-viewer-wrapper"
+					 :class="tab.pageKey">
+				<FileOperationArea :pageKey="tab.pageKey" :isDisconnected="isDisconnected" @update:wrapLines="updateWrapLines" />
+				<TextFileViewer :pageKey="tab.pageKey" :isDisconnected="isDisconnected" :wrapLines="wrapLines" />
 			</div>
 		</div>
 	</div>
@@ -31,98 +27,98 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue';
-import Split from 'split.js';
-import TextFileViewer from './components/TextFileViewer.vue';
-import FileOperationArea from './components/FileOperationArea.vue';
+	import { ref, nextTick, onMounted } from 'vue';
+	import Split from 'split.js';
+	import TextFileViewer from './components/TextFileViewer.vue';
+	import FileOperationArea from './components/FileOperationArea.vue';
 
-const tabs = ref<{
+	const tabs = ref<{
 		pageKey: string,
 		tabHeader: string,
 		isActive: boolean
 	}[]>([]);
-const activeTab = ref<string | null>(null);
-const isDisconnected = ref<boolean>(false);
-const wrapLines = ref<boolean>(false);
+	const activeTab = ref<string | null>(null);
+	const isDisconnected = ref<boolean>(false);
+	const wrapLines = ref<boolean>(false);
 
-const addTab = (pageKey: string, tabHeader: string) => {
-	tabs.value.push({
-		pageKey,
-		tabHeader,
-		isActive: false
-	});
-	activeTab.value = pageKey;
-
-	nextTick(() => {
-		Split([`.${pageKey} .main-area`, `.${pageKey} .tab-area`], {
-			sizes: [70, 30],
-			direction: 'vertical'
+	const addTab = (pageKey: string, tabHeader: string) => {
+		tabs.value.push({
+			pageKey,
+			tabHeader,
+			isActive: false
 		});
-	});
-};
+		activeTab.value = pageKey;
 
-const removeTab = (pageKey: string) => {
-	tabs.value = tabs.value.filter(x => x.pageKey !== pageKey);
-	activeTab.value = tabs.value[0]?.pageKey || null;
-};
-
-const change = (pageKey: string) => {
-	activeTab.value = pageKey;
-};
-
-const changeTabHeader = (pageKey: string, tabHeader: string) => {
-	const tab = tabs.value.find(x => x.pageKey === pageKey);
-	if (tab) {
-		tab.tabHeader = tabHeader;
-	}
+		nextTick(() => {
+			Split([`.${pageKey} .main-area`, `.${pageKey} .tab-area`], {
+				sizes: [70, 30],
+				direction: 'vertical'
+			});
+		});
 	};
 
-const updateWrapLines = (value: boolean) => {
-	wrapLines.value = value;
-}
+	const removeTab = (pageKey: string) => {
+		tabs.value = tabs.value.filter(x => x.pageKey !== pageKey);
+		activeTab.value = tabs.value[0]?.pageKey || null;
+	};
 
-onMounted(() => {
-	// テスト用
-	if (!window.chrome?.webview) {
-		addTab('p1', 'Page 1');
-		addTab('p2', 'Page 2');
-		activeTab.value = 'p1';
-		return;
+	const change = (pageKey: string) => {
+		activeTab.value = pageKey;
+	};
+
+	const changeTabHeader = (pageKey: string, tabHeader: string) => {
+		const tab = tabs.value.find(x => x.pageKey === pageKey);
+		if (tab) {
+			tab.tabHeader = tabHeader;
+		}
+	};
+
+	const updateWrapLines = (value: boolean) => {
+		wrapLines.value = value;
 	}
 
-	// C# → JS 通信
-	window.chrome.webview.addEventListener('message', e => {
-		const message = e.data;
-		switch (message.type) {
-			case 'FileOpened':
-				addTab(message.data.pageKey, message.data.tabHeader);
-				break;
-			case 'FileClosed':
-				removeTab(message.data);
-				break;
-			case 'OpenedFilePathChanged':
-				changeTabHeader(message.pageKey, message.data);
-				break;
-			case 'IsDisconnectedUpdated':
-				isDisconnected.value = message.data;
-        break;
-      case 'LineStyleChanged': 
-        const styleTag = document.getElementById('dynamic-style');
-        if (styleTag) {
-          styleTag.textContent = message.data;
-        }
-        break;
+	onMounted(() => {
+		// テスト用
+		if (!window.chrome?.webview) {
+			addTab('p1', 'Page 1');
+			addTab('p2', 'Page 2');
+			activeTab.value = 'p1';
+			return;
 		}
+
+		// C# → JS 通信
+		window.chrome.webview.addEventListener('message', e => {
+			const message = e.data;
+			switch (message.type) {
+				case 'FileOpened':
+					addTab(message.data.pageKey, message.data.tabHeader);
+					break;
+				case 'FileClosed':
+					removeTab(message.data);
+					break;
+				case 'OpenedFilePathChanged':
+					changeTabHeader(message.pageKey, message.data);
+					break;
+				case 'IsDisconnectedUpdated':
+					isDisconnected.value = message.data;
+					break;
+				case 'LineStyleChanged':
+					const styleTag = document.getElementById('dynamic-style');
+					if (styleTag) {
+						styleTag.textContent = message.data;
+					}
+					break;
+			}
+		});
 	});
-});
 </script>
 
 <style scoped>
-  .text-file-viewer-wrapper {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
+	.text-file-viewer-wrapper {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
 
 	.empty-state {
 		height: 100%;

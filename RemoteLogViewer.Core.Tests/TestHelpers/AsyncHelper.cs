@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
-namespace RemoteLogViewer.Core.Tests.TestHelpers; 
+namespace RemoteLogViewer.Core.Tests.TestHelpers;
+
 internal class AsyncHelper {
 	public static async Task WaitUntilAsync<T>(Func<T> valueFunc, T expected, int timeoutMs = 1000, int intervalMs = 5) {
 		var sw = Stopwatch.StartNew();

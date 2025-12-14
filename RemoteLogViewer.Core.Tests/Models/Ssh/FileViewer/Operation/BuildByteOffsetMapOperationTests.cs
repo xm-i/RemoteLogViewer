@@ -1,9 +1,13 @@
 using Microsoft.Extensions.Logging;
+
 using Moq;
+
 using R3;
+
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Core.Services.Ssh;
+
 using Shouldly;
 
 namespace RemoteLogViewer.Core.Tests.Models.Ssh.FileViewer.Operation;

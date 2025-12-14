@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Data;
+
 using RemoteLogViewer.Composition.Stores.Settings;
 
 namespace RemoteLogViewer.WinUI.Views.Converters;

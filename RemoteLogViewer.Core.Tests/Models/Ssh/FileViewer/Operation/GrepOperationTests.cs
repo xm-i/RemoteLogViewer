@@ -1,12 +1,16 @@
 // TextLine
 
 using Microsoft.Extensions.Logging;
+
 using Moq;
+
 using R3;
+
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.ByteOffsetMap;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.Operation;
 using RemoteLogViewer.Core.Services.Ssh;
+
 using Shouldly;
 
 namespace RemoteLogViewer.Core.Tests.Models.Ssh.FileViewer.Operation;
@@ -35,17 +39,17 @@ public class GrepOperationTests {
 		op.ReceivedLineCount.CurrentValue.ShouldBe(0);
 
 		subject.OnNext(l1);
-		await WaitUntilAsync(() => list.Count,1);
+		await WaitUntilAsync(() => list.Count, 1);
 		list.ShouldBe([l1]);
 		op.IsRunning.CurrentValue.ShouldBeTrue();
-		op.Progress.CurrentValue.ShouldBe(l1.LineNumber / 1000d,0.001);
+		op.Progress.CurrentValue.ShouldBe(l1.LineNumber / 1000d, 0.001);
 		op.ReceivedLineCount.CurrentValue.ShouldBe(10);
 
 		subject.OnNext(l2);
-		await WaitUntilAsync(() => list.Count,2);
+		await WaitUntilAsync(() => list.Count, 2);
 		list.ShouldBe([l1, l2]);
 		op.IsRunning.CurrentValue.ShouldBeTrue();
-		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / 1000d,0.001);
+		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / 1000d, 0.001);
 		op.ReceivedLineCount.CurrentValue.ShouldBe(200);
 
 		subject.OnCompleted();
@@ -74,11 +78,11 @@ public class GrepOperationTests {
 
 		subject.OnNext(l1);
 		subject.OnNext(l2);
-		await WaitUntilAsync(() => list.Count,2);
+		await WaitUntilAsync(() => list.Count, 2);
 
 		list.ShouldBe([l1, l2]);
 		op.IsRunning.CurrentValue.ShouldBeTrue();
-		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / 1000d,0.001);
+		op.Progress.CurrentValue.ShouldBe(l2.LineNumber / 1000d, 0.001);
 		op.ReceivedLineCount.CurrentValue.ShouldBe(200);
 
 		cts.Cancel();

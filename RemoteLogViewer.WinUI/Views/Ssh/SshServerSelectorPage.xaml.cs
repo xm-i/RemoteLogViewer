@@ -1,10 +1,13 @@
-using Windows.Storage.Pickers;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+
 using RemoteLogViewer.Core.ViewModels.Ssh;
+
+using Windows.Storage.Pickers;
+
 using WinRT.Interop;
 
 namespace RemoteLogViewer.WinUI.Views.Ssh;
@@ -82,7 +85,7 @@ public sealed partial class SshServerSelectorPage : Page {
 	/// 保存済み接続一覧ダブルタップ時の処理です。
 	/// </summary>
 	private void SavedConnections_DoubleTapped(object sender, DoubleTappedRoutedEventArgs _) {
-		if(this.ViewModel == null) {
+		if (this.ViewModel == null) {
 			return;
 		}
 		if (sender is ListBox lb && lb.SelectedItem is SshConnectionInfoViewModel info) {

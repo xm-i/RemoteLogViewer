@@ -15,7 +15,8 @@ public abstract class DisposableBase : IDisposable {
 		GC.SuppressFinalize(this);
 	}
 	/// <summary>派生クラス追加破棄処理。</summary>
-	protected virtual void OnDisposed() { }
+	protected virtual void OnDisposed() {
+	}
 }
 
 /// <summary>Model 基底クラスです。</summary>

@@ -6,55 +6,53 @@
 		</ul>
 
 		<div class="tab-contents">
-			<GrepTab
-				:pageKey="pageKey"
-				v-show="isActive === 'Grep'"
-				@line-clicked="grepLineClicked"
-				:isDisconnected="isDisconnected"
-			/>
+			<GrepTab :pageKey="pageKey"
+							 v-show="isActive === 'Grep'"
+							 @line-clicked="grepLineClicked"
+							 :isDisconnected="isDisconnected" />
 			<LineViewTab ref="lineViewTab" v-show="isActive === 'LineView'" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import GrepTab from './GrepTab.vue';
-import LineViewTab from './LineViewTab.vue';
-import type { TextLine } from '@/types';
+	import { ref } from 'vue';
+	import GrepTab from './GrepTab.vue';
+	import LineViewTab from './LineViewTab.vue';
+	import type { TextLine } from '@/types';
 
-interface Props {
-	pageKey: string
-	isDisconnected: boolean
-}
+	interface Props {
+		pageKey: string
+		isDisconnected: boolean
+	}
 
-const props = withDefaults(defineProps<Props>(), {
-	isDisconnected: false
-});
+	const props = withDefaults(defineProps<Props>(), {
+		isDisconnected: false
+	});
 
-const emit = defineEmits<{
-	'grep-line-clicked': [lineNumber: number]
-}>();
+	const emit = defineEmits<{
+		'grep-line-clicked': [lineNumber: number]
+	}>();
 
-const isActive = ref('Grep');
-const lineViewTabVisibility = ref(false);
-const lineViewTab = ref<InstanceType<typeof LineViewTab>>();
+	const isActive = ref('Grep');
+	const lineViewTabVisibility = ref(false);
+	const lineViewTab = ref<InstanceType<typeof LineViewTab>>();
 
-const change = (target: string) => {
-	isActive.value = target;
-};
+	const change = (target: string) => {
+		isActive.value = target;
+	};
 
-const setLine = (line: TextLine) => {
-	isActive.value = 'LineView';
-	lineViewTabVisibility.value = true;
-	lineViewTab.value?.setLine(line);
-};
+	const setLine = (line: TextLine) => {
+		isActive.value = 'LineView';
+		lineViewTabVisibility.value = true;
+		lineViewTab.value?.setLine(line);
+	};
 
-const grepLineClicked = (lineNumber: number) => {
-	emit('grep-line-clicked', lineNumber);
-};
+	const grepLineClicked = (lineNumber: number) => {
+		emit('grep-line-clicked', lineNumber);
+	};
 
-defineExpose({
-	setLine
-});
+	defineExpose({
+		setLine
+	});
 </script>

@@ -1,10 +1,13 @@
 using System.IO;
 using System.Text;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+
 using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.WinUI.Views;
+
 using Serilog;
 
 namespace RemoteLogViewer.WinUI;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
+
 using RemoteLogViewer.Core.Models.Ssh.FileViewer;
 using RemoteLogViewer.Core.Models.Ssh.FileViewer.ByteOffsetMap;
 

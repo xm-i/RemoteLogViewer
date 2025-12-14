@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml.Data;
+
 using RemoteLogViewer.Core.Services.Ssh;
 
 namespace RemoteLogViewer.WinUI.Views.Converters;

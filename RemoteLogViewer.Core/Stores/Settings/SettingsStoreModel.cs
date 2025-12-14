@@ -1,8 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Core.Services;
 using RemoteLogViewer.Core.Stores.SerializerContext;
@@ -17,7 +19,7 @@ public class SettingsStoreModel {
 	private readonly ILogger _logger;
 	private readonly WorkspaceService _workspaceService;
 	private readonly Subject<Unit> _settingsUpdatedSubject = new();
-	
+
 	public IServiceProvider ScopedService {
 		get;
 	}
