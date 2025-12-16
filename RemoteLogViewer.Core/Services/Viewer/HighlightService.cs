@@ -38,6 +38,7 @@ public class HighlightService {
 	public string CreateCss(string wrapperSelector) {
 		var conditions = this._settingsStoreModel.SettingsModel.HighlightSettings.Rules.SelectMany(x => x.Conditions).Where(x => !string.IsNullOrEmpty(x.Pattern.Value));
 
+		this._ruleWithClassName.Clear();
 		if (!string.IsNullOrEmpty(this._grepConditionModel.Pattern.Value)) {
 			this._ruleWithClassName.Add(("grep-condition", this._grepConditionModel));
 		}
