@@ -4,8 +4,6 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Microsoft.Extensions.DependencyInjection;
-
 using RemoteLogViewer.Composition.Stores.Settings;
 using RemoteLogViewer.Core.Stores.Settings;
 
@@ -13,25 +11,37 @@ namespace RemoteLogViewer.Core.Services.Viewer;
 
 [Inject(InjectServiceLifetime.Transient)]
 public class HighlightService {
-	private readonly IServiceProvider _serviceProvider;
 	private readonly SettingsStoreModel _settingsStoreModel;
+	private readonly HighlightConditionModel _grepConditionModel;
 	private readonly ConcurrentDictionary<(string pattern, bool ignoreCase), Regex> _regexCache = [];
 	private readonly List<(string ClassName, HighlightConditionModel Condition)> _ruleWithClassName = [];
 
-	public HighlightService(SettingsStoreModel settingsStoreModel, IServiceProvider serviceProvider) {
+	/// <summary>
+	/// コンストラクタ
+	/// </summary>
+	/// <param name="settingsStoreModel">設定モデル</param>
+	/// <param name="grepConditionModel">
+	/// GREP条件のハイライト設定
+	/// この型のライフサイクルはScopedであり、このサービスを呼び出すスコープで指定されているGREP条件を取得することでGREP条件の更新に追従できる。
+	/// 呼び出し側で、GREP実行時にこのインスタンスを更新しておき、常に最新に保たれている前提で動く。
+	/// </param>
+	public HighlightService(SettingsStoreModel settingsStoreModel, HighlightConditionModel grepConditionModel) {
 		this._settingsStoreModel = settingsStoreModel;
-		this._serviceProvider = serviceProvider;
+		this._grepConditionModel = grepConditionModel;
 	}
 
+	/// <summary>
+	/// CSS定義生成
+	/// </summary>
+	/// <param name="wrapperSelector">このCSSをラップするセレクタを指定する。GREP条件がスコープごとに異なるため、必ず一意な値を渡す必要がある。</param>
+	/// <returns>CSS定義</returns>
 	public string CreateCss(string wrapperSelector) {
 		var conditions = this._settingsStoreModel.SettingsModel.HighlightSettings.Rules.SelectMany(x => x.Conditions).Where(x => !string.IsNullOrEmpty(x.Pattern.Value));
-		var grepCondition = this._serviceProvider.GetRequiredService<HighlightConditionModel>();
 
-		if (!string.IsNullOrEmpty(grepCondition.Pattern.Value)) {
-			this._ruleWithClassName.Add(("grep-condition", grepCondition));
+		if (!string.IsNullOrEmpty(this._grepConditionModel.Pattern.Value)) {
+			this._ruleWithClassName.Add(("grep-condition", this._grepConditionModel));
 		}
 		this._ruleWithClassName.AddRange(conditions.Select((x, i) => ($"c{i}", x)));
-
 
 		return wrapperSelector + "{" + string.Join("", this._ruleWithClassName.AsEnumerable().Reverse().Select((x, i) => {
 			var sb = new StringBuilder();
@@ -47,6 +57,11 @@ public class HighlightService {
 		})) + "}";
 	}
 
+	/// <summary>
+	/// ハイライト付きテキスト生成
+	/// </summary>
+	/// <param name="content">生テキスト</param>
+	/// <returns>ハイライトクラス付きHTML</returns>
 	public string CreateStyledLine(string content) {
 		// 行全体スタイルの決定
 		List<string> lineClasses = [];
