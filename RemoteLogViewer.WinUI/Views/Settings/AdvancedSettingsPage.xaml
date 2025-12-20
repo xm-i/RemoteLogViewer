@@ -6,7 +6,7 @@
 	 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	 mc:Ignorable="d">
 	<Grid Padding="16" RowDefinitions="Auto" ColumnDefinitions="Auto,Auto">
-		<TextBlock Text="バイトオフセット作成間隔(行数)"/>
+		<TextBlock Text="Byte Offset Creation Interval (Lines)"/>
 		<NumberBox Grid.Column="1" Text="{x:Bind ViewModel.ByteOffsetMapChunkSize.Value,Mode=TwoWay}"/>
 	</Grid>
 </Page>
