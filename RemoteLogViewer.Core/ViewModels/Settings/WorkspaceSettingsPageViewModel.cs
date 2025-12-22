@@ -28,14 +28,14 @@ public class WorkspaceSettingsPageViewModel : SettingsPageViewModel<WorkspaceSet
 		this.SelectedPath.Value = workspaceService.WorkspacePath ?? string.Empty;
 		this.SkipPersist.Value = workspaceService.IsPersist;
 		this._workspaceService = workspaceService;
-		this.ConfirmCommand.Subscribe(_ => this.OnConfirm());
+		_ = this.ConfirmCommand.Subscribe(_ => this.OnConfirm());
 	}
 
 	/// <summary>確定処理。</summary>
 	private void OnConfirm() {
 		var path = this.SelectedPath.Value.Trim();
 		if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) {
-			this.ErrorMessage.Value = "有効なフォルダを選択してください。";
+			this.ErrorMessage.Value = "Select a folder.";
 			return;
 		}
 		this.ErrorMessage.Value = null;

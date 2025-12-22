@@ -47,6 +47,9 @@ public partial class App : Application {
 		var logger = LoggerFactory.CreateLogger<App>();
 		WinUI3ProviderInitializer.SetDefaultObservableSystem(ex => logger.LogWarning(ex, "Exception"));
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+		AppDomain.CurrentDomain.UnhandledException += (s, e) => {
+			logger.LogError(e.ExceptionObject as Exception, "UnhandledException");
+		};
 
 		var workspaceService = Ioc.Default.GetRequiredService<WorkspaceService>();
 		if (string.IsNullOrWhiteSpace(workspaceService.WorkspacePath)) {

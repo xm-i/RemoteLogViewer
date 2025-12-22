@@ -13,7 +13,7 @@
 			<TextBox x:Name="PathTextBox" Text="{x:Bind ViewModel.SelectedPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="340" IsReadOnly="True" />
 			<Button Content="Browse..." Margin="8,0,0,0" Click="Browse_Click" />
 		</StackPanel>
-		<CheckBox x:Name="SkipCheckBox" IsChecked="{x:Bind ViewModel.SkipPersist.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Content="次回以降この確認を省略" Margin="0,12,0,0" Grid.Row="2" />
+		<CheckBox x:Name="SkipCheckBox" IsChecked="{x:Bind ViewModel.SkipPersist.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Content="Do not show this again." Margin="0,12,0,0" Grid.Row="2" />
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0" Grid.Row="3">
 			<Button Content="Apply and exit" Click="Ok_Click" />
 		</StackPanel>
