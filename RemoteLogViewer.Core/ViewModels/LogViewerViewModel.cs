@@ -53,7 +53,7 @@ public class LogViewerViewModel : ViewModelBase<LogViewerViewModel> {
 			.SelectedSshConnectionInfo
 			.ObservePropertyChanged(x => x.Value)
 			.Subscribe(x => {
-				this.Title.Value = $"{x?.Name.Value ?? string.Empty}";
+				this.Title.Value = string.IsNullOrEmpty(x?.Name.Value) ? "New Log Tab" : x.Name.Value;
 			}).AddTo(this.CompositeDisposable);
 
 		_ = sshSessionModel.IsConnected.Subscribe(isConnected => {
