@@ -203,14 +203,16 @@
 
 			// 上方向の事前読み込み処理
 			if (visibleLines.value[0] < minLineNumber.value + prefetchThreshold &&
-				!loadingRequests.value.find(x => x.end === minLineNumber.value - 1)) {
+				!loadingRequests.value.find(x => x.end === minLineNumber.value - 1) &&
+				minLineNumber.value > 0) {
 				log(() => `request by intersect ${visibleLines.value[0]}`);
 				requestLogs(minLineNumber.value - prefetchLines, minLineNumber.value - 1);
 			}
 
 			// 下方向の事前読み込み処理
 			if (visibleLines.value[visibleLines.value.length - 1] > maxLineNumber.value - prefetchThreshold &&
-				!loadingRequests.value.find(x => x.start === maxLineNumber.value + 1)) {
+				!loadingRequests.value.find(x => x.start === maxLineNumber.value + 1) &&
+        totalLines.value > maxLineNumber.value) {
 				log(() => `request by intersect ${visibleLines.value[visibleLines.value.length - 1]}`);
 				requestLogs(maxLineNumber.value + 1, maxLineNumber.value + prefetchLines);
 			}
@@ -319,7 +321,15 @@
 	}, { deep: true });
 
 	watch(totalLines, () => {
-		updateScrollAreaHeight();
+		if (visibleLines.value[visibleLines.value.length - 1] > maxLineNumber.value - prefetchThreshold &&
+			!loadingRequests.value.find(x => x.start === maxLineNumber.value + 1) && 
+			totalLines.value > maxLineNumber.value) {
+			// 次行取得閾値を超えている場合、追加行取得を行う
+			requestLogs(maxLineNumber.value + 1, maxLineNumber.value + prefetchLines);
+		}else{
+			// 最終行が表示されていない場合、スクロールエリアの高さの更新のみ行う
+			updateScrollAreaHeight();
+		}
 	});
 
 	watch(() => props.wrapLines, () => {
